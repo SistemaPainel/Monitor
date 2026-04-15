@@ -36,7 +36,6 @@
             gap: 20px; 
         }
         
-        /* Adicionado transição para a sombra também */
         .station-card { 
             background: var(--bg-card); 
             border-radius: 10px; 
@@ -46,7 +45,6 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease; 
         }
 
-        /* Efeito Hover Sutil */
         .station-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
@@ -57,8 +55,20 @@
         .station-card.status-quebrada { border-left-color: var(--color-quebrada); background-color: #fffde7; }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .card-header h2 { margin: 0; font-size: 1.2rem; color: #333; }
+        .card-header h2 { margin: 0; font-size: 1.2rem; color: #333; display: flex; align-items: center; }
         
+        /* ESTILO DO CONTADOR "2x" */
+        .badge-repetido {
+            background: #333;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 16px; /* Letra maior conforme solicitado */
+            font-weight: 800;
+            margin-left: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         .info-row { display: flex; flex-direction: column; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .info-label { font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; }
         .info-value { font-size: 14px; font-weight: 600; color: #222; }
@@ -159,6 +169,16 @@
             try {
                 const response = await fetch(`${URL_API}?grupo=${grupoAtual}`);
                 const dados = await response.json();
+                
+                // Lógica para contar repetições de Modelo + Tamanho
+                const contagem = {};
+                dados.forEach(d => {
+                    if (d.modelo && d.tamanho && d.modelo !== "Não Alocado" && d.modelo !== "VAZIO") {
+                        const chave = `${d.modelo.trim()}-${d.tamanho.trim()}`;
+                        contagem[chave] = (contagem[chave] || 0) + 1;
+                    }
+                });
+
                 const grid = document.getElementById('stationGrid');
                 document.getElementById('loading-msg').style.display = 'none';
                 grid.innerHTML = "";
@@ -169,11 +189,16 @@
                     const modeloBanco = (item && item.modelo) ? item.modelo : 'Não Alocado';
                     const tamanhoBanco = (item && item.tamanho) ? item.tamanho : '--';
 
+                    // Verifica se esta estação está rodando algo repetido
+                    const chaveAtual = `${modeloBanco.trim()}-${tamanhoBanco.trim()}`;
+                    const totalRepetido = contagem[chaveAtual] || 0;
+                    const badgeRepetido = totalRepetido > 1 ? `<span class="badge-repetido">${totalRepetido}x</span>` : "";
+
                     const card = document.createElement('div');
                     card.className = `station-card status-${statusBanco}`;
                     card.innerHTML = `
                         <div class="card-header">
-                            <h2>EST ${String(i).padStart(2, '0')}</h2>
+                            <h2>EST ${String(i).padStart(2, '0')}${badgeRepetido}</h2>
                             <select onchange="mudarStatus('${grupoAtual}', ${i}, this.value)">
                                 <option value="rodando" ${statusBanco === 'rodando' ? 'selected' : ''}>RODANDO</option>
                                 <option value="parada" ${statusBanco === 'parada' ? 'selected' : ''}>PARADA</option>
@@ -221,7 +246,10 @@
             const stations = document.querySelectorAll('.station-card');
             let printContent = `<html><head><title>Relatório - ${grupo}</title><style>@page { size: A4; margin: 8mm; } body { font-family: 'Segoe UI', sans-serif; color: #222; } .print-header { border-bottom: 3px solid #333; margin-bottom: 15px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; } table { width: 100%; border-collapse: collapse; table-layout: fixed; } th, td { border: 1px solid #999; padding: 6px 4px; text-align: center; font-size: 8.5pt; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } th { background-color: #f0f0f0; font-weight: bold; text-transform: uppercase; } .st-rodando { color: #2e7d32; font-weight: bold; } .st-parada { color: #d32f2f; font-weight: bold; } .st-quebrada { color: #b7950b; font-weight: bold; }</style></head><body><div class="print-header"><div><h1>${grupo} - Relatório de Alocação</h1></div><div>Gerado: ${dataAtual}</div></div><table><thead><tr><th style="width:35px;">EST</th><th>MODELO</th><th style="width:70px;">TAM</th><th style="width:45px;">GIRO</th><th style="width:45px;">REFIL</th><th style="width:45px;">REPR</th><th style="width:75px;">STATUS</th></tr></thead><tbody>`;
             stations.forEach(card => {
-                const est = card.querySelector('h2').innerText.replace('EST ', '');
+                // Limpa o número da estação para não imprimir o "2x" no relatório de papel
+                const estRaw = card.querySelector('h2').innerText.replace('EST ', '');
+                const est = estRaw.split(' ')[0].trim(); 
+                
                 const mod = card.querySelector('.info-row:nth-child(2) .info-value').innerText;
                 const tam = card.querySelector('.info-row:nth-child(3) .info-value').innerText;
                 const giro = card.querySelector('.stats-grid .stat-box:nth-child(1) .stat-num').innerText;
