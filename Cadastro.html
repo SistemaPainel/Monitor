@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Alocação Dinâmico</title>
+    <style>
+        :root { --primary-red: #d32f2f; --bg-body: #f9f9fb; --border-color: #e0e0e0; --text-main: #333; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-body); padding: 20px; color: var(--text-main); }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .sub-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 20px; }
+        .btn-group { display: flex; gap: 10px; width: auto; }
+        .btn { border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; gap: 8px; text-transform: uppercase; justify-content: center; align-items: center; }
+        .btn-save { background-color: var(--primary-red); color: white; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .card { background: white; border: 1px solid var(--border-color); border-radius: 4px; padding: 15px; }
+        .input-box { margin-bottom: 10px; }
+        .input-box label { display: block; font-size: 9px; font-weight: 700; margin-bottom: 4px; }
+        .input-box select { width: 100%; padding: 7px; border: 1px solid #eee; font-size: 11px; }
+        .filter-box { display: flex; flex-direction: column; min-width: 150px; }
+        .filter-box label { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        .filter-box select { padding: 8px; font-weight: bold; border-radius: 5px; border: 1px solid #ccc; font-size: 14px;}
+        .actions-container { display: flex; align-items: flex-end; gap: 15px; flex-wrap: wrap; justify-content: flex-end; }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .sub-header { flex-direction: column; align-items: flex-start; }
+            .actions-container { width: 100%; justify-content: flex-start; }
+            .filter-box { width: 100%; }
+            .btn-group { width: 100%; }
+            .btn-save { flex-grow: 1; }
+        }
+    </style>
+</head>
+<body>
+    <header><h1>Controle de Alocação</h1></header>
+    <div class="sub-header">
+        <div>
+            <h2>🔖 Configuração Dinâmica</h2>
+            <p>Os campos mostram a última alocação salva. Requer crachá para salvar.</p>
+        </div>
+        <div class="actions-container">
+            <div class="filter-box">
+                <label>GRUPO</label>
+                <select id="filtroGrupo" onchange="trocarGrupo()">
+                    <option value="Grupo 1">Grupo 1</option>
+                    <option value="Grupo 2">Grupo 2</option>
+                    <option value="Grupo 3">Grupo 3</option>
+                    <option value="Grupo 4">Grupo 4</option>
+                    <option value="Grupo 5">Grupo 5</option>
+                    <option value="Grupo 6">Grupo 6</option>
+                    <option value="Grupo 7">Grupo 7</option>
+                    <option value="Grupo 8">Grupo 8</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button id="btnSalvar" class="btn btn-save" onclick="salvarAlocacao()">💾 Salvar Alocação</button>
+            </div>
+        </div>
+    </div>
+    <div id="msgCarregando" style="display:none; color: #d32f2f; font-weight: bold; margin-bottom: 10px;">⌛ Sincronizando dados atuais...</div>
+    <div class="grid-container" id="stationGrid"></div>
+
+    <script>
+        const URL_API = "https://script.google.com/macros/s/AKfycbzbhy0dG22XL-vV-5_fuoZg5aNhBC7zmgv5XZZsvRtHJm277AgxNJYhhe7boVg0JPYu/exec"; 
+        const dataMap = { "VAZIO": ["VAZIO"],"004 BOR+EVA": ["34/35", "36", "37", "38", "39/40", "41", "42", "43/44", "45", "46", "47/48"], "ADIZERO DRIVE BOR+EVA": ["11/12", "3X/4X", "5/6", "6X/7X", "8/9", "9X/10X"], "AIR MAX NUAXIS BOR+EVA": ["10", "11", "12", "6", "7", "7,5", "8,5", "9,5"], "BOR SB CHECK+ CONF SB MALOR": ["10", "11", "12", "5,5", "6", "7", "7,5", "8,5", "9,5"], "BUMP 21 EVA+BOR": ["34/35", "36", "41", "42", "43", "44/45"], "COURT VISION ALTA BOR+EVA": ["10", "5,5", "6", "7", "7,5", "8,5", "9"], "CPO HYBRID BOR": ["37", "38", "39", "40", "41", "42", "43", "44"], "D0021 BOR+EVA": ["34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"], "D0023 EVA + BOR": ["34/35", "36", "37", "38", "39/40", "41", "42", "43/44", "45", "46"], "DOWNSHIFTER 13 BOR+EVA": ["10", "12", "6", "7"], "DOWNSHIFTER 14 BOR+EVA": ["10", "11", "12", "4", "4,5", "5,5", "6", "7", "7,5", "8,5", "9,5"], "FILA 2402 BOR": ["34/35", "36", "37", "38/39", "40", "41", "42", "43", "44/45"], "FILA 2421 EVA + BOR": ["40"], "FILA 2423 BOR": ["34/35", "36", "37", "38/39", "40"], "FILA 2428 EVA+2421 BORR": ["37", "38/39", "40", "41", "42", "43", "44/45"], "FILA 2502 BOR + EVA CORTE": ["37", "38/39", "40", "41", "42", "43", "44/45"], "FILA 2510 EVA+BOR": ["34/35", "36", "37", "38/39", "40", "41", "42", "43", "46", "47", "48"], "FILA 2525 BOR+EVA": ["T2", "T3", "T4", "T5"], "FILA 2602 EVA+BOR": ["33", "34/35", "36", "37", "38/39", "40", "41", "42", "43", "44/45"], "GEL EQUATION PRE BOR+CONF+PIE": ["10X", "11X", "12", "4", "5", "5X", "6", "7", "7X", "8", "8X", "9X"], "GEL-BACKHAND 2 BOR+EVA": ["10X", "11X", "12", "5", "5X", "6", "7", "7X", "8", "8X", "9", "9X"], "GEL-BACKHAND 2 CLAY BOR+EVA": ["10X", "11X", "12", "4", "5", "5X", "6", "7", "7X", "8", "8X", "9", "9X"], "GEL-NAGOYA 4 BOR+EVA": ["10X", "11X", "12", "4", "5", "5X", "6", "7", "7X", "8", "8X", "9", "9X"], "GEL-NAGOYA 7 BOR+EVA": ["10X", "11X", "12", "4", "5", "6", "7", "8", "8X", "9"], "GEL-PULSE 15 EVA+BOR": ["10X", "11X", "12", "4", "5", "5X", "6", "7", "7X", "8", "8X", "9", "9X"], "GEL-QUANTUM 180 5 BOR+EVA": ["10X", "11X", "12", "4", "5", "5X", "6", "7", "7X", "8", "8X", "9", "9X"], "GEL-QUANTUM 360 5 BOR+EVA": ["10X", "11X", "12", "4", "5", "5X", "6", "7", "7X", "8", "8X", "9", "9X"], "HANDBALL SPEZIAL": ["10,5", "11,5", "4", "4,5", "5,5", "6", "6,5", "7", "8", "9", "9,5"], "HG BUMP 24+EVA": ["34/35", "36", "37", "38/39", "40", "41", "42", "43", "44/45", "46"], "HG STEALTH 23 BOR": ["37", "38", "39", "40", "41", "42", "43", "44"], "HG UPTAKE+EVA": ["34/35", "36", "37", "38/39", "40", "41", "42", "43", "44/45"], "HG VORTEX BOR": ["34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"], "ID BUMP 24+EVA": ["34/35", "36", "37", "38/39", "40", "41", "42", "43", "44/45", "46"], "ID CUSHION BOR+EVA": ["37", "38", "39", "40", "41", "42", "43"], "ID HYPER DIAMOND": ["37", "38", "39", "40", "41", "42", "43", "44"], "ID STABLE BOR+EVA": ["34/35", "36", "37", "38/39", "40", "41", "42", "43"], "ID STEALTH 23 BOR": ["39", "42"], "ID UPTAKE 24+EVA": ["34/35", "36", "37", "38/39", "40", "41", "42", "43", "44/45", "46"], "ID VORTEX BOR": ["34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"], "ID VORTEX BOR INF": ["29", "30", "31", "32", "33", "34", "35", "36"], "JR VAPOR 15 CLUB IC BOR": ["1/1X", "2/2X", "3/3X", "4/4X", "5/5X"], "JR VAPOR 15 CLUB TF BOR": ["1/1X", "2/2X", "3/3X", "4/4X", "5/5X"], "LEGEND 10 CLUB TF": ["10/10X", "11/11X", "12/12X", "4/4X", "5/5X", "6/6X", "7/7X", "8/8X", "9/9X"], "NB 413 BOR+EVA": ["34/36", "37/38", "39/40", "41/42", "43", "44"], "NIKE AIR WINFLO 11 BOR+EVA": ["10", "11", "12", "4", "4X", "5X", "6", "7", "7X", "8X", "9X"], "NIKE AIR WINFLO 12 BOR+EVA": ["10", "11", "12", "4", "4,5", "5,5", "6", "7", "7,5", "8,5", "9,5"], "NIKE FLEX TRAIN BOR+EVA": ["10", "11", "12", "6", "7", "7,5", "8,5", "9,5"], "NIKE QUEST 5 BOR+EVA": ["10", "11", "12", "6", "7", "7X", "8X", "9X"], "NIKE SB CHECK SOLA+PIE": ["10", "11", "12", "4,5", "5,5", "6", "7", "7,5", "8,5", "9,5"], "OT PRO CLAY BOR+EVA": ["37", "38/39", "41", "42", "43", "44/45", "46", "47"], "PLACA TESTE BOR": ["U"], "PRIORITY BOR": ["10", "10X", "11", "12", "3X", "4", "4X", "5", "5X", "6", "6X", "7", "7X", "8", "8X", "9", "9X"], "PRO 5 TRAINER": ["36", "37", "38", "39", "40", "41", "42", "43", "44"], "QUEST 6 EVA+BOR": ["10", "11", "12", "4", "4X", "5X", "6", "7", "7X", "8X", "9X"], "RUN DEFY BOR+EVA": ["10", "11", "12", "4", "4,5", "5,5", "6", "7", "7,5", "8,5", "9,5"], "RUN SWIFT 3 BOR+EVA": ["10", "11", "12", "4", "4X", "5X", "6", "7", "7X", "8X", "9X"], "SAMBA OG": ["10,5", "11,5", "12", "4", "4,5", "5,5", "6", "6,5", "7", "8", "9", "9,5"], "STREETTALK": ["10,5", "11,5", "11,5/12", "12", "4", "4,5", "4/4,5", "5,5", "5,5/6", "6", "6,5", "6,5/7", "7", "8", "8/9", "9", "9,5", "9X/10X"], "U471 EVA CORTE + BOR": ["34", "35", "36", "37", "40"], "UMBRO TRAINER INF": ["28", "29", "30", "31", "32", "33", "34", "35", "36"], "VAPOR 15 CLUB IC BOR": ["11/11X", "8/8X"], "VAPOR 15 CLUB TF BOR": ["10/10X", "11/11X", "12/12X", "5/5X", "6/6X", "7/7X", "8/8X", "9/9X"] };
+        const grid = document.getElementById('stationGrid');
+        const modelNames = Object.keys(dataMap).sort();
+        function trocarGrupo() { const grupo = document.getElementById('filtroGrupo').value; localStorage.setItem('ultimoGrupoSelecionado', grupo); renderizarEstacoes(); }
+        async function renderizarEstacoes() {
+            const grupo = document.getElementById('filtroGrupo').value;
+            const numEstacoes = (grupo === "Grupo 4" || grupo === "Grupo 5") ? 48 : 36;
+            document.getElementById('msgCarregando').style.display = 'block';
+            grid.style.opacity = '0.5';
+            try {
+                const response = await fetch(`${URL_API}?grupo=${grupo}`);
+                const dadosAtuais = await response.json();
+                grid.innerHTML = ''; 
+                for (let i = 1; i <= numEstacoes; i++) {
+                    const salvo = dadosAtuais.find(d => String(d.estacao) === String(i));
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.setAttribute('data-status', salvo ? salvo.status : "parada");
+                    card.innerHTML = `
+                        <div class="card-header"><b>ESTAÇÃO ${i}</b></div>
+                        <div class="input-box"><label>MODELO</label><select class="sel-modelo" onchange="updateSizes(this)"><option value="">Selecionar</option>${modelNames.map(m => `<option value="${m}" ${salvo && m === salvo.modelo ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+                        <div class="input-box"><label>TAMANHO</label><select class="sel-tamanho"><option value="">Escolha o modelo</option></select></div>`;
+                    grid.appendChild(card);
+                    if (salvo && salvo.modelo) popularTamanhos(card.querySelector('.sel-tamanho'), salvo.modelo, salvo.tamanho);
+                }
+            } catch (e) {} finally { document.getElementById('msgCarregando').style.display = 'none'; grid.style.opacity = '1'; }
+        }
+        function updateSizes(selectModelo) { popularTamanhos(selectModelo.closest('.card').querySelector('.sel-tamanho'), selectModelo.value, ""); }
+        function popularTamanhos(el, modelo, sel) {
+            el.innerHTML = '<option value="">Selecionar</option>';
+            if (modelo && dataMap[modelo]) dataMap[modelo].forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; if (s === sel) o.selected = true; el.appendChild(o); });
+        }
+        async function salvarAlocacao() {
+            const crachas = ["48192292175030"];
+            const info = prompt("Informe seu crachá:");
+            if (!info || !crachas.includes(info.trim())) return alert("Não autorizado.");
+            const grupo = document.getElementById('filtroGrupo').value;
+            const payload = { action: "updateAllocation", grupo: grupo, cracha: info.trim(), data: [] };
+            document.querySelectorAll('.card').forEach((c, i) => {
+                const m = c.querySelector('.sel-modelo').value;
+                const t = c.querySelector('.sel-tamanho').value;
+                if(m && t) payload.data.push({ grupo: grupo, estacao: i + 1, modelo: m, tamanho: t, status: c.getAttribute('data-status') });
+            });
+            try {
+                const btn = document.getElementById('btnSalvar'); btn.innerText = "⌛ Salvando..."; btn.disabled = true;
+                await fetch(URL_API, { method: 'POST', body: JSON.stringify(payload) });
+                alert('Salvo com sucesso!'); renderizarEstacoes();
+            } catch (e) { alert('Erro.'); } finally { document.getElementById('btnSalvar').innerText = "💾 Salvar Alocação"; document.getElementById('btnSalvar').disabled = false; }
+        }
+        window.onload = () => { const g = localStorage.getItem('ultimoGrupoSelecionado'); if (g) document.getElementById('filtroGrupo').value = g; renderizarEstacoes(); };
+    </script>
+</body>
+</html>
