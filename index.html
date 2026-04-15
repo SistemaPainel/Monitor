@@ -57,16 +57,17 @@
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .card-header h2 { margin: 0; font-size: 1.2rem; color: #333; display: flex; align-items: center; }
         
-        /* ESTILO DO CONTADOR "2x" */
+        /* ESTILO DO CONTADOR "2x" - VERSÃO REDUZIDA */
         .badge-repetido {
             background: #333;
             color: #fff;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 16px; /* Letra maior conforme solicitado */
-            font-weight: 800;
-            margin-left: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 1px 6px; 
+            border-radius: 4px;
+            font-size: 12px; /* Tamanho reduzido conforme solicitado */
+            font-weight: 700;
+            margin-left: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            vertical-align: middle;
         }
 
         .info-row { display: flex; flex-direction: column; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
@@ -246,7 +247,6 @@
             const stations = document.querySelectorAll('.station-card');
             let printContent = `<html><head><title>Relatório - ${grupo}</title><style>@page { size: A4; margin: 8mm; } body { font-family: 'Segoe UI', sans-serif; color: #222; } .print-header { border-bottom: 3px solid #333; margin-bottom: 15px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; } table { width: 100%; border-collapse: collapse; table-layout: fixed; } th, td { border: 1px solid #999; padding: 6px 4px; text-align: center; font-size: 8.5pt; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } th { background-color: #f0f0f0; font-weight: bold; text-transform: uppercase; } .st-rodando { color: #2e7d32; font-weight: bold; } .st-parada { color: #d32f2f; font-weight: bold; } .st-quebrada { color: #b7950b; font-weight: bold; }</style></head><body><div class="print-header"><div><h1>${grupo} - Relatório de Alocação</h1></div><div>Gerado: ${dataAtual}</div></div><table><thead><tr><th style="width:35px;">EST</th><th>MODELO</th><th style="width:70px;">TAM</th><th style="width:45px;">GIRO</th><th style="width:45px;">REFIL</th><th style="width:45px;">REPR</th><th style="width:75px;">STATUS</th></tr></thead><tbody>`;
             stations.forEach(card => {
-                // Limpa o número da estação para não imprimir o "2x" no relatório de papel
                 const estRaw = card.querySelector('h2').innerText.replace('EST ', '');
                 const est = estRaw.split(' ')[0].trim(); 
                 
