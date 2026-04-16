@@ -19,8 +19,8 @@
         /* CABEÇALHO FIXO NO TOPO (STICKY) */
         .header { 
             position: sticky; 
-            top: 0; /* Define onde ele vai colar na tela */
-            z-index: 1000; /* Garante que os cards passem por baixo dele */
+            top: 0; 
+            z-index: 1000; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
@@ -28,7 +28,7 @@
             background: #fff; 
             padding: 15px; 
             border-radius: 8px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Sombra um pouco maior para destacar quando rolar */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
             flex-wrap: wrap; 
             gap: 15px;
         }
@@ -144,15 +144,25 @@
 
         /* RESPONSIVIDADE PARA CELULARES E TABLETS PEQUENOS */
         @media (max-width: 650px) {
-            body { padding: 10px; }
-            .header { flex-direction: column; align-items: stretch; position: relative; /* Remove o sticky no celular se quiser poupar espaço, ou mantenha se preferir */ }
+            body { padding: 8px; }
+            .header { flex-direction: column; align-items: stretch; position: relative; padding: 10px; }
             .actions-container { flex-direction: column; gap: 10px; align-items: stretch; }
             .filter-box { width: 100%; }
             .filter-box select { width: 100%; }
             .btn-sync { margin-top: 5px; width: 100%; padding: 12px; font-size: 13px; }
             
-            /* No celular, para os cards não ficarem esmagados e ilegíveis, eles caem para 1 por linha */
-            .machine-grid { grid-template-columns: 1fr; }
+            /* Mantém 2 colunas lado a lado no celular, mas ajusta o espaçamento */
+            .machine-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+            
+            /* Ajustes finos nos cards para caberem perfeitamente na tela estreita */
+            .machine-container { padding: 10px; }
+            .station-card { padding: 8px; border-left-width: 4px; }
+            .card-header h2 { font-size: 0.85rem; }
+            .info-value { font-size: 11px; }
+            .stats-grid { gap: 4px; }
+            .stat-box { padding: 4px; }
+            .stat-num { font-size: 13px; }
+            .stat-label { font-size: 7px; }
             
             #status-update { text-align: center; margin-top: 5px; }
         }
