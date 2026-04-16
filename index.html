@@ -63,7 +63,7 @@
             color: #fff;
             padding: 1px 6px; 
             border-radius: 4px;
-            font-size: 12px; /* Tamanho reduzido conforme solicitado */
+            font-size: 12px;
             font-weight: 700;
             margin-left: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
@@ -171,11 +171,12 @@
                 const response = await fetch(`${URL_API}?grupo=${grupoAtual}`);
                 const dados = await response.json();
                 
-                // Lógica para contar repetições de Modelo + Tamanho
+                // Lógica para contar repetições de Modelo + Tamanho (Normalizando Ponto para Vírgula)
                 const contagem = {};
                 dados.forEach(d => {
                     if (d.modelo && d.tamanho && d.modelo !== "Não Alocado" && d.modelo !== "VAZIO") {
-                        const chave = `${d.modelo.trim()}-${d.tamanho.trim()}`;
+                        const tamanhoNorm = String(d.tamanho).replace('.', ',').trim();
+                        const chave = `${d.modelo.trim()}-${tamanhoNorm}`;
                         contagem[chave] = (contagem[chave] || 0) + 1;
                     }
                 });
@@ -188,10 +189,12 @@
                     let item = dados.find(d => String(d.estacao) === String(i));
                     const statusBanco = (item && item.status) ? item.status : 'parada';
                     const modeloBanco = (item && item.modelo) ? item.modelo : 'Não Alocado';
-                    const tamanhoBanco = (item && item.tamanho) ? item.tamanho : '--';
+                    
+                    // Normaliza o tamanho na hora de exibir e comparar
+                    const tamanhoBanco = (item && item.tamanho) ? String(item.tamanho).replace('.', ',').trim() : '--';
 
                     // Verifica se esta estação está rodando algo repetido
-                    const chaveAtual = `${modeloBanco.trim()}-${tamanhoBanco.trim()}`;
+                    const chaveAtual = `${modeloBanco.trim()}-${tamanhoBanco}`;
                     const totalRepetido = contagem[chaveAtual] || 0;
                     const badgeRepetido = totalRepetido > 1 ? `<span class="badge-repetido">${totalRepetido}x</span>` : "";
 
@@ -215,9 +218,9 @@
                             <span class="info-value">${tamanhoBanco}</span>
                         </div>
                         <div class="stats-grid">
-                            <div class="stat-box"><span class="stat-num">${item ? item.giro : 0}</span><span class="stat-label">Giro</span></div>
-                            <div class="stat-box"><span class="stat-num">${item ? item.refilagem : 0}</span><span class="stat-label">Refil</span></div>
-                            <div class="stat-box"><span class="stat-num">${item ? item.reprovados : 0}</span><span class="stat-label">Reprov</span></div>
+                            <div class="stat-box"><span class="stat-num">${item && item.giro ? item.giro : 0}</span><span class="stat-label">Giro</span></div>
+                            <div class="stat-box"><span class="stat-num">${item && item.refilagem ? item.refilagem : 0}</span><span class="stat-label">Refil</span></div>
+                            <div class="stat-box"><span class="stat-num">${item && item.reprovados ? item.reprovados : 0}</span><span class="stat-label">Reprov</span></div>
                         </div>
                     `;
                     grid.appendChild(card);
