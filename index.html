@@ -50,7 +50,8 @@
         
         .actions-container { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .filter-box { display: flex; flex-direction: column; }
-        .filter-box label { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        /* AQUI: Adicionado text-align: center; para centralizar a legenda */
+        .filter-box label { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; text-align: center; }
         .filter-box select { padding: 8px; font-weight: bold; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; cursor: pointer; }
 
         .btn-sync { background-color: #333; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; transition: 0.2s; }
@@ -118,6 +119,14 @@
                     <option value="Grupo 8">Grupo 8</option>
                 </select>
             </div>
+            
+            <div class="filter-box">
+                <label>MODELO</label>
+                <select id="filtroModelo" onchange="aplicarFiltroModelo()">
+                    <option value="TODOS">Todos</option>
+                </select>
+            </div>
+
             <div class="filter-box">
                 <label>STATUS GLOBAL</label>
                 <select id="statusGlobal">
@@ -151,7 +160,6 @@
     <script>
         const URL_API = "https://script.google.com/macros/s/AKfycbzQKH2Z5xyOUJASsupjo4kskJnYYGVm4i31vxq0UdAYp-P7VZmHYam0FYt-jfbiNJok/exec";
 
-        // FUNÇÕES DO MODAL CUSTOMIZADO
         function customAlert(msg) {
             return new Promise(resolve => {
                 const overlay = document.getElementById('customModalOverlay');
@@ -197,12 +205,45 @@
             carregarPainel();
         }
 
+        function aplicarFiltroModelo() {
+            const modeloSelecionado = document.getElementById('filtroModelo').value;
+            const cards = document.querySelectorAll('.station-card');
+            
+            cards.forEach(card => {
+                const modeloCard = card.getAttribute('data-modelo');
+                if (modeloSelecionado === "TODOS" || modeloCard === modeloSelecionado) {
+                    card.style.display = 'flex'; 
+                } else {
+                    card.style.display = 'none'; 
+                }
+            });
+        }
+
         async function carregarPainel() {
             const grupoAtual = document.getElementById('filtroGrupo').value;
             const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
             try {
                 const response = await fetch(`${URL_API}?grupo=${grupoAtual}`);
                 const dados = await response.json();
+
+                const modelosUnicos = new Set();
+                dados.forEach(d => {
+                    if (d.modelo && d.modelo !== "Não Alocado" && d.modelo !== "VAZIO") {
+                        modelosUnicos.add(d.modelo.trim());
+                    }
+                });
+
+                const selectModelo = document.getElementById('filtroModelo');
+                const valorSelecionadoAtual = selectModelo.value; 
+                
+                selectModelo.innerHTML = '<option value="TODOS">Todos</option>';
+                [...modelosUnicos].sort().forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = m;
+                    if (m === valorSelecionadoAtual) opt.selected = true;
+                    selectModelo.appendChild(opt);
+                });
 
                 const contagem = {};
                 dados.forEach(d => {
@@ -238,6 +279,7 @@
 
                     const card = document.createElement('div');
                     card.className = `station-card status-${statusBanco}`;
+                    card.setAttribute('data-modelo', modeloBanco.trim());
                     card.innerHTML = `
                         <div class="card-header">
                             <h2>EST ${String(i).padStart(2, '0')}${badgeRepetido}</h2>
@@ -277,7 +319,9 @@
                 
                 document.getElementById('status-update').innerHTML = 
                     `Última atualização: ${new Date().toLocaleTimeString()}<br>` + 
-                    `Últ. Alocação: ${dataAlocacaoFormatada}`;
+                    `Alocação salva: ${dataAlocacaoFormatada}`;
+                    
+                aplicarFiltroModelo(); 
 
             } catch (e) { document.getElementById('loading-msg').style.display = 'block'; }
         }
@@ -304,6 +348,8 @@
             let printContent = `<html><head><title>Relatório - ${grupo}</title><style>@page { size: A4; margin: 8mm; } body { font-family: 'Segoe UI', sans-serif; color: #222; } .print-header { border-bottom: 3px solid #333; margin-bottom: 15px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; } table { width: 100%; border-collapse: collapse; table-layout: fixed; } th, td { border: 1px solid #999; padding: 6px 4px; text-align: center; font-size: 8.5pt; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } th { background-color: #f0f0f0; font-weight: bold; text-transform: uppercase; } .st-rodando { color: #2e7d32; font-weight: bold; } .st-parada { color: #d32f2f; font-weight: bold; } .st-quebrada { color: #b7950b; font-weight: bold; }</style></head><body><div class="print-header"><div><h1>${grupo} - Relatório de Alocação</h1></div><div>Gerado: ${dataAtual}</div></div><table><thead><tr><th style="width:35px;">EST</th><th>MODELO</th><th style="width:70px;">TAM</th><th style="width:45px;">GIRO</th><th style="width:45px;">REFIL</th><th style="width:45px;">REPR</th><th style="width:75px;">STATUS</th></tr></thead><tbody>`;
             let dadosImpressao = [];
             stations.forEach(card => {
+                if (card.style.display === 'none') return; 
+
                 const h2Text = card.querySelector('h2').innerText;
                 const match = h2Text.match(/EST\s*(\d+)/);
                 const numEstacao = match ? parseInt(match[1], 10) : 0;
