@@ -12,49 +12,81 @@
             --color-parada: #d32f2f; 
             --color-quebrada: #fbc02d; 
             --color-ok: #2e7d32;
+            
+            /* Novas variáveis para transição de tema */
+            --bg-machine: #fdfdfd;
+            --border-color: #e0e0e0;
+            --border-info: #eee;
+            --text-muted: #888888;
+            --text-value: #222222;
+            --bg-stat: #f8f9fa;
+            --text-stat-label: #666666;
+            --bg-parada-card: #ffebee;
+            --bg-quebrada-card: #fffde7;
+            --bg-input: #ffffff;
+            --border-input: #cccccc;
         }
+
+        /* Variaveis do Tema Escuro */
+        body.dark-mode {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-dark: #e0e0e0;
+            --bg-machine: #181818;
+            --border-color: #333333;
+            --border-info: #333333;
+            --text-muted: #aaaaaa;
+            --text-value: #ffffff;
+            --bg-stat: #2a2a2a;
+            --text-stat-label: #bbbbbb;
+            --bg-parada-card: #3b1c1c;
+            --bg-quebrada-card: #332d14;
+            --bg-input: #2c2c2c;
+            --border-input: #444444;
+        }
+
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-body); margin: 0; padding: 15px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-body); color: var(--text-dark); margin: 0; padding: 15px; transition: background-color 0.3s, color 0.3s; }
         
-        .header { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-wrap: wrap; gap: 15px; }
-        .header h1 { margin: 0; font-size: 1.5rem; }
-        .header p { margin: 5px 0 0 0; }
+        .header { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--bg-card); padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-wrap: wrap; gap: 15px; transition: background-color 0.3s; }
+        .header h1 { margin: 0; font-size: 1.5rem; color: var(--text-dark); }
+        .header p { margin: 5px 0 0 0; color: var(--text-muted); }
 
         .main-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start; }
-        .machine-container { background: #fdfdfd; border-radius: 10px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; border-top: 6px solid #333; width: 100%; }
+        .machine-container { background: var(--bg-machine); border-radius: 10px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-color); border-top: 6px solid var(--text-dark); width: 100%; transition: background-color 0.3s, border-color 0.3s; }
         .machine-container.m1 { border-top-color: #d32f2f; }
         .machine-container.m2 { border-top-color: #1976d2; }
         .machine-container.m3 { border-top-color: #7b1fa2; }
         .machine-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         
-        .station-card { background: var(--bg-card); border-radius: 8px; padding: 12px; border-left: 6px solid var(--color-ok); box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.2s ease, box-shadow 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
-        .station-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); cursor: default; }
-        .station-card.status-parada { border-left-color: var(--color-parada); background-color: #ffebee; }
-        .station-card.status-quebrada { border-left-color: var(--color-quebrada); background-color: #fffde7; }
+        .station-card { background: var(--bg-card); border-radius: 8px; padding: 12px; border-left: 6px solid var(--color-ok); box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+        .station-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); cursor: default; }
+        .station-card.status-parada { border-left-color: var(--color-parada); background-color: var(--bg-parada-card); }
+        .station-card.status-quebrada { border-left-color: var(--color-quebrada); background-color: var(--bg-quebrada-card); }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 5px; flex-wrap: wrap; }
-        .card-header h2 { margin: 0; font-size: 1rem; color: #333; display: flex; align-items: center; white-space: nowrap; }
+        .card-header h2 { margin: 0; font-size: 1rem; color: var(--text-dark); display: flex; align-items: center; white-space: nowrap; transition: color 0.3s; }
         
-        .badge-repetido { background: #333; color: #fff; padding: 1px 4px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); vertical-align: middle; }
-        .info-row { display: flex; flex-direction: column; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
-        .info-label { font-size: 9px; font-weight: bold; color: #888; text-transform: uppercase; }
-        .info-value { font-size: 12px; font-weight: 600; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%; }
+        .badge-repetido { background: var(--text-dark); color: var(--bg-card); padding: 1px 4px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); vertical-align: middle; }
+        .info-row { display: flex; flex-direction: column; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-info); transition: border-color 0.3s; }
+        .info-label { font-size: 9px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; transition: color 0.3s; }
+        .info-value { font-size: 12px; font-weight: 600; color: var(--text-value); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%; transition: color 0.3s; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: auto; }
-        .stat-box { text-align: center; padding: 6px; background: #f8f9fa; border-radius: 4px; min-width: 0; }
-        .stat-num { display: block; font-size: 16px; font-weight: 900; color: #333; }
-        .stat-label { font-size: 8px; font-weight: bold; color: #666; text-transform: uppercase; }
+        .stat-box { text-align: center; padding: 6px; background: var(--bg-stat); border-radius: 4px; min-width: 0; transition: background-color 0.3s; }
+        .stat-num { display: block; font-size: 16px; font-weight: 900; color: var(--text-value); transition: color 0.3s; }
+        .stat-label { font-size: 8px; font-weight: bold; color: var(--text-stat-label); text-transform: uppercase; transition: color 0.3s; }
         
-        select { padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 10px; font-weight: bold; width: auto; max-width: 100%; }
+        select { background-color: var(--bg-input); color: var(--text-dark); padding: 4px; border-radius: 4px; border: 1px solid var(--border-input); font-size: 10px; font-weight: bold; width: auto; max-width: 100%; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
         #loading-msg { text-align: center; font-weight: bold; color: #d32f2f; padding: 20px; display: none; }
         
         .actions-container { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .filter-box { display: flex; flex-direction: column; }
-        .filter-box label { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; text-align: center; }
+        .filter-box label { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: var(--text-muted); text-align: center; transition: color 0.3s; }
         
         /* Regra de centralização aplicada aqui e fortalecida nas options via JavaScript */
-        .filter-box select { padding: 8px; font-weight: bold; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; cursor: pointer; text-align: center; text-align-last: center; }
-        .filter-box select option { text-align: center; }
+        .filter-box select { padding: 8px; font-weight: bold; border-radius: 5px; border: 1px solid var(--border-input); font-size: 14px; cursor: pointer; text-align: center; text-align-last: center; }
+        .filter-box select option { text-align: center; background-color: var(--bg-input); color: var(--text-dark); }
 
         .btn-sync { background-color: #333; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; transition: 0.2s; }
         .btn-sync:hover { background-color: #444; }
@@ -62,16 +94,42 @@
         .btn-global:hover { background-color: #b71c1c; }
         .btn-print { background-color: #2c3e50; }
         .btn-print:hover { background-color: #1a252f; }
+        
+        /* BOTÃO FLUTUANTE DE TEMA */
+        .btn-theme-floating {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background-color: var(--bg-card);
+            color: var(--text-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1001;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+        }
+        .btn-theme-floating:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            border-color: var(--text-dark);
+        }
 
         /* ESTILOS DO MODAL CUSTOMIZADO */
-        .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-        .custom-modal-box { background: #fff; padding: 25px 20px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 320px; max-width: 90%; text-align: center; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .custom-modal-box h3 { margin-top: 0; font-size: 15px; color: #333; margin-bottom: 20px; font-weight: 600; line-height: 1.4; white-space: pre-line; }
-        .custom-modal-input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; text-align: center; box-sizing: border-box; outline: none; font-weight: bold; letter-spacing: 2px;}
-        .custom-modal-input:focus { border-color: #333; }
+        .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .custom-modal-box { background: var(--bg-card); padding: 25px 20px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 320px; max-width: 90%; text-align: center; font-family: 'Segoe UI', Tahoma, sans-serif; transition: background-color 0.3s; }
+        .custom-modal-box h3 { margin-top: 0; font-size: 15px; color: var(--text-dark); margin-bottom: 20px; font-weight: 600; line-height: 1.4; white-space: pre-line; transition: color 0.3s; }
+        .custom-modal-input { background-color: var(--bg-input); color: var(--text-dark); width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 16px; text-align: center; box-sizing: border-box; outline: none; font-weight: bold; letter-spacing: 2px; transition: background-color 0.3s, color 0.3s; }
+        .custom-modal-input:focus { border-color: var(--color-parada); }
         .custom-modal-actions { display: flex; gap: 10px; justify-content: center; }
         .custom-modal-actions button { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; flex: 1; text-transform: uppercase; font-size: 12px; }
-        .btn-cancelar { background: #e0e0e0; color: #444; }
+        .btn-cancelar { background: #e0e0e0; color: #111; }
         .btn-cancelar:hover { background: #d0d0d0; }
         .btn-confirmar { background: #d32f2f; color: #fff; }
         .btn-confirmar:hover { background: #b71c1c; }
@@ -98,6 +156,9 @@
             .stat-num { font-size: 13px; }
             .stat-label { font-size: 7px; letter-spacing: -0.3px; }
             #status-update { text-align: center; margin-top: 5px; } 
+            
+            /* Ajuste do botão flutuante para mobile (um pouco menor) */
+            .btn-theme-floating { width: 45px; height: 45px; font-size: 20px; bottom: 15px; right: 15px; }
         }
     </style>
 </head>
@@ -138,15 +199,18 @@
                     <option value="quebrada" style="text-align: center;">QUEBRADA</option>
                 </select>
             </div>
+            
             <button class="btn-sync btn-global" onclick="alterarStatusGlobal()">⚡ Aplicar Global</button>
             <button class="btn-sync btn-print" onclick="gerarImpressao()">🖨️ Imprimir</button>
             <button class="btn-sync" id="btnSyncRef" onclick="sincronizarProducao()">🔄 Atualizar Referência</button>
-            <div id="status-update" style="font-size: 11px; color: #888; line-height: 1.4; text-align: center;">Atualizando...</div>
+            <div id="status-update" style="font-size: 11px; color: var(--text-muted); line-height: 1.4; text-align: center; transition: color 0.3s;">Atualizando...</div>
         </div>
     </div>
 
     <div id="loading-msg">⚠️ Erro ao carregar dados!</div>
     <div class="main-container" id="stationGrid"></div>
+
+    <button id="btnTema" class="btn-theme-floating" onclick="alternarTema()" title="Alternar Tema Escuro/Claro">🌙</button>
 
     <div id="customModalOverlay" class="custom-modal-overlay">
         <div class="custom-modal-box">
@@ -161,6 +225,15 @@
 
     <script>
         const URL_API = "https://script.google.com/macros/s/AKfycbw3CQXra_RWyZ_oaut_NP8AEhgz7ul5EKRXVLBHdOfbRoUIbc1toOHMOK5oF_Kdk8Wh/exec";
+
+        // FUNÇÃO DE TEMA
+        function alternarTema() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            localStorage.setItem('temaEscuroMonitor', isDark);
+            document.getElementById('btnTema').innerText = isDark ? '☀️' : '🌙';
+        }
 
         function customAlert(msg) {
             return new Promise(resolve => {
@@ -466,6 +539,14 @@
         }
 
         window.onload = () => {
+            // Carrega tema salvo
+            const temaSalvo = localStorage.getItem('temaEscuroMonitor');
+            if (temaSalvo === 'true') {
+                document.body.classList.add('dark-mode');
+                const btnTema = document.getElementById('btnTema');
+                if (btnTema) btnTema.innerText = '☀️';
+            }
+
             const g = localStorage.getItem('ultimoGrupoSelecionado');
             if (g) document.getElementById('filtroGrupo').value = g;
             carregarPainel();
