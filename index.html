@@ -219,7 +219,7 @@
         // ==== DICIONÁRIO DE CRACHÁS E NOMES ====
         // Replique aqui a mesma lista que você colocar no CAD.HTML
         const usuariosAutorizados = {
-            "48192292175030": "Francisco Eduardo"
+            "48192292175030": "Administrador"
         };
         // =======================================
 
@@ -241,7 +241,7 @@
             }
 
             // Exibe a notificação com a palavra "Usuário" no lugar de "Crachá"
-            toast.innerHTML = `<strong>🚕 Alocação Atualizada!</strong><br>${grupoAlterado}<br>Abastecedor: ${nomeExibicao}<br>Horário: ${dataHora}`;
+            toast.innerHTML = `<strong>🚕 Nova Alocação Salva!</strong><br>${grupoAlterado}<br>Usuário: ${nomeExibicao}<br>Horário: ${dataHora}`;
             toast.style.display = 'block';
             
             setTimeout(() => toast.style.opacity = '1', 10);
