@@ -136,7 +136,6 @@
             .btn-theme-floating { width: 45px; height: 45px; font-size: 20px; bottom: 15px; right: 15px; }
         }
 
-        /* ==== ESTILO DA NOTIFICACAO FLUTUANTE ==== */
         .toast-alerta {
             position: fixed; 
             bottom: 25px; 
@@ -214,13 +213,12 @@
     </div>
 
     <script>
-        const URL_API = "https://script.google.com/macros/s/AKfycbw_C0966ct0MblBDK0lmPKZThLWqFagPMkroKregG2r3L9MyukP077DTgiITkfAHsF6/exec";
+        // URL UNIFICADA PARA OS DOIS SISTEMAS
+        const URL_API = "https://script.google.com/macros/s/AKfycbw3CQXra_RWyZ_oaut_NP8AEhgz7ul5EKRXVLBHdOfbRoUIbc1toOHMOK5oF_Kdk8Wh/exec";
         
-        // ==== DICIONÁRIO DE CRACHÁS E NOMES ====
         const usuariosAutorizados = {
             "48192292175030": "Administrador"
         };
-        // =======================================
 
         let historicoGrupos = {}; 
         let bgGroupIndex = 1;     
@@ -233,7 +231,7 @@
 
             if (som) {
                 som.currentTime = 0; 
-                som.play().catch(e => console.log("Áudio bloqueado pelo navegador até o primeiro clique do usuário."));
+                som.play().catch(e => console.warn("Clique na tela uma vez para o navegador permitir tocar o som."));
             }
 
             toast.innerHTML = `<strong>🚕 Nova Alocação Salva!</strong><br>${grupoAlterado}<br>Usuário: ${nomeExibicao}<br>Horário: ${dataHora}`;
@@ -247,7 +245,6 @@
             }, 10000); 
         }
 
-        // DETECÇÃO INSTANTÂNEA
         window.addEventListener('storage', function(e) {
             if(e.key === 'alocacaoGlobalSalva' && e.newValue) {
                 const dados = JSON.parse(e.newValue);
@@ -259,7 +256,6 @@
             }
         });
 
-        // DETECÇÃO BACKGROUND (Com Cache-Buster)
         async function checarProximoGrupoBackground() {
             const grupoAtualVisor = document.getElementById('filtroGrupo').value;
             let grupoChecar = "Grupo " + bgGroupIndex;
@@ -270,7 +266,7 @@
             if(grupoChecar === grupoAtualVisor) return;
 
             try {
-                // ADDED CACHE-BUSTER HERE
+                // ADICIONADO CACHE-BUSTER AQUI PARA GITHUB PAGES (_t=...)
                 const response = await fetch(`${URL_API}?grupo=${grupoChecar}&_t=${new Date().getTime()}`);
                 const dados = await response.json();
                 const infoData = dados.find(d => d.dataHora);
@@ -284,7 +280,7 @@
                         exibirNotificacao(infoData.cracha, infoData.dataHora, grupoChecar);
                     }
                 }
-            } catch(e) { console.error("Erro no background fetch:", e); }
+            } catch(e) {}
         }
         
         setInterval(checarProximoGrupoBackground, 3500);
@@ -360,7 +356,7 @@
             const grupoAtual = document.getElementById('filtroGrupo').value;
             const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
             try {
-                // ADDED CACHE-BUSTER HERE
+                // ADICIONADO CACHE-BUSTER AQUI PARA GITHUB PAGES (_t=...)
                 const response = await fetch(`${URL_API}?grupo=${grupoAtual}&_t=${new Date().getTime()}`);
                 const dados = await response.json();
 
@@ -477,7 +473,7 @@
                     
                 aplicarFiltroModelo(); 
 
-            } catch (e) { document.getElementById('loading-msg').style.display = 'block'; console.error(e); }
+            } catch (e) { document.getElementById('loading-msg').style.display = 'block'; }
         }
 
         async function sincronizarProducao() {
