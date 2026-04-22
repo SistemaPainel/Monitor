@@ -213,8 +213,8 @@
     </div>
 
     <script>
-        // URL UNIFICADA PARA OS DOIS SISTEMAS
-        const URL_API = "https://script.google.com/macros/s/AKfycbw3CQXra_RWyZ_oaut_NP8AEhgz7ul5EKRXVLBHdOfbRoUIbc1toOHMOK5oF_Kdk8Wh/exec";
+        // API ORIGINAL DO MONITOR (Devolvida e mantida)
+        const URL_API = "https://script.google.com/macros/s/AKfycbw_C0966ct0MblBDK0lmPKZThLWqFagPMkroKregG2r3L9MyukP077DTgiITkfAHsF6/exec";
         
         const usuariosAutorizados = {
             "48192292175030": "Administrador"
@@ -231,7 +231,8 @@
 
             if (som) {
                 som.currentTime = 0; 
-                som.play().catch(e => console.warn("Clique na tela uma vez para o navegador permitir tocar o som."));
+                // Alguns navegadores bloqueiam som automático se você não clicar na tela antes.
+                som.play().catch(e => console.warn("Interaja com a página uma vez para o som ser permitido."));
             }
 
             toast.innerHTML = `<strong>🚕 Nova Alocação Salva!</strong><br>${grupoAlterado}<br>Usuário: ${nomeExibicao}<br>Horário: ${dataHora}`;
@@ -245,6 +246,7 @@
             }, 10000); 
         }
 
+        // Detecta atualização em tempo real caso CAD e MONITOR estejam abertos no mesmo PC
         window.addEventListener('storage', function(e) {
             if(e.key === 'alocacaoGlobalSalva' && e.newValue) {
                 const dados = JSON.parse(e.newValue);
@@ -256,6 +258,7 @@
             }
         });
 
+        // Verificação passiva em Background com bloqueio estrito de CACHE
         async function checarProximoGrupoBackground() {
             const grupoAtualVisor = document.getElementById('filtroGrupo').value;
             let grupoChecar = "Grupo " + bgGroupIndex;
@@ -266,8 +269,8 @@
             if(grupoChecar === grupoAtualVisor) return;
 
             try {
-                // ADICIONADO CACHE-BUSTER AQUI PARA GITHUB PAGES (_t=...)
-                const response = await fetch(`${URL_API}?grupo=${grupoChecar}&_t=${new Date().getTime()}`);
+                // Requisição com timestamp para evitar chache do GitHub Pages
+                const response = await fetch(`${URL_API}?grupo=${grupoChecar}&_t=${new Date().getTime()}`, { cache: "no-store" });
                 const dados = await response.json();
                 const infoData = dados.find(d => d.dataHora);
                 
@@ -356,8 +359,8 @@
             const grupoAtual = document.getElementById('filtroGrupo').value;
             const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
             try {
-                // ADICIONADO CACHE-BUSTER AQUI PARA GITHUB PAGES (_t=...)
-                const response = await fetch(`${URL_API}?grupo=${grupoAtual}&_t=${new Date().getTime()}`);
+                // Requisição principal com bypass de Cache para funcionamento correto em nuvem
+                const response = await fetch(`${URL_API}?grupo=${grupoAtual}&_t=${new Date().getTime()}`, { cache: "no-store" });
                 const dados = await response.json();
 
                 const modelosUnicos = new Set();
@@ -447,6 +450,7 @@
                     gridDestino.appendChild(criarCardElemento(i + metade));
                 }
 
+                // Verifica notificação do próprio grupo ativo no monitor
                 const infoData = dados.find(d => d.dataHora);
                 
                 if (infoData && infoData.dataHora) {
