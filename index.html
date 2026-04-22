@@ -6,7 +6,7 @@
     <title>Painel de Monitoramento - Produção</title>
     <style>
         :root { 
-            --bg-body: #f4f4f9; a
+            --bg-body: #f4f4f9; 
             --bg-card: #ffffff; 
             --text-dark: #1a1a1a; 
             --color-parada: #d32f2f; 
@@ -254,7 +254,7 @@
         let usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
 
         let historicoGrupos = {}; 
-        let estadoAlocacao = {}; // NOVA TRAVA: Guarda o "raio-x" dos modelos/tamanhos
+        let estadoAlocacao = {}; 
         let bgGroupIndex = 1;     
         
         async function verificarSenhaConfig() {
@@ -275,7 +275,7 @@
             const el = document.getElementById('configMsg');
             el.style.color = cor;
             el.innerText = msg;
-            setTimeout(() => el.innerText = '', 5500);
+            setTimeout(() => el.innerText = '', 3500);
         }
 
         function adicionarCracha() {
@@ -312,10 +312,11 @@
             
             setTimeout(() => toast.style.opacity = '1', 10);
             
+            // Alterado para 30 segundos conforme solicitado
             setTimeout(() => {
                 toast.style.opacity = '0';
                 setTimeout(() => toast.style.display = 'none', 500); 
-            }, 15000); 
+            }, 30000); 
         }
 
         window.addEventListener('storage', function(e) {
@@ -344,18 +345,26 @@
             try {
                 const response = await fetch(`${URL_API}?grupo=${grupoChecar}&_t=${new Date().getTime()}`, { cache: "no-store" });
                 const dados = await response.json();
-                const infoData = dados.find(d => d.dataHora);
+                
+                const estacoesReais = {};
+                dados.forEach(d => {
+                    if (!d.grupo || d.grupo === grupoChecar) {
+                        estacoesReais[d.estacao] = d;
+                    }
+                });
+
+                const listaExibida = Object.values(estacoesReais);
+                const infoData = listaExibida.find(d => d.dataHora);
                 
                 if (infoData && infoData.dataHora) {
                     const chave = infoData.dataHora + (infoData.cracha || "");
-                    const strEstado = dados.map(d => `${d.estacao}-${d.modelo || ''}-${d.tamanho || ''}`).join('|');
+                    const strEstado = listaExibida.map(d => `${d.estacao}-${d.modelo || ''}-${d.tamanho || ''}`).join('|');
 
                     if (!historicoGrupos[grupoChecar]) {
                         historicoGrupos[grupoChecar] = chave; 
                         estadoAlocacao[grupoChecar] = strEstado;
                     } else if (historicoGrupos[grupoChecar] !== chave) {
                         historicoGrupos[grupoChecar] = chave; 
-                        // SÓ NOTIFICA SE O MODELO OU O TAMANHO MUDOU
                         if (estadoAlocacao[grupoChecar] !== strEstado) {
                             estadoAlocacao[grupoChecar] = strEstado;
                             exibirNotificacao(infoData.cracha, infoData.dataHora, grupoChecar);
@@ -441,8 +450,17 @@
                 const response = await fetch(`${URL_API}?grupo=${grupoAtual}&_t=${new Date().getTime()}`, { cache: "no-store" });
                 const dados = await response.json();
 
-                const modelosUnicos = new Set();
+                const estacoesReais = {};
                 dados.forEach(d => {
+                    if (!d.grupo || d.grupo === grupoAtual) {
+                        estacoesReais[d.estacao] = d; 
+                    }
+                });
+                
+                const listaExibida = Object.values(estacoesReais);
+
+                const modelosUnicos = new Set();
+                listaExibida.forEach(d => {
                     if (d.modelo && d.modelo !== "Não Alocado" && d.modelo !== "VAZIO") {
                         modelosUnicos.add(d.modelo.trim());
                     }
@@ -463,7 +481,7 @@
                 });
 
                 const contagem = {};
-                dados.forEach(d => {
+                listaExibida.forEach(d => {
                     if (d.modelo && d.tamanho && d.modelo !== "Não Alocado" && d.modelo !== "VAZIO") {
                         const tamanhoNorm = String(d.tamanho).replace('.', ',').trim();
                         const chave = `${d.modelo.trim()}-${tamanhoNorm}`;
@@ -486,7 +504,7 @@
                 }
 
                 const criarCardElemento = (i) => {
-                    let item = dados.find(d => String(d.estacao) === String(i));
+                    let item = estacoesReais[i]; 
                     const statusBanco = (item && item.status) ? item.status : 'parada';
                     const modeloBanco = (item && item.modelo) ? item.modelo : 'Não Alocado';
                     const tamanhoBanco = (item && item.tamanho) ? String(item.tamanho).replace('.', ',').trim() : '--';
@@ -528,18 +546,17 @@
                     gridDestino.appendChild(criarCardElemento(i + metade));
                 }
 
-                const infoData = dados.find(d => d.dataHora);
+                const infoData = listaExibida.find(d => d.dataHora);
                 
                 if (infoData && infoData.dataHora) {
                     const chave = infoData.dataHora + (infoData.cracha || "");
-                    const strEstado = dados.map(d => `${d.estacao}-${d.modelo || ''}-${d.tamanho || ''}`).join('|');
+                    const strEstado = listaExibida.map(d => `${d.estacao}-${d.modelo || ''}-${d.tamanho || ''}`).join('|');
                     
                     if (!historicoGrupos[grupoAtual]) {
                         historicoGrupos[grupoAtual] = chave; 
                         estadoAlocacao[grupoAtual] = strEstado;
                     } else if (historicoGrupos[grupoAtual] !== chave) {
                         historicoGrupos[grupoAtual] = chave; 
-                        // SÓ NOTIFICA SE O MODELO OU O TAMANHO MUDOU
                         if (estadoAlocacao[grupoAtual] !== strEstado) {
                             estadoAlocacao[grupoAtual] = strEstado;
                             exibirNotificacao(infoData.cracha, infoData.dataHora, grupoAtual);
