@@ -13,7 +13,6 @@
             --color-quebrada: #fbc02d; 
             --color-ok: #2e7d32;
             
-            /* Novas variáveis para transição de tema */
             --bg-machine: #fdfdfd;
             --border-color: #e0e0e0;
             --border-info: #eee;
@@ -27,7 +26,6 @@
             --border-input: #cccccc;
         }
 
-        /* Variaveis do Tema Escuro */
         body.dark-mode {
             --bg-body: #121212;
             --bg-card: #1e1e1e;
@@ -83,8 +81,6 @@
         .actions-container { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .filter-box { display: flex; flex-direction: column; }
         .filter-box label { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: var(--text-muted); text-align: center; transition: color 0.3s; }
-        
-        /* Regra de centralização aplicada aqui e fortalecida nas options via JavaScript */
         .filter-box select { padding: 8px; font-weight: bold; border-radius: 5px; border: 1px solid var(--border-input); font-size: 14px; cursor: pointer; text-align: center; text-align-last: center; }
         .filter-box select option { text-align: center; background-color: var(--bg-input); color: var(--text-dark); }
 
@@ -95,33 +91,14 @@
         .btn-print { background-color: #2c3e50; }
         .btn-print:hover { background-color: #1a252f; }
         
-        /* BOTÃO FLUTUANTE DE TEMA */
         .btn-theme-floating {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            background-color: var(--bg-card);
-            color: var(--text-dark);
-            border: 2px solid var(--border-color);
-            border-radius: 50%;
-            width: 55px;
-            height: 55px;
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 1001;
-            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+            position: fixed; bottom: 25px; right: 25px; background-color: var(--bg-card); color: var(--text-dark);
+            border: 2px solid var(--border-color); border-radius: 50%; width: 55px; height: 55px; font-size: 24px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1001; transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s, border-color 0.3s;
         }
-        .btn-theme-floating:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-            border-color: var(--text-dark);
-        }
+        .btn-theme-floating:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.4); border-color: var(--text-dark); }
 
-        /* ESTILOS DO MODAL CUSTOMIZADO */
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .custom-modal-box { background: var(--bg-card); padding: 25px 20px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 320px; max-width: 90%; text-align: center; font-family: 'Segoe UI', Tahoma, sans-serif; transition: background-color 0.3s; }
         .custom-modal-box h3 { margin-top: 0; font-size: 15px; color: var(--text-dark); margin-bottom: 20px; font-weight: 600; line-height: 1.4; white-space: pre-line; transition: color 0.3s; }
@@ -156,13 +133,26 @@
             .stat-num { font-size: 13px; }
             .stat-label { font-size: 7px; letter-spacing: -0.3px; }
             #status-update { text-align: center; margin-top: 5px; } 
-            
-            /* Ajuste do botão flutuante para mobile (um pouco menor) */
             .btn-theme-floating { width: 45px; height: 45px; font-size: 20px; bottom: 15px; right: 15px; }
+        }
+
+        /* ==== ESTILO DA NOTIFICACAO FLUTUANTE ==== */
+        .toast-alerta {
+            position: fixed; 
+            bottom: 25px; 
+            left: 25px;   
+            background: #2e7d32; color: #fff;
+            padding: 15px 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            z-index: 99999; display: none; font-size: 14px; border-left: 6px solid #1b5e20;
+            transition: opacity 0.5s; opacity: 0; font-family: 'Segoe UI', Tahoma, sans-serif;
         }
     </style>
 </head>
 <body>
+    <audio id="somNotificacao" src="https://www.myinstants.com/media/sounds/uber-request.mp3" preload="auto"></audio>
+
+    <div id="toastAlocacao" class="toast-alerta"></div>
+
     <div class="header">
         <div>
             <h1>📊 Painel de Abastecimento</h1>
@@ -224,7 +214,86 @@
     </div>
 
     <script>
-        const URL_API = "https://script.google.com/macros/s/AKfycbw3CQXra_RWyZ_oaut_NP8AEhgz7ul5EKRXVLBHdOfbRoUIbc1toOHMOK5oF_Kdk8Wh/exec";
+        const URL_API = "https://script.google.com/macros/s/AKfycbw_C0966ct0MblBDK0lmPKZThLWqFagPMkroKregG2r3L9MyukP077DTgiITkfAHsF6/exec";
+        
+        // ==== DICIONÁRIO DE CRACHÁS E NOMES ====
+        // Replique aqui a mesma lista que você colocar no CAD.HTML
+        const usuariosAutorizados = {
+            "48192292175030": "Francisco Eduardo"
+        };
+        // =======================================
+
+        // ==== VARIÁVEIS E LÓGICA DE NOTIFICAÇÃO GLOBAL ====
+        let historicoGrupos = {}; 
+        let bgGroupIndex = 1;     
+        
+        function exibirNotificacao(cracha, dataHora, grupoAlterado) {
+            const toast = document.getElementById('toastAlocacao');
+            const som = document.getElementById('somNotificacao');
+
+            // Traduz o crachá para o nome (se não achar na lista, mostra o crachá ou "Usuário")
+            const nomeExibicao = usuariosAutorizados[cracha] || cracha || "Usuário";
+
+            // Dispara o som
+            if (som) {
+                som.currentTime = 0; 
+                som.play().catch(e => console.warn("Clique na tela uma vez para o navegador permitir tocar o som."));
+            }
+
+            // Exibe a notificação com a palavra "Usuário" no lugar de "Crachá"
+            toast.innerHTML = `<strong>🚕 Alocação Atualizada!</strong><br>${grupoAlterado}<br>Abastecedor: ${nomeExibicao}<br>Horário: ${dataHora}`;
+            toast.style.display = 'block';
+            
+            setTimeout(() => toast.style.opacity = '1', 10);
+            
+            // Alterado para 10 SEGUNDOS de exibição cravados (10000ms)
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.style.display = 'none', 500); 
+            }, 10000); 
+        }
+
+        // DETECÇÃO INSTANTÂNEA
+        window.addEventListener('storage', function(e) {
+            if(e.key === 'alocacaoGlobalSalva' && e.newValue) {
+                const dados = JSON.parse(e.newValue);
+                const chave = dados.dataHora + dados.cracha;
+                if(historicoGrupos[dados.grupo] !== chave) {
+                    historicoGrupos[dados.grupo] = chave;
+                    // Usa a função normal, ela vai traduzir o cracha internamente
+                    exibirNotificacao(dados.cracha, dados.dataHora, dados.grupo);
+                }
+            }
+        });
+
+        // DETECÇÃO BACKGROUND
+        async function checarProximoGrupoBackground() {
+            const grupoAtualVisor = document.getElementById('filtroGrupo').value;
+            let grupoChecar = "Grupo " + bgGroupIndex;
+            
+            bgGroupIndex++;
+            if(bgGroupIndex > 8) bgGroupIndex = 1;
+
+            if(grupoChecar === grupoAtualVisor) return;
+
+            try {
+                const response = await fetch(`${URL_API}?grupo=${grupoChecar}`);
+                const dados = await response.json();
+                const infoData = dados.find(d => d.dataHora);
+                
+                if (infoData && infoData.dataHora) {
+                    const chave = infoData.dataHora + (infoData.cracha || "");
+                    if (!historicoGrupos[grupoChecar]) {
+                        historicoGrupos[grupoChecar] = chave; 
+                    } else if (historicoGrupos[grupoChecar] !== chave) {
+                        historicoGrupos[grupoChecar] = chave; 
+                        exibirNotificacao(infoData.cracha, infoData.dataHora, grupoChecar);
+                    }
+                }
+            } catch(e) {}
+        }
+        
+        setInterval(checarProximoGrupoBackground, 3500);
 
         // FUNÇÃO DE TEMA
         function alternarTema() {
@@ -311,14 +380,13 @@
                 const selectModelo = document.getElementById('filtroModelo');
                 const valorSelecionadoAtual = selectModelo.value; 
                 
-                // Forçando o alinhamento central da opção padrão direto no JS
                 selectModelo.innerHTML = '<option value="TODOS" style="text-align: center;">Todos</option>';
                 
                 [...modelosUnicos].sort().forEach(m => {
                     const opt = document.createElement('option');
                     opt.value = m;
                     opt.textContent = m;
-                    opt.style.textAlign = 'center'; // Forçando o alinhamento central nas opções dinâmicas
+                    opt.style.textAlign = 'center'; 
                     if (m === valorSelecionadoAtual) opt.selected = true;
                     selectModelo.appendChild(opt);
                 });
@@ -390,6 +458,17 @@
                 }
 
                 const infoData = dados.find(d => d.dataHora);
+                
+                if (infoData && infoData.dataHora) {
+                    const chave = infoData.dataHora + (infoData.cracha || "");
+                    if (!historicoGrupos[grupoAtual]) {
+                        historicoGrupos[grupoAtual] = chave; 
+                    } else if (historicoGrupos[grupoAtual] !== chave) {
+                        historicoGrupos[grupoAtual] = chave; 
+                        exibirNotificacao(infoData.cracha, infoData.dataHora, grupoAtual);
+                    }
+                }
+
                 let dataAlocacaoFormatada = '--';
                 if (infoData && infoData.dataHora && infoData.dataHora.includes('/')) {
                     const partes = infoData.dataHora.split(' ');
@@ -429,7 +508,6 @@
             const dataAtual = new Date().toLocaleString('pt-BR');
             const stations = document.querySelectorAll('.station-card');
             
-            // Coletar todos os dados das estações
             let dadosCard = {};
             stations.forEach(card => {
                 const h2Text = card.querySelector('h2').innerText;
@@ -451,7 +529,6 @@
                 }
             });
 
-            // Estilos ajustados para caber em uma única folha A4 (margens menores, fonte menor, padding apertado)
             let printContent = `<html><head><title>Relatório - ${grupo}</title><style>
                 @page { size: A4 landscape; margin: 6mm; } 
                 body { font-family: 'Segoe UI', sans-serif; color: #222; margin: 0; padding: 0; line-height: 1.2;} 
@@ -471,10 +548,8 @@
                 <th class="divisor" style="width:30px;">EST</th><th>MODELO</th><th style="width:50px;">TAM</th><th style="width:35px;">GIRO</th><th style="width:35px;">REF</th><th style="width:35px;">REP</th><th style="width:65px;">STATUS</th>
             </tr></thead><tbody>`;
             
-            // Montar as linhas agrupando a estação esquerda e a estação da direita (frente) na mesma linha da tabela
             for (let i = 1; i <= metade; i++) {
                 let par = i + metade;
-                
                 let d1 = dadosCard[i] || { mod: '', tam: '', giro: '', refil: '', repr: '', statusTxt: '', statusCls: '' };
                 let d2 = dadosCard[par] || { mod: '', tam: '', giro: '', refil: '', repr: '', statusTxt: '', statusCls: '' };
 
@@ -503,10 +578,11 @@
             const novoStatus = document.getElementById('statusGlobal').value;
             if (!novoStatus) { await customAlert("Selecione um status primeiro."); return; }
             
-            const crachas = ["48192292175030"];
             const info = await customPrompt(`Colocar TODAS as estações como ${novoStatus.toUpperCase()}?\n\nInforme seu crachá para confirmar:`);
+            const crachaDigitado = info ? info.trim() : "";
+            const nomeUsuario = usuariosAutorizados[crachaDigitado];
             
-            if (!info || !crachas.includes(info.trim())) { await customAlert("Acesso negado. Crachá inválido ou não informado."); return; }
+            if (!nomeUsuario) { await customAlert("Acesso negado. Crachá inválido ou não cadastrado."); return; }
             
             const grupoAtual = document.getElementById('filtroGrupo').value;
             const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
@@ -514,7 +590,7 @@
                 document.getElementById('status-update').innerText = "Alterando todas...";
                 const promessas = [];
                 for (let i = 1; i <= numEstacoes; i++) {
-                    promessas.push(fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: "updateStatus", grupo: grupoAtual, estacao: i, status: novoStatus, cracha: info.trim() }) }));
+                    promessas.push(fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: "updateStatus", grupo: grupoAtual, estacao: i, status: novoStatus, cracha: crachaDigitado }) }));
                 }
                 await Promise.all(promessas); 
                 await customAlert(`Sucesso! Status alterado para ${novoStatus.toUpperCase()}.`); 
@@ -523,23 +599,23 @@
         }
 
         async function mudarStatus(grupo, estacao, novoStatus) {
-            const crachas = ["48192292175030"];
             const info = await customPrompt(`Mudar EST ${estacao} para ${novoStatus.toUpperCase()}.\n\nInforme seu crachá:`);
+            const crachaDigitado = info ? info.trim() : "";
+            const nomeUsuario = usuariosAutorizados[crachaDigitado];
             
-            if (!info || !crachas.includes(info.trim())) { 
+            if (!nomeUsuario) { 
                 await customAlert("Acesso negado. Alteração cancelada."); 
                 carregarPainel(); 
                 return; 
             }
             try {
                 document.getElementById('status-update').innerText = "Salvando status...";
-                await fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: "updateStatus", grupo: grupo, estacao: estacao, status: novoStatus, cracha: info.trim() }) });
+                await fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: "updateStatus", grupo: grupo, estacao: estacao, status: novoStatus, cracha: crachaDigitado }) });
                 carregarPainel();
             } catch (err) { carregarPainel(); }
         }
 
         window.onload = () => {
-            // Carrega tema salvo
             const temaSalvo = localStorage.getItem('temaEscuroMonitor');
             if (temaSalvo === 'true') {
                 document.body.classList.add('dark-mode');
@@ -551,7 +627,7 @@
             if (g) document.getElementById('filtroGrupo').value = g;
             carregarPainel();
         };
-        setInterval(carregarPainel, 30000);
+        setInterval(carregarPainel, 10000);
     </script>
 </body>
 </html>
