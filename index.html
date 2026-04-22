@@ -217,13 +217,11 @@
         const URL_API = "https://script.google.com/macros/s/AKfycbw_C0966ct0MblBDK0lmPKZThLWqFagPMkroKregG2r3L9MyukP077DTgiITkfAHsF6/exec";
         
         // ==== DICIONÁRIO DE CRACHÁS E NOMES ====
-        // Replique aqui a mesma lista que você colocar no CAD.HTML
         const usuariosAutorizados = {
             "48192292175030": "Administrador"
         };
         // =======================================
 
-        // ==== VARIÁVEIS E LÓGICA DE NOTIFICAÇÃO GLOBAL ====
         let historicoGrupos = {}; 
         let bgGroupIndex = 1;     
         
@@ -231,22 +229,18 @@
             const toast = document.getElementById('toastAlocacao');
             const som = document.getElementById('somNotificacao');
 
-            // Traduz o crachá para o nome (se não achar na lista, mostra o crachá ou "Usuário")
             const nomeExibicao = usuariosAutorizados[cracha] || cracha || "Usuário";
 
-            // Dispara o som
             if (som) {
                 som.currentTime = 0; 
-                som.play().catch(e => console.warn("Clique na tela uma vez para o navegador permitir tocar o som."));
+                som.play().catch(e => console.log("Áudio bloqueado pelo navegador até o primeiro clique do usuário."));
             }
 
-            // Exibe a notificação com a palavra "Usuário" no lugar de "Crachá"
             toast.innerHTML = `<strong>🚕 Nova Alocação Salva!</strong><br>${grupoAlterado}<br>Usuário: ${nomeExibicao}<br>Horário: ${dataHora}`;
             toast.style.display = 'block';
             
             setTimeout(() => toast.style.opacity = '1', 10);
             
-            // Alterado para 10 SEGUNDOS de exibição cravados (10000ms)
             setTimeout(() => {
                 toast.style.opacity = '0';
                 setTimeout(() => toast.style.display = 'none', 500); 
@@ -260,13 +254,12 @@
                 const chave = dados.dataHora + dados.cracha;
                 if(historicoGrupos[dados.grupo] !== chave) {
                     historicoGrupos[dados.grupo] = chave;
-                    // Usa a função normal, ela vai traduzir o cracha internamente
                     exibirNotificacao(dados.cracha, dados.dataHora, dados.grupo);
                 }
             }
         });
 
-        // DETECÇÃO BACKGROUND
+        // DETECÇÃO BACKGROUND (Com Cache-Buster)
         async function checarProximoGrupoBackground() {
             const grupoAtualVisor = document.getElementById('filtroGrupo').value;
             let grupoChecar = "Grupo " + bgGroupIndex;
@@ -277,7 +270,8 @@
             if(grupoChecar === grupoAtualVisor) return;
 
             try {
-                const response = await fetch(`${URL_API}?grupo=${grupoChecar}`);
+                // ADDED CACHE-BUSTER HERE
+                const response = await fetch(`${URL_API}?grupo=${grupoChecar}&_t=${new Date().getTime()}`);
                 const dados = await response.json();
                 const infoData = dados.find(d => d.dataHora);
                 
@@ -290,12 +284,11 @@
                         exibirNotificacao(infoData.cracha, infoData.dataHora, grupoChecar);
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.error("Erro no background fetch:", e); }
         }
         
         setInterval(checarProximoGrupoBackground, 3500);
 
-        // FUNÇÃO DE TEMA
         function alternarTema() {
             const body = document.body;
             body.classList.toggle('dark-mode');
@@ -367,7 +360,8 @@
             const grupoAtual = document.getElementById('filtroGrupo').value;
             const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
             try {
-                const response = await fetch(`${URL_API}?grupo=${grupoAtual}`);
+                // ADDED CACHE-BUSTER HERE
+                const response = await fetch(`${URL_API}?grupo=${grupoAtual}&_t=${new Date().getTime()}`);
                 const dados = await response.json();
 
                 const modelosUnicos = new Set();
@@ -483,7 +477,7 @@
                     
                 aplicarFiltroModelo(); 
 
-            } catch (e) { document.getElementById('loading-msg').style.display = 'block'; }
+            } catch (e) { document.getElementById('loading-msg').style.display = 'block'; console.error(e); }
         }
 
         async function sincronizarProducao() {
