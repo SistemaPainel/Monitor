@@ -248,16 +248,15 @@
     <script>
         const URL_API = "https://script.google.com/macros/s/AKfycbw_C0966ct0MblBDK0lmPKZThLWqFagPMkroKregG2r3L9MyukP077DTgiITkfAHsF6/exec";
         
-        // Agora o MONITOR também puxa os usuários dinamicamente do localStorage
         const defaultUsuarios = {
             "48192292175030": "Francisco Eduardo"
         };
         let usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
 
         let historicoGrupos = {}; 
+        let estadoAlocacao = {}; // NOVA TRAVA: Guarda o "raio-x" dos modelos/tamanhos
         let bgGroupIndex = 1;     
         
-        // ======= LÓGICA DE CONFIGURAÇÃO (Só de crachá no Monitor) =======
         async function verificarSenhaConfig() {
             const senha = await customPrompt("Acesso Restrito!\nDigite a senha administrativa:");
             if (senha === "14490") {
@@ -269,7 +268,6 @@
 
         function fecharConfig() {
             document.getElementById('configModalOverlay').style.display = 'none';
-            // Recarrega os usuários na memória
             usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
         }
 
@@ -296,13 +294,11 @@
             document.getElementById('configNovoCracha').value = '';
             document.getElementById('configNovoNome').value = '';
         }
-        // ======================================
 
         function exibirNotificacao(cracha, dataHora, grupoAlterado) {
             const toast = document.getElementById('toastAlocacao');
             const som = document.getElementById('somNotificacao');
 
-            // Aqui ele puxa o nome do recém cadastrado na hora da notificação
             usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
             const nomeExibicao = usuariosAutorizados[cracha] || cracha || "Usuário";
 
@@ -352,11 +348,18 @@
                 
                 if (infoData && infoData.dataHora) {
                     const chave = infoData.dataHora + (infoData.cracha || "");
+                    const strEstado = dados.map(d => `${d.estacao}-${d.modelo || ''}-${d.tamanho || ''}`).join('|');
+
                     if (!historicoGrupos[grupoChecar]) {
                         historicoGrupos[grupoChecar] = chave; 
+                        estadoAlocacao[grupoChecar] = strEstado;
                     } else if (historicoGrupos[grupoChecar] !== chave) {
                         historicoGrupos[grupoChecar] = chave; 
-                        exibirNotificacao(infoData.cracha, infoData.dataHora, grupoChecar);
+                        // SÓ NOTIFICA SE O MODELO OU O TAMANHO MUDOU
+                        if (estadoAlocacao[grupoChecar] !== strEstado) {
+                            estadoAlocacao[grupoChecar] = strEstado;
+                            exibirNotificacao(infoData.cracha, infoData.dataHora, grupoChecar);
+                        }
                     }
                 }
             } catch(e) {}
@@ -529,11 +532,18 @@
                 
                 if (infoData && infoData.dataHora) {
                     const chave = infoData.dataHora + (infoData.cracha || "");
+                    const strEstado = dados.map(d => `${d.estacao}-${d.modelo || ''}-${d.tamanho || ''}`).join('|');
+                    
                     if (!historicoGrupos[grupoAtual]) {
                         historicoGrupos[grupoAtual] = chave; 
+                        estadoAlocacao[grupoAtual] = strEstado;
                     } else if (historicoGrupos[grupoAtual] !== chave) {
                         historicoGrupos[grupoAtual] = chave; 
-                        exibirNotificacao(infoData.cracha, infoData.dataHora, grupoAtual);
+                        // SÓ NOTIFICA SE O MODELO OU O TAMANHO MUDOU
+                        if (estadoAlocacao[grupoAtual] !== strEstado) {
+                            estadoAlocacao[grupoAtual] = strEstado;
+                            exibirNotificacao(infoData.cracha, infoData.dataHora, grupoAtual);
+                        }
                     }
                 }
 
@@ -646,7 +656,6 @@
             const novoStatus = document.getElementById('statusGlobal').value;
             if (!novoStatus) { await customAlert("Selecione um status primeiro."); return; }
             
-            // Recarrega usuariosAutorizados da memória sempre que for autenticar
             usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
             
             const info = await customPrompt(`Colocar TODAS as estações como ${novoStatus.toUpperCase()}?\n\nInforme seu crachá para confirmar:`);
@@ -670,7 +679,6 @@
         }
 
         async function mudarStatus(grupo, estacao, novoStatus) {
-            // Recarrega usuariosAutorizados da memória sempre que for autenticar
             usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
             
             const info = await customPrompt(`Mudar EST ${estacao} para ${novoStatus.toUpperCase()}.\n\nInforme seu crachá:`);
