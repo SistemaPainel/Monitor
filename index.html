@@ -12,7 +12,7 @@
             --bg-ambient-2: rgba(0, 122, 255, 0.08);  
             
             --glass-bg: rgba(255, 255, 255, 0.75); 
-            --card-bg: #ffffff; /* Fundo 100% sólido para evitar vazamento 3D */
+            --card-bg: #ffffff; 
             --glass-border: rgba(255, 255, 255, 0.5);
             --glass-blur: blur(20px) saturate(180%);
             
@@ -41,7 +41,7 @@
             --bg-ambient-2: rgba(10, 132, 255, 0.12);
             
             --glass-bg: rgba(28, 28, 32, 0.65);
-            --card-bg: #1c1c1f; /* Fundo 100% sólido para evitar vazamento 3D */
+            --card-bg: #1c1c1f; 
             --glass-border: rgba(255, 255, 255, 0.08);
             
             --text-main: #f5f5f7;
@@ -84,18 +84,22 @@
         .machine-container { background: transparent; width: 100%; }
         .machine-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
         
-        /* === EFEITO FLIP CARD 3D CORRIGIDO === */
+        /* === EFEITO FLIP CARD NITIDEZ MÁXIMA === */
         .flip-card {
-            background-color: transparent; perspective: 1000px; width: 100%; min-height: 170px; cursor: pointer;
+            background-color: transparent; perspective: 1200px; width: 100%; min-height: 170px; cursor: pointer;
         }
         .flip-card-inner {
             position: relative; width: 100%; height: 100%; text-align: left;
-            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
             transform-style: preserve-3d; display: grid; grid-template-columns: 1fr;
-            will-change: transform; 
+            /* Comando will-change removido para não borrar o texto! */
         }
+        
+        /* Levanta a carta levemente ao passar o mouse */
         .flip-card:hover .flip-card-inner { transform: translateY(-4px); }
-        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg) scale(1.02); z-index: 10; }
+        
+        /* Gira sem escalar (sem zoom) para manter a fonte vetorizada e nítida */
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); z-index: 10; }
         
         .flip-card-front, .flip-card-back {
             grid-area: 1 / 1 / 2 / 2; -webkit-backface-visibility: hidden; backface-visibility: hidden;
@@ -105,6 +109,7 @@
             box-shadow: var(--shadow-soft);
             padding: 16px; display: flex; flex-direction: column; justify-content: space-between;
             transition: box-shadow 0.3s ease;
+            transform: translateZ(0); /* Força a renderização nítida via GPU */
         }
         .flip-card:hover .flip-card-front { box-shadow: var(--shadow-hover); }
 
@@ -129,9 +134,8 @@
         .stat-num { display: block; font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
         .stat-label { font-size: 8px; font-weight: 700; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* VERSO DA CARTA COM CORREÇÃO DE NITIDEZ 3D */
         .flip-card-back { 
-            transform: rotateY(180deg) translateZ(1px); /* translateZ(1px) Força o navegador a focar o texto */
+            transform: rotateY(180deg) translateZ(1px); 
             padding: 20px; overflow-y: auto; max-height: 240px; 
         }
         .flip-card-back::-webkit-scrollbar { width: 4px; }
@@ -141,7 +145,6 @@
         .det-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid rgba(120,120,128,0.1); padding-bottom: 4px;}
         .det-empty { text-align: center; font-size: 12px; color: var(--text-sec); margin-top: 30px; font-weight: 600; }
         
-        /* Fontes maiores para melhor leitura */
         .det-item { font-size: 11px; color: var(--text-main); margin-bottom: 10px; font-weight: 700; line-height: 1.5; }
         .det-item span.prs { color: var(--text-main); background: var(--color-numix); color: white; padding: 3px 6px; border-radius: 6px; font-size: 10px; margin-left: 6px; box-shadow: 0 2px 4px rgba(241,84,77,0.3);}
 
@@ -419,7 +422,6 @@
             });
         }
 
-        // Lógica de agrupamento com a nova estilização elegante e fontes maiores
         function gerarListaDetalhes(titulo, lista, corTitulo) {
             if(!lista || lista.length === 0) return '';
             const grupos = {};
