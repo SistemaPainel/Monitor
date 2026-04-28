@@ -49,7 +49,19 @@
             --card-back-bg: rgba(9, 9, 11, 0.98);
         }
 
-        * { box-sizing: border-box; outline: none; }
+        * { 
+            box-sizing: border-box; 
+            outline: none; 
+            -webkit-font-smoothing: antialiased; 
+            -moz-osx-font-smoothing: grayscale; 
+        }
+
+        /* === OTIMIZAÇÃO DE HARDWARE E RENDERIZAÇÃO === */
+        .machine-container, .station-card, .flip-card-inner, .header, .notif-panel {
+            transform: translateZ(0); 
+            backface-visibility: hidden; 
+            will-change: transform, opacity; 
+        }
         
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
@@ -126,7 +138,7 @@
             cursor: pointer; transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1); overflow: hidden; position: relative;
         }
         .station-card::before { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; transition: all 0.4s ease; }
-        .station-card:hover { transform: translateY(-5px) scale(1.01); box-shadow: var(--glass-hover-shadow); }
+        .station-card:hover { transform: translateY(-5px); box-shadow: var(--glass-hover-shadow); } /* scale(1.01) removido para evitar blur */
         .station-card.status-parada::before { background: var(--color-parada); box-shadow: 2px 0 15px var(--color-parada-glow); }
         .station-card.status-quebrada::before { background: var(--color-quebrada); box-shadow: 2px 0 15px var(--color-quebrada-glow); }
         .station-card.status-rodando::before { background: var(--color-ok); box-shadow: 2px 0 15px var(--color-ok-glow); }
@@ -183,11 +195,10 @@
 
         @media (max-width: 600px) {
             body { padding: 12px; }
-            .actions-container { grid-template-columns: 1fr 1fr; } /* 2 colunas para botões/filtros no celular */
-            .btn-wip, .btn-kpi-dashboard { grid-column: 1 / -1; padding: 14px; font-size: 12px; } /* Relatórios ocupam a tela toda */
+            .actions-container { grid-template-columns: 1fr 1fr; } 
+            .btn-wip, .btn-kpi-dashboard { grid-column: 1 / -1; padding: 14px; font-size: 12px; } 
             .main-container { grid-template-columns: 1fr; gap: 20px; }
             .machine-container { padding: 16px; border-radius: 20px; }
-            /* BLINDAGEM DE VAZAMENTO NO CELULAR: 1 CARD POR LINHA */
             .machine-grid { grid-template-columns: 1fr; gap: 16px; } 
             .flip-card-wrapper { height: 240px; } 
             .btn-theme-floating { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 22px; }
@@ -473,9 +484,40 @@
         let wipRawData = []; 
         let collapsedModels = new Set();
 
-        /* === HISTÓRICO DE NOTIFICAÇÕES === */
-        let notifHistory = [];
-        let notifUnread = 0;
+        /* === HISTÓRICO DE NOTIFICAÇÕES (COM PERSISTÊNCIA DE 5 HORAS) === */
+        let notifHistory = JSON.parse(localStorage.getItem('notifHistoryData')) || [];
+        let notifUnread = parseInt(localStorage.getItem('notifUnreadCount')) || 0;
+
+        function limparNotificacoesAntigas() {
+            const cincoHorasEmMs = 5 * 60 * 60 * 1000;
+            const agora = new Date().getTime();
+            const tamanhoOriginal = notifHistory.length;
+            notifHistory = notifHistory.filter(n => (agora - (n.timestamp || agora)) < cincoHorasEmMs);
+            if(notifHistory.length !== tamanhoOriginal) {
+                localStorage.setItem('notifHistoryData', JSON.stringify(notifHistory));
+            }
+        }
+        limparNotificacoesAntigas(); // Roda sempre que a página carrega
+
+        function atualizarDomNotificacoes() {
+            const badge = document.getElementById('notifBadge');
+            const btn = document.getElementById('notifBellBtn');
+            if(notifUnread > 0) {
+                badge.textContent = notifUnread > 99 ? '99+' : notifUnread;
+                badge.style.display = 'flex';
+                btn.classList.add('has-notif');
+            } else {
+                badge.style.display = 'none';
+                btn.classList.remove('has-notif');
+            }
+            
+            const list = document.getElementById('notifList');
+            if(notifHistory.length > 0) {
+                list.innerHTML = notifHistory.map(n => `<div class="notif-item"><div class="notif-item-title">🔄 Sincronização Detectada</div><div class="notif-item-body">${n.grupo}<br>Operador: ${n.operador}</div><div class="notif-item-time">Log: ${n.dataHora} &nbsp;•&nbsp; ${n.hora}</div></div>`).join('');
+            } else {
+                list.innerHTML = '<div class="notif-empty">Nenhuma notificação ainda.</div>';
+            }
+        }
 
         function toggleNotifPanel(e) {
             e.stopPropagation();
@@ -484,8 +526,8 @@
             panel.classList.toggle('open', !isOpen);
             if (!isOpen) {
                 notifUnread = 0;
-                const badge = document.getElementById('notifBadge');
-                badge.style.display = 'none';
+                localStorage.setItem('notifUnreadCount', 0);
+                atualizarDomNotificacoes();
             }
         }
 
@@ -500,23 +542,27 @@
             const nomeExib = (JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios)[cracha] || cracha || "Sistema";
             const agora = new Date();
             const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            notifHistory.unshift({ grupo: grupoAlterado, operador: nomeExib, dataHora: dataHora || '—', hora });
+            
+            // Adiciona timestamp para validação de 5 horas futuramente
+            notifHistory.unshift({ grupo: grupoAlterado, operador: nomeExib, dataHora: dataHora || '—', hora, timestamp: agora.getTime() });
             if (notifHistory.length > 50) notifHistory.pop();
             notifUnread++;
-            const badge = document.getElementById('notifBadge');
-            badge.textContent = notifUnread > 99 ? '99+' : notifUnread;
-            badge.style.display = 'flex';
+            
+            // Salva no navegador permanentemente
+            localStorage.setItem('notifHistoryData', JSON.stringify(notifHistory));
+            localStorage.setItem('notifUnreadCount', notifUnread);
+            
             const btn = document.getElementById('notifBellBtn');
-            btn.classList.remove('has-notif'); void btn.offsetWidth; btn.classList.add('has-notif');
-            const list = document.getElementById('notifList');
-            list.innerHTML = notifHistory.map(n => `<div class="notif-item"><div class="notif-item-title">🔄 Sincronização Detectada</div><div class="notif-item-body">${n.grupo}<br>Operador: ${n.operador}</div><div class="notif-item-time">Log: ${n.dataHora} &nbsp;•&nbsp; ${n.hora}</div></div>`).join('');
+            btn.classList.remove('has-notif'); void btn.offsetWidth; // Gatilho visual imediato
+            atualizarDomNotificacoes();
         }
 
         function limparNotificacoes() {
             notifHistory = [];
             notifUnread = 0;
-            document.getElementById('notifBadge').style.display = 'none';
-            document.getElementById('notifList').innerHTML = '<div class="notif-empty">Nenhuma notificação ainda.</div>';
+            localStorage.removeItem('notifHistoryData');
+            localStorage.removeItem('notifUnreadCount');
+            atualizarDomNotificacoes();
             document.getElementById('notifPanel').classList.remove('open');
         } 
             
@@ -1128,6 +1174,7 @@
             const temaSalvo = localStorage.getItem('temaEscuroMonitor');
             if (temaSalvo === 'true') { document.body.classList.add('dark-mode'); const btnTema = document.getElementById('btnTema'); if (btnTema) btnTema.innerText = '☀️'; }
             const g = localStorage.getItem('ultimoGrupoSelecionado'); if (g) document.getElementById('filtroGrupo').value = g;
+            atualizarDomNotificacoes();
             carregarPainel();
         };
         setInterval(carregarPainel, 10000);
