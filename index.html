@@ -1325,26 +1325,37 @@
         }
         
         /* FUNÇÃO PARA ADICIONAR PRs MANUALMENTE */
-        async function adicionarPrManual(grupo, estacao, event) {
+        async function adicionarPrManual(grupo, estacao, atual, event) {
             event.stopPropagation(); 
-            const chave = `pr_manual_${grupo}_${estacao}`;
-            const chaveTime = `pr_manual_time_${grupo}_${estacao}`;
-            let atual = parseInt(localStorage.getItem(chave)) || 0;
             
             const val = await customPrompt(`Quantos PRs adicionar manualmente na EST ${estacao} do ${grupo}?\n(Digite 0 para resetar/limpar. Atual: +${atual})`, false);
             
             if (val !== null && val.trim() !== '') {
                 const num = parseInt(val);
                 if (!isNaN(num)) {
-                    if (num === 0) {
-                        localStorage.removeItem(chave);
-                        localStorage.removeItem(chaveTime);
-                    } else {
-                        localStorage.setItem(chave, atual + num);
-                        const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                        localStorage.setItem(chaveTime, horaAtual);
+                    let novoPr = 0;
+                    let novoTime = "";
+                    if (num !== 0) {
+                        novoPr = atual + num;
+                        novoTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     }
-                    carregarPainel(); 
+                    
+                    document.getElementById('status-update').innerText = "Atualizando PR Manual...";
+                    try {
+                        await fetch(URL_API, { 
+                            method: 'POST', 
+                            body: JSON.stringify({ 
+                                action: "updatePrManual", 
+                                grupo: grupo, 
+                                estacao: estacao, 
+                                prManual: novoPr,
+                                prTime: novoTime
+                            }) 
+                        });
+                        carregarPainel(); 
+                    } catch (e) {
+                        await customAlert("Falha na comunicação com o banco.");
+                    }
                 } else {
                     await customAlert('Por favor, digite um número válido.');
                 }
@@ -1364,25 +1375,17 @@
                 return; 
             }
 
-            let contadorDeletados = 0;
-            const chavesParaDeletar = [];
-            
-            for (let i = 0; i < localStorage.length; i++) {
-                const chave = localStorage.key(i);
-                if (chave && chave.startsWith('pr_manual_')) {
-                    chavesParaDeletar.push(chave);
-                }
+            document.getElementById('status-update').innerText = "Limpando PRs Manuais Globais...";
+            try {
+                await fetch(URL_API, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: "clearPrManual", cracha: crachaDigitado }) 
+                });
+                await customAlert(`Limpeza concluída por ${nomeUsuario}.\nRegistros manuais foram apagados da base de dados global.`);
+                carregarPainel();
+            } catch (e) {
+                await customAlert("Falha na comunicação com o banco.");
             }
-
-            chavesParaDeletar.forEach(chave => {
-                localStorage.removeItem(chave);
-                // Como as chaves de tempo começam com 'pr_manual_time_', 
-                // elas também serão capturadas e excluídas neste loop.
-                contadorDeletados++;
-            });
-
-            await customAlert(`Limpeza concluída por ${nomeUsuario}.\nRegistros manuais foram apagados da memória.`);
-            carregarPainel();
         }
 
         async function carregarPainel() {
@@ -1433,8 +1436,9 @@
                     const badgeRepetido = totalRepetido > 1 ? `<span class="badge-repetido">${totalRepetido}x</span>` : "";
                     const detalhes = (item && item.detalhes) ? item.detalhes : [];
 
-                    const prManual = parseInt(localStorage.getItem(`pr_manual_${grupoAtual}_${i}`)) || 0;
-                    const prTime = localStorage.getItem(`pr_manual_time_${grupoAtual}_${i}`) || '';
+                    // Resgatando PR manual diretamente do App Script
+                    const prManual = item && item.prManual ? parseInt(item.prManual) : 0;
+                    const prTime = item && item.prTime ? item.prTime : '';
                     
                     const giroNumBase = item && item.giro ? parseInt(item.giro) : 0;
                     const giroNum = giroNumBase + prManual;
@@ -1452,8 +1456,9 @@
                     if(totalPecas === 0 && statusBanco === 'rodando') saudeColor = '#007AFF';
 
                     const disableSelect = userRole === 'viewer' ? 'disabled' : '';
+                    // Passando o valor atual do prManual no botão
                     const buttonHtml = userRole === 'editor' 
-                        ? `<button onclick="adicionarPrManual('${grupoAtual}', ${i}, event)" style="background: var(--text-muted); color: var(--stat-box); border: none; border-radius: 4px; width: 14px; height: 14px; font-size: 11px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: 0.2s;" onmouseover="this.style.background='#007AFF'; this.style.color='#fff'" onmouseout="this.style.background='var(--text-muted)'; this.style.color='var(--stat-box)'" title="Adicionar PR Manual">+</button>`
+                        ? `<button onclick="adicionarPrManual('${grupoAtual}', ${i}, ${prManual}, event)" style="background: var(--text-muted); color: var(--stat-box); border: none; border-radius: 4px; width: 14px; height: 14px; font-size: 11px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: 0.2s;" onmouseover="this.style.background='#007AFF'; this.style.color='#fff'" onmouseout="this.style.background='var(--text-muted)'; this.style.color='var(--stat-box)'" title="Adicionar PR Manual">+</button>`
                         : '';
 
                     const titleTooltip = prTime ? `${prManual} adicionados manualmente (Última att: ${prTime})` : `${prManual} adicionados manualmente`;
@@ -1463,6 +1468,7 @@
                     const front = document.createElement('div');
                     front.className = `flip-card-front station-card status-${statusBanco}${(giroNum < 60 && giroNum > 0 && statusBanco === 'rodando') ? ' giro-baixo' : ''}`;
                     front.setAttribute('data-modelo', modeloBanco.trim()); front.setAttribute('data-estacao', i);
+                    front.setAttribute('data-pr', prManual); // Guardando na DOM para a impressão ler depois
                     
                     front.innerHTML = `
                         <div class="card-header">
@@ -1514,7 +1520,7 @@
                 
                 // Verificar alertas de giro baixo após renderizar
                 listaExibida.forEach(d => {
-                    const giroB = parseInt(d.giro || 0) + (parseInt(localStorage.getItem(`pr_manual_${grupoAtual}_${d.estacao}`)) || 0);
+                    const giroB = parseInt(d.giro || 0) + (d.prManual ? parseInt(d.prManual) : 0);
                     _dadosGiroParaAlerta.push({ estacao: d.estacao, giro: giroB, status: d.status || 'parada' });
                 });
                 verificarAlertasGiroBaixo(grupoAtual, _dadosGiroParaAlerta);
@@ -1570,7 +1576,8 @@
                     const refil = card.querySelector('.stats-grid .stat-box:nth-child(2) .stat-num').textContent;
                     const repr = card.querySelector('.stats-grid .stat-box:nth-child(3) .stat-num').textContent;
                     
-                    const prManual = parseInt(localStorage.getItem(`pr_manual_${grupo}_${numEstacao}`)) || 0;
+                    // Lê o PR Manual que injetamos como atributo data-pr no DOM
+                    const prManual = parseInt(card.getAttribute('data-pr'), 10) || 0;
 
                     let statusTxt = "", statusCls = "";
                     if(card.classList.contains('status-rodando')) { statusTxt = "RODANDO"; statusCls = "st-rodando"; }
@@ -1901,7 +1908,7 @@
             const gridColor=isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)', lblColor=isDark?'#94a3b8':'#64748b', txtColor=isDark?'#f8fafc':'#0f172a';
             Chart.defaults.font.family="'Inter',sans-serif"; Chart.defaults.color=lblColor;
             const body=document.getElementById('kpiBody');
-            if(_kpiTabAtual==='geral') body.innerHTML=_tplGeral(d); else if(_kpiTabAtual==='modelos') body.innerHTML=_tplModelos(d); else if(_kpiTabAtual==='tamanhos') body.innerHTML=_tplTamanhos(d); else if(_kpiTabAtual==='cors') body.innerHTML=_tplCors(d);
+            if(_kpiTabAtual==='geral') body.innerHTML=_tplGeral(d); else if(_kpiTabAtual==='modelos') body.innerHTML=_tplModelos(d); else if(_kpiTabAtual==='tamanhos') body.innerHTML=_tplCors(d); else if(_kpiTabAtual==='cors') body.innerHTML=_tplCors(d);
             requestAnimationFrame(()=>_buildCharts(d,isDark,gridColor,lblColor,txtColor));
         }
         function _tplGeral(d) {
