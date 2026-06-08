@@ -2565,100 +2565,97 @@ rx="1.5" fill="#f59e0b"/>
                     const resp = await fetch(FIREBASE_URL + FB_USUARIOS + '.json' + AUTH);
                     if (!resp.ok) throw new Error('HTTP ' + resp.status);
                     const data = await resp.json();
-                    // Firebase retorna {"error":"..."} com HTTP 200 quando há Permission Denied
                     if (data && data.error) throw new Error('Firebase: ' + data.error);
                     if (!data) {
                         _aplicarFallbackCredenciais();
                         _credenciaisCarregadas = true;
                         return;
                     }
-                    // Estrutura real do banco: lista plana de usuários com campo "role"
-                    // OU formato aninhado {editores:{}, operadores:{}, gerentes:{}, coordenadores:{}, dev:{}}
+
+                    // Limpa as variáveis para repopular de forma híbrida
                     credenciaisEditor        = {};
                     credenciaisGerente       = {};
                     coordenadoresAutorizados = {};
                     defaultUsuarios          = {};
                     credenciaisDev           = {};
 
-                    // Detecta formato aninhado (legado: gravado pelo _salvarCategoria antigo)
-                    // O novo código salva cada usuário individualmente no formato plano, então
-                    // este bloco é um fallback de compatibilidade para dados antigos no Firebase.
-                    const _NESTED_KEYS = ['editores','operadores','gerentes','coordenadores','dev'];
-                    const _isNested = _NESTED_KEYS.some(k => data[k] && typeof data[k] === 'object');
-
-                    if (_isNested) {
-                        // ── Formato aninhado: { editores:{user:{senha,nome}}, operadores:{id:nome}, ... } ──
-                        const _ed  = data.editores      || {};
-                        const _ger = data.gerentes       || {};
-                        const _crd = data.coordenadores  || {};
-                        const _op  = data.operadores     || {};
-                        const _dev = data.dev            || {};
-
-                        for (const [user, cred] of Object.entries(_ed)) {
+                    // 1. PROCESSAR ESTRUTURAS ANINHADAS (Pastas antigas/legadas se existirem)
+                    if (data.editores && typeof data.editores === 'object') {
+                        for (const [user, cred] of Object.entries(data.editores)) {
                             const loginKey = user.replace(/_/g, '.');
                             const senha = (cred && typeof cred === 'object') ? (cred.senha || '') : String(cred || '');
                             const nome  = (cred && cred.nome) ? cred.nome : loginKey;
                             credenciaisEditor[loginKey] = { senha, nome };
                             defaultUsuarios[loginKey]   = nome;
                         }
-                        for (const [user, cred] of Object.entries(_ger)) {
+                    }
+                    if (data.gerentes && typeof data.gerentes === 'object') {
+                        for (const [user, cred] of Object.entries(data.gerentes)) {
                             const loginKey = user.replace(/_/g, '.');
                             const senha = (cred && typeof cred === 'object') ? (cred.senha || '') : String(cred || '');
                             const nome  = (cred && cred.nome) ? cred.nome : loginKey;
                             credenciaisGerente[loginKey] = { senha, nome };
                         }
-                        for (const [id, val] of Object.entries(_crd)) {
+                    }
+                    if (data.coordenadores && typeof data.coordenadores === 'object') {
+                        for (const [id, val] of Object.entries(data.coordenadores)) {
                             const nome = typeof val === 'string' ? val : (val && val.nome ? val.nome : id);
                             coordenadoresAutorizados[id] = nome;
                             defaultUsuarios[id] = nome;
                         }
-                        for (const [id, val] of Object.entries(_op)) {
+                    }
+                    if (data.operadores && typeof data.operadores === 'object') {
+                        for (const [id, val] of Object.entries(data.operadores)) {
                             const loginKey = id.replace(/_/g, '.');
                             const nome = typeof val === 'string' ? val : (val && val.nome ? val.nome : loginKey);
                             defaultUsuarios[loginKey] = nome;
                         }
-                        for (const [user, cred] of Object.entries(_dev)) {
+                    }
+                    if (data.dev && typeof data.dev === 'object') {
+                        for (const [user, cred] of Object.entries(data.dev)) {
                             const loginKey = user.replace(/_/g, '.');
                             const senha = (cred && typeof cred === 'object') ? (cred.senha || '') : String(cred || '');
                             const nome  = (cred && cred.nome) ? cred.nome : loginKey;
                             credenciaisDev[loginKey]      = { senha, nome };
-                            credenciaisGerente[loginKey]  = { senha, nome }; // Dev também pode entrar como gerente
-                        }
-                    } else {
-                        // ── Formato plano: cada entrada tem campo "role" ──
-                        // Chaves usam _ (ex: Raiane_neres), login usa . (ex: Raiane.neres)
-                        for (const [key, usuario] of Object.entries(data)) {
-                            if (!usuario || typeof usuario !== 'object') continue;
-                            // Converte chave: _ → . para coincidir com o que o usuário digita no login
-                            const loginKey = key.replace(/_/g, '.');
-                            const { role, senha, nome, cracha } = usuario;
-
-                            if (role === 'editor') {
-                                credenciaisEditor[loginKey] = { senha, nome };
-                                defaultUsuarios[loginKey]   = nome;
-                                if (cracha) defaultUsuarios[cracha] = nome;
-                            } else if (role === 'gerente') {
-                                credenciaisGerente[loginKey] = { senha, nome };
-                            } else if (role === 'dev') {
-                                credenciaisDev[loginKey] = { senha, nome };
-                                // Dev também pode entrar como gerente
-                                credenciaisGerente[loginKey] = { senha, nome };
-                            } else if (role === 'coordenador') {
-                                // Chave já é o crachá numérico
-                                coordenadoresAutorizados[key]  = nome;
-                                if (cracha && cracha !== key) coordenadoresAutorizados[cracha] = nome;
-                                defaultUsuarios[key] = nome;
-                            } else if (role === 'operador') {
-                                if (cracha) defaultUsuarios[cracha] = nome;
-                                defaultUsuarios[loginKey] = nome;
-                            }
+                            credenciaisGerente[loginKey]  = { senha, nome };
                         }
                     }
+
+                    // 2. PROCESSAR REGISTROS PLANOS (Chaves soltas criadas na raiz moderna)
+                    for (const [key, usuario] of Object.entries(data)) {
+                        if (!usuario || typeof usuario !== 'object') continue;
+                        
+                        // Pula os nós de pastas para não duplicar dados
+                        if (['editores', 'operadores', 'gerentes', 'coordenadores', 'dev'].includes(key)) continue;
+
+                        const loginKey = key.replace(/_/g, '.');
+                        const { role, senha, nome, cracha } = usuario;
+
+                        if (role === 'editor') {
+                            credenciaisEditor[loginKey] = { senha, nome };
+                            defaultUsuarios[loginKey]   = nome;
+                            if (cracha) defaultUsuarios[cracha] = nome;
+                        } else if (role === 'gerente') {
+                            credenciaisGerente[loginKey] = { senha, nome };
+                        } else if (role === 'dev') {
+                            credenciaisDev[loginKey] = { senha, nome };
+                            credenciaisGerente[loginKey] = { senha, nome };
+                        } else if (role === 'coordenador') {
+                            coordenadoresAutorizados[key] = nome;
+                            if (cracha && cracha !== key) coordenadoresAutorizados[cracha] = nome;
+                            defaultUsuarios[key] = nome;
+                        } else if (role === 'operador') {
+                            if (cracha) defaultUsuarios[cracha] = nome;
+                            defaultUsuarios[loginKey] = nome;
+                        }
+                    }
+
                 } catch(e) {
                     console.warn('Firebase credenciais indisponível, usando fallback local.', e);
                     _aplicarFallbackCredenciais();
                 }
-                // Garante acesso dev local caso o Firebase não tenha retornado a credencial
+                
+                // Garantia de segurança para o usuário Dev Criador local
                 if (!Object.keys(credenciaisDev).length) {
                     credenciaisDev['Francisco.carvalho'] = { senha: '200406', nome: 'Desenvolvedor Criador' };
                     credenciaisGerente['Francisco.carvalho'] = { senha: '200406', nome: 'Desenvolvedor Criador' };
@@ -2667,6 +2664,7 @@ rx="1.5" fill="#f59e0b"/>
             })();
             return _credenciaisPromise;
         }
+        
 
         // Credenciais locais usadas quando o Firebase está inacessível
         // Espelham exatamente o que está no banco de dados real
