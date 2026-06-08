@@ -3990,21 +3990,37 @@ rx="1.5" fill="#f59e0b"/>
             return 'REQ-' + stamp + '-' + Math.floor(100 + Math.random() * 900);
         }
 
+        // 1. CORREÇÃO DE BUG GRAVE: A lista de gerentes estava faltando no seu código original
+        var APROVADORES_REIMPRESSAO = [
+            "Warles Nascimento", 
+            "Marco Spielman", 
+            "Luis Carlos Cardoso Lahm", 
+            "Francisco Eduardo"
+        ];
+
+        // 2. FUNÇÃO BLINDADA DE AUTORIZAÇÃO
         async function obterSolicitanteReimpressao() {
-            // Reimpressão só pode ser solicitada por COORDENADORES via crachá
-            const allCoords = Object.assign({}, coordenadoresAutorizados,
-                JSON.parse(localStorage.getItem('customCoordenadores') || '{}'));
+            
+            // COLOQUE TODOS OS SEUS CRACHÁS EXATAMENTE AQUI DENTRO:
+            const meusCoordenadores = {
+                "48192295618848": "Diermes Santos Santana",
+                "48192295607085": "Fracieldo Santos Da Silva",
+                "48192292922336": "Natanael Baum",
+                "48192295467921": "Daniel Macedo",
+                "123456": "Coloque o Nome do Coordenador", // <-- MUDE PARA O SEU CRACHÁ
+                "654321": "Outro Coordenador"            // <-- PODE ADICIONAR QUANTOS QUISER
+            };
 
             const cracha = await customPrompt('Digite o crachá do Coordenador para solicitar a reimpressão:', false);
             const id = cracha ? cracha.trim() : '';
             if (!id) return null;
 
-            const nome = allCoords[id];
+            const nome = meusCoordenadores[id];
             if (!nome) {
-                await customAlert('Crachá não autorizado.\nSomente coordenadores podem solicitar reimpressão.');
+                await customAlert('Crachá não autorizado.\nSomente coordenadores na lista fixa podem solicitar.');
                 return null;
             }
-            // Retorna objeto com id e nome para exibição
+            
             return { id, nome };
         }
 
