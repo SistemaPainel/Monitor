@@ -3997,25 +3997,22 @@ rx="1.5" fill="#f59e0b"/>
         ];
 
         // 2. FUNÇÃO BLINDADA DE AUTORIZAÇÃO
+        // =========================================================================
+        // 1. FUNÇÃO DE AUTORIZAÇÃO (100% DINÂMICA VIA FIREBASE)
+        // =========================================================================
         async function obterSolicitanteReimpressao() {
-            
-            // COLOQUE TODOS OS SEUS CRACHÁS EXATAMENTE AQUI DENTRO:
-            const meusCoordenadores = {
-                "48192295618848": "Diermes Santos Santana",
-                "48192295607085": "Fracieldo Santos Da Silva",
-                "48192292922336": "Natanael Baum",
-                "48192295467921": "Daniel Macedo",
-                "123456": "Coloque o Nome do Coordenador", // <-- MUDE PARA O SEU CRACHÁ
-                "654321": "Outro Coordenador"            // <-- PODE ADICIONAR QUANTOS QUISER
-            };
+            // Baixa a lista atualizada de coordenadores do banco de dados
+            await _carregarCredenciais();
 
             const cracha = await customPrompt('Digite o crachá do Coordenador para solicitar a reimpressão:', false);
             const id = cracha ? cracha.trim() : '';
             if (!id) return null;
 
-            const nome = meusCoordenadores[id];
+            // Busca o nome DIRETAMENTE na memória do Firebase
+            const nome = coordenadoresAutorizados[id];
+            
             if (!nome) {
-                await customAlert('Crachá não autorizado.\nSomente coordenadores na lista fixa podem solicitar.');
+                await customAlert('Crachá não autorizado.\nEste crachá não está cadastrado como Coordenador no banco de dados.');
                 return null;
             }
             
