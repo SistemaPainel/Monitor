@@ -5384,9 +5384,9 @@ rx="1.5" fill="#f59e0b"/>
             carregarPainel();
             _carregarInversoes();
             _carregarNotas();
-            sysIntervals.push(setInterval(carregarPainel, 10000));
-            sysIntervals.push(setInterval(checarProximoGrupoBackground, 3500));
-            sysIntervals.push(setInterval(_carregarInversoes, 15000));
+            sysIntervals.push(setInterval(carregarPainel, 30000));
+            sysIntervals.push(setInterval(checarProximoGrupoBackground, 15000));
+            sysIntervals.push(setInterval(_carregarInversoes, 40000));
             sysIntervals.push(setInterval(_carregarNotas, 20000));
             // Polling de novas reimpressões (notificação em tempo real)
             _pollarNovasReimpressoes(); // inicializa o timestamp
