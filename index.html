@@ -2566,70 +2566,44 @@ rx="1.5" fill="#f59e0b"/>
                     if (!resp.ok) throw new Error('HTTP ' + resp.status);
                     const data = await resp.json();
                     if (data && data.error) throw new Error('Firebase: ' + data.error);
+                    
                     if (!data) {
-                        _aplicarFallbackCredenciais();
-                        _credenciaisCarregadas = true;
+                        console.error('Nenhum usuário encontrado no banco de dados.');
+                        alert('Erro crítico: Banco de dados de usuários vazio ou inacessível.');
                         return;
                     }
 
-                    // Limpa as variáveis para repopular de forma híbrida
+                    // Limpa as variáveis
                     credenciaisEditor        = {};
                     credenciaisGerente       = {};
                     coordenadoresAutorizados = {};
                     defaultUsuarios          = {};
                     credenciaisDev           = {};
 
-                    // 1. PROCESSAR ESTRUTURAS ANINHADAS (Pastas antigas/legadas se existirem)
-                    if (data.editores && typeof data.editores === 'object') {
-                        for (const [user, cred] of Object.entries(data.editores)) {
-                            const loginKey = user.replace(/_/g, '.');
-                            const senha = (cred && typeof cred === 'object') ? (cred.senha || '') : String(cred || '');
-                            const nome  = (cred && cred.nome) ? cred.nome : loginKey;
-                            credenciaisEditor[loginKey] = { senha, nome };
-                            defaultUsuarios[loginKey]   = nome;
+                    // PROCESSAR REGISTROS DO FIREBASE
+                    for (const [key, val] of Object.entries(data)) {
+                        // 1. Tratamento para as listas agrupadas antigas (Legado no DB)
+                        if (key === 'coordenadores' && typeof val === 'object') {
+                            for (const [cracha, nome] of Object.entries(val)) {
+                                coordenadoresAutorizados[cracha] = nome;
+                                defaultUsuarios[cracha] = nome;
+                            }
+                            continue;
                         }
-                    }
-                    if (data.gerentes && typeof data.gerentes === 'object') {
-                        for (const [user, cred] of Object.entries(data.gerentes)) {
-                            const loginKey = user.replace(/_/g, '.');
-                            const senha = (cred && typeof cred === 'object') ? (cred.senha || '') : String(cred || '');
-                            const nome  = (cred && cred.nome) ? cred.nome : loginKey;
-                            credenciaisGerente[loginKey] = { senha, nome };
+                        if (key === 'operadores' && typeof val === 'object') {
+                            for (const [cracha, nome] of Object.entries(val)) {
+                                defaultUsuarios[cracha] = typeof nome === 'string' ? nome : (nome.nome || cracha);
+                            }
+                            continue;
                         }
-                    }
-                    if (data.coordenadores && typeof data.coordenadores === 'object') {
-                        for (const [id, val] of Object.entries(data.coordenadores)) {
-                            const nome = typeof val === 'string' ? val : (val && val.nome ? val.nome : id);
-                            coordenadoresAutorizados[id] = nome;
-                            defaultUsuarios[id] = nome;
-                        }
-                    }
-                    if (data.operadores && typeof data.operadores === 'object') {
-                        for (const [id, val] of Object.entries(data.operadores)) {
-                            const loginKey = id.replace(/_/g, '.');
-                            const nome = typeof val === 'string' ? val : (val && val.nome ? val.nome : loginKey);
-                            defaultUsuarios[loginKey] = nome;
-                        }
-                    }
-                    if (data.dev && typeof data.dev === 'object') {
-                        for (const [user, cred] of Object.entries(data.dev)) {
-                            const loginKey = user.replace(/_/g, '.');
-                            const senha = (cred && typeof cred === 'object') ? (cred.senha || '') : String(cred || '');
-                            const nome  = (cred && cred.nome) ? cred.nome : loginKey;
-                            credenciaisDev[loginKey]      = { senha, nome };
-                            credenciaisGerente[loginKey]  = { senha, nome };
-                        }
-                    }
+                        // Ignora outras listas antigas para evitar duplicidade
+                        if (key === 'editores' || key === 'gerentes' || key === 'dev') continue;
 
-                    // 2. PROCESSAR REGISTROS PLANOS (Chaves soltas criadas na raiz moderna)
-                    for (const [key, usuario] of Object.entries(data)) {
-                        if (!usuario || typeof usuario !== 'object') continue;
+                        // 2. Tratamento para o formato atual (objetos com "role")
+                        if (!val || typeof val !== 'object' || !val.role) continue;
                         
-                        // Pula os nós de pastas para não duplicar dados
-                        if (['editores', 'operadores', 'gerentes', 'coordenadores', 'dev'].includes(key)) continue;
-
                         const loginKey = key.replace(/_/g, '.');
-                        const { role, senha, nome, cracha } = usuario;
+                        const { role, senha, nome, cracha } = val;
 
                         if (role === 'editor') {
                             credenciaisEditor[loginKey] = { senha, nome };
@@ -2639,6 +2613,7 @@ rx="1.5" fill="#f59e0b"/>
                             credenciaisGerente[loginKey] = { senha, nome };
                         } else if (role === 'dev') {
                             credenciaisDev[loginKey] = { senha, nome };
+                            // O dev também atua como gerente por padrão
                             credenciaisGerente[loginKey] = { senha, nome };
                         } else if (role === 'coordenador') {
                             coordenadoresAutorizados[key] = nome;
@@ -2650,128 +2625,23 @@ rx="1.5" fill="#f59e0b"/>
                         }
                     }
 
-                } catch(e) {
-                    console.warn('Firebase credenciais indisponível, usando fallback local.', e);
-                    _aplicarFallbackCredenciais();
-                }
-                
-                // Garantia de segurança para o usuário Dev Criador local
-                if (!Object.keys(credenciaisDev).length) {
-                    credenciaisDev['Francisco.carvalho'] = { senha: '200406', nome: 'Desenvolvedor Criador' };
-                    credenciaisGerente['Francisco.carvalho'] = { senha: '200406', nome: 'Desenvolvedor Criador' };
-                }
-                _credenciaisCarregadas = true;
-            })();
-            return _credenciaisPromise;
-        }
-        
+                            }  catch(e) {
+                        console.error('Falha ao conectar com Firebase para credenciais.', e);
+                        alert('Sem conexão com o banco de dados. Verifique sua internet.');
+                    }
+                    
+                    _credenciaisCarregadas = true;
+                })();
+                return _credenciaisPromise;
+            }
 
-        // Credenciais locais usadas quando o Firebase está inacessível
-        // Espelham exatamente o que está no banco de dados real
-        function _aplicarFallbackCredenciais() {
-            credenciaisEditor = {
-                "Raiane.neres":   { senha: "dados1", nome: "Raiane Neres" },
-                "Maria.dias":     { senha: "dados2", nome: "Maria Dias" },
-                "Rafael.matos":   { senha: "dados4", nome: "Rafael Matos" },
-                "Bruno.bs":       { senha: "dados5", nome: "Bruno BS" },
-                "Rafael.miranda": { senha: "dados6", nome: "Rafael Miranda" },
-                "Sandra.santos":  { senha: "dados7", nome: "Sandra Santos" }
-            };
-            credenciaisGerente = {
-                "Warles.nascimento":   { senha: "1987", nome: "Warles Nascimento" },
-                "Marco.spielman":      { senha: "1987", nome: "Marco Spielman" },
-                "Luis.lahm":           { senha: "1987", nome: "Luis Carlos Cardoso Lahm" },
-                "Francisco.eduardo":   { senha: "1987", nome: "Francisco Eduardo" },
-                "Francisco.carvalho":  { senha: "200406", nome: "Francisco Eduardo Alves Carvalho" }
-            };
-            coordenadoresAutorizados = {
-                "48192295618848": "Diermes Santos Santana",
-                "48192295607085": "Fracieldo Santos Da Silva",
-                "48192292922336": "Natanael Baum",
-                "48192295467921": "Daniel Macedo"
-            };
-            defaultUsuarios = {
-                "48192292175030":  "Francisco Eduardo",
-                "Raiane.neres":    "Raiane Neres",
-                "Maria.dias":      "Maria Dias",
-                "Rafael.matos":    "Rafael Matos",
-                "Bruno.bs":        "Bruno BS",
-                "Rafael.miranda":  "Rafael Miranda",
-                "Sandra.santos":   "Sandra Santos",
-                "48192292922336":  "Natanael Baum",
-                "48192295467921":  "Daniel Macedo",
-                "48192295607085":  "Fracieldo Santos Da Silva",
-                "48192295618848":  "Diermes Santos Santana"
-            };
-            credenciaisDev = {
-                "Francisco.carvalho": { senha: "200406", nome: "Desenvolvedor Criador" }
-            };
-        }
-
-        async function _inicializarCredenciaisFirebase() {
-            // Dados de migração — só sobe uma vez se o nó não existir
-            const payload = {
-                editores: {
-                    "Raiane.neres":    { senha: "dados1", nome: "Raiane Neres" },
-                    "Maria.dias":      { senha: "dados2", nome: "Maria Dias" },
-                    "Francisco.carvalho": { senha: "dados3", nome: "Francisco Carvalho" },
-                    "Rafael.matos":    { senha: "dados4", nome: "Rafael Matos" },
-                    "Bruno.bs":        { senha: "dados5", nome: "Bruno BS" },
-                    "Rafael.miranda":  { senha: "dados6", nome: "Rafael Miranda" },
-                    "Sandra.santos":   { senha: "dados7", nome: "Sandra Santos" }
-                },
-                gerentes: {
-                    "Warles.nascimento": { senha: "1987", nome: "Warles Nascimento" },
-                    "Marco.spielman":    { senha: "1987", nome: "Marco Spielman" },
-                    "Luis.lahm":         { senha: "1987", nome: "Luis Carlos Cardoso Lahm" },
-                    "Francisco Eduardo": { senha: "1987", nome: "Francisco Eduardo" }
-                },
-                coordenadores: {
-                    "1987":             "Francisco Eduardo Alves Carvalho",
-                    "48192295618848":   "Diermes Santos Santana",
-                    "48192295607085":   "Fracieldo Santos Da Silva",
-                    "48192292922336":   "Natanael Baum",
-                    "48192295467921":   "Daniel Macedo"
-                },
-                operadores: {
-                    "48192292175030": "Francisco Eduardo",
-                    "1987":           "Administrador",
-                    "Raiane.neres":   "Raiane Neres",
-                    "Maria.dias":     "Maria Dias",
-                    "Francisco.carvalho": "Francisco Carvalho",
-                    "Rafael.matos":   "Rafael Matos",
-                    "Bruno.bs":       "Bruno BS",
-                    "Rafael.miranda": "Rafael Miranda",
-                    "Sandra.santos":  "Sandra Santos"
-                },
-                dev: {
-                    "Francisco.carvalho": { senha: "200406", nome: "Desenvolvedor Criador" }
-                }
-            };
-            await fetch(FIREBASE_URL + FB_USUARIOS + '.json' + AUTH, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            credenciaisEditor     = Object.fromEntries(Object.entries(payload.editores).map(([u,v])=>[u,v.senha]));
-            // editor no Firebase guarda {senha,nome}, mas internamente usamos { usuario: senha }
-            // recarrega no formato correto:
-            credenciaisEditor     = {};
-            for (const [u,v] of Object.entries(payload.editores)) credenciaisEditor[u] = v.senha;
-            credenciaisGerente    = payload.gerentes;
-            coordenadoresAutorizados = payload.coordenadores;
-            defaultUsuarios       = payload.operadores;
-            credenciaisDev        = payload.dev;
-            _credenciaisCarregadas = true;
-        }
-
-        // ── Helper: sanitiza chaves para o Firebase (. → _) ─────────────────────
-        function _sanitizarChavesFirebase(obj) {
-            if (!obj || typeof obj !== 'object') return obj;
-            const out = {};
-            for (const [k, v] of Object.entries(obj)) out[k.replace(/\./g, '_')] = v;
-            return out;
-        }
+            // ── Helper: sanitiza chaves para o Firebase (. → _) ─────────────────────
+            function _sanitizarChavesFirebase(obj) {
+                if (!obj || typeof obj !== 'object') return obj;
+                const out = {};
+                for (const [k, v] of Object.entries(obj)) out[k.replace(/\./g, '_')] = v;
+                return out;
+            }
 
         // ── Salva um único usuário no nó plano /usuarios/{chave} ─────────────────
         // Mantém o formato flat que _carregarCredenciais sabe ler e não sobrescreve outros usuários
@@ -2948,9 +2818,7 @@ rx="1.5" fill="#f59e0b"/>
         }
 
         // ── CREDENCIAL DO DESENVOLVEDOR CRIADOR (fallback local) ──
-        credenciaisDev = {
-            "Francisco.carvalho": { senha: "200406", nome: "Desenvolvedor Criador" }
-        };
+       
 
         function mostrarLoginDev() {
             const sel = document.getElementById('selecaoModo');
@@ -3988,13 +3856,8 @@ rx="1.5" fill="#f59e0b"/>
             return 'REQ-' + stamp + '-' + Math.floor(100 + Math.random() * 900);
         }
 
-        // 1. CORREÇÃO DE BUG GRAVE: A lista de gerentes estava faltando no seu código original
-        var APROVADORES_REIMPRESSAO = [
-            "Warles Nascimento", 
-            "Marco Spielman", 
-            "Luis Carlos Cardoso Lahm", 
-            "Francisco Eduardo"
-        ];
+       
+        
 
         // 2. FUNÇÃO BLINDADA DE AUTORIZAÇÃO
         // =========================================================================
@@ -4029,7 +3892,15 @@ rx="1.5" fill="#f59e0b"/>
             const solicitanteNome = solicitanteObj.nome; // nome completo do coordenador
             const solicitanteCracha = solicitanteObj.id;  // crachá para registro
 
-            const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', APROVADORES_REIMPRESSAO.map(nome => ({ value: nome, label: nome })));
+            // Cria a lista de gerentes dinamicamente lendo do Firebase
+            const listaGerentes = Object.values(credenciaisGerente).map(g => ({ value: g.nome, label: g.nome }));
+            
+            if(listaGerentes.length === 0) {
+                await customAlert('Nenhum Gerente cadastrado no banco de dados para aprovação.');
+                return;
+            }
+
+            const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', listaGerentes);
             if (!aprovador) { await customAlert('Solicitacao cancelada.'); return; }
 
             const ordens = Array.from(checks).map(cb => ({
@@ -4048,8 +3919,8 @@ rx="1.5" fill="#f59e0b"/>
                 const payload = {
                     numRequisicao, grupo, estacao, modelo, tamanho, ordens,
                     status: 'pendente',
-                    solicitante: solicitanteNome,   // nome exibido
-                    solicitanteCracha,               // crachá registrado
+                    solicitante: solicitanteNome,
+                    solicitanteCracha,
                     aprovadorSolicitado: aprovador,
                     dataHora, timestamp: Date.now()
                 };
@@ -4059,7 +3930,7 @@ rx="1.5" fill="#f59e0b"/>
                     body: JSON.stringify(payload)
                 });
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                // Broadcast notificação para gerente e outros painéis
+                
                 const notifReimpData = { tipo: 'reimpressao_solicitada', numRequisicao, solicitante: solicitanteNome, aprovadorSolicitado: aprovador, grupo, estacao, modelo, tamanho, dataHora, timestamp: Date.now() };
                 localStorage.setItem('notifReimpressao', JSON.stringify(notifReimpData));
                 await customAlert('Solicitacao de reimpressao enviada.\nRequisicao: ' + numRequisicao + '\nSolicitante: ' + solicitanteNome);
@@ -5322,7 +5193,7 @@ rx="1.5" fill="#f59e0b"/>
                     if (sess.role && (Date.now() - sess.ts) < dozeHoras) {
                         userRole = sess.role;
                         if (sess.role === 'gerente') {
-                            _gerenteAprovadorAtual = sess.aprovador || APROVADORES_REIMPRESSAO[0];
+                            _gerenteAprovadorAtual = sess.aprovador || '';
                             document.getElementById('loginScreen').style.display = 'none';
                             document.getElementById('mainApp').style.display = 'block';
                             mostrarAreaGerente();
