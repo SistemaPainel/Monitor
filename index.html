@@ -3570,7 +3570,7 @@ rx="1.5" fill="#f59e0b"/>
             else if (senha !== null && senha !== "") { await customAlert("Credencial Inválida. Acesso Negado."); }
         }
         
-        function fecharConfig() { document.getElementById('configModalOverlay').style.display = 'none'; usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios; }
+        function fecharConfig() { document.getElementById('configModalOverlay').style.display = 'none'; usuariosAutorizados = usuariosAutorizados = defaultUsuarios; }
         function mostrarMsgConfig(msg, cor) { const el = document.getElementById('configMsg'); el.style.color = cor; el.innerText = msg; setTimeout(() => el.innerText = '', 3500); }
         function adicionarCracha() {
             const cracha = document.getElementById('configNovoCracha').value.trim();
@@ -3695,7 +3695,7 @@ rx="1.5" fill="#f59e0b"/>
 
         function exibirNotificacao(cracha, dataHora, grupoAlterado) {
             const toast = document.getElementById('toastAlocacao');
-            usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
+            usuariosAutorizados = usuariosAutorizados = defaultUsuarios;
             const nomeExibicao = usuariosAutorizados[cracha] || cracha || "Sistema";
 
             tocarSomNotificacao();
@@ -4305,7 +4305,7 @@ rx="1.5" fill="#f59e0b"/>
             const cracha = await customPrompt('Para confirmar que a reimpressão foi executada, digite seu Usuário/Crachá:', false);
             if (!cracha || !cracha.trim()) return;
 
-            usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
+            usuariosAutorizados = usuariosAutorizados = defaultUsuarios;
             const nomeEditor = usuariosAutorizados[cracha.trim()] || cracha.trim();
 
             const dataHoraFeito = new Date().toLocaleString('pt-BR');
@@ -4624,7 +4624,7 @@ rx="1.5" fill="#f59e0b"/>
         document.addEventListener('click', () => { fecharMenuLimpar(); fecharMenuVisao(); });
 
         async function limparTodasNotas() {
-            usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
+            usuariosAutorizados = usuariosAutorizados = defaultUsuarios;
             const info = await customPrompt("Ação de Limpeza de Notas.\n\nDigite seu Usuário/Crachá para confirmar:", false);
             const crachaDigitado = info ? info.trim() : "";
             const nomeUsuario = usuariosAutorizados[crachaDigitado];
@@ -4642,7 +4642,7 @@ rx="1.5" fill="#f59e0b"/>
         }
 
         async function limparPrsManuais() {
-            usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
+            usuariosAutorizados = usuariosAutorizados = defaultUsuarios;
             const info = await customPrompt("Ação Crítica de Limpeza.\n\nPor favor, digite seu Usuário/Crachá para confirmar:", false);
             const crachaDigitado = info ? info.trim() : ""; const nomeUsuario = usuariosAutorizados[crachaDigitado];
             if (!nomeUsuario) { await customAlert("Acesso negado. Usuário/Crachá inválido ou não cadastrado."); return; }
@@ -5032,7 +5032,7 @@ rx="1.5" fill="#f59e0b"/>
         async function alterarStatusGlobal() {
             const novoStatus = document.getElementById('statusGlobal').value;
             if (!novoStatus) { await customAlert("Selecione um status alvo."); return; }
-            usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
+            usuariosAutorizados = usuariosAutorizados = defaultUsuarios;
             
             const info = await customPrompt(`Acionar override global para ${novoStatus.toUpperCase()}?\n\nInsira o Usuário/Crachá do operador:`, false);
             const crachaDigitado = info ? info.trim() : ""; const nomeUsuario = usuariosAutorizados[crachaDigitado];
@@ -5084,7 +5084,7 @@ rx="1.5" fill="#f59e0b"/>
         }
 
         async function mudarStatus(grupo, estacao, novoStatus) {
-            usuariosAutorizados = JSON.parse(localStorage.getItem('customUsuarios')) || defaultUsuarios;
+            usuariosAutorizados = usuariosAutorizados = defaultUsuarios;
             const info = await customPrompt(`Alterar Estado da EST ${estacao} para ${novoStatus.toUpperCase()}.\n\nUsuário/Crachá do Operador:`, false);
             const crachaDigitado = info ? info.trim() : ""; const nomeUsuario = usuariosAutorizados[crachaDigitado];
             
