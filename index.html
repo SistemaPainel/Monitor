@@ -1850,6 +1850,12 @@
             .chat-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--glass-border); height: 250px; flex-shrink: 0; }
             .chat-fab { bottom: 20px; right: 20px; }
         }
+    
+ /* Ações de Mensagem (Editar/Apagar) */
+        .chat-msg-actions { display: none; position: absolute; top: -14px; right: 10px; background: var(--stat-box); border: 1px solid var(--glass-border); border-radius: 8px; padding: 2px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 10; }
+        .chat-msg-wrap.mine:hover .chat-msg-actions { display: flex; gap: 4px; animation: fadeInDown 0.2s ease; }
+        .chat-msg-action-btn { background: transparent; border: none; cursor: pointer; font-size: 11px; padding: 4px; border-radius: 6px; transition: 0.2s; }
+        .chat-msg-action-btn:hover { background: var(--input-bg); transform: scale(1.1); }
 
     </style>
 </head>
@@ -6888,7 +6894,7 @@ rx="1.5" fill="#f59e0b"/>
             btn.disabled = false; btn.textContent = '↺ Atualizar';
         }
      // =========================================================================
-        // MOTOR LÓGICO DO CHAT - SPATIAL UI (COM CONTADORES INDIVIDUAIS NA FOTO)
+        // MOTOR LÓGICO DO CHAT - SPATIAL UI (ORDENAÇÃO + EDITAR/APAGAR)
         // =========================================================================
         let _chatAtivo = 'global'; 
         let _chatOnlineUsers = {};
@@ -6899,6 +6905,7 @@ rx="1.5" fill="#f59e0b"/>
         let _isPollingUsers = false; 
         let _lastMsgId = null;
         let _unreadPerChannel = JSON.parse(localStorage.getItem('chatUnreadPerChannel')) || {};
+        let _chatLastActivity = JSON.parse(localStorage.getItem('chatLastActivity')) || {}; // Memória para ordenação
 
         if (!window._oldAplicarPermissoes) {
             window._oldAplicarPermissoes = aplicarPermissoesDeAcesso;
@@ -6923,7 +6930,6 @@ rx="1.5" fill="#f59e0b"/>
                 setTimeout(() => overlay.style.opacity = '1', 10);
                 document.getElementById('chatUnreadBadge').style.display = 'none';
                 
-                // Ao abrir, zera os não lidos da aba que ele está abrindo por padrão (a última)
                 _unreadPerChannel[getChatChannelPath(_chatAtivo)] = 0;
                 localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
                 _recalcularBadgeGlobal();
@@ -6976,7 +6982,6 @@ rx="1.5" fill="#f59e0b"/>
             try {
                 const res = await fetch(`${FIREBASE_URL}/chat/users.json${AUTH}`);
                 if(res.ok) _chatOnlineUsers = await res.json() || {};
-                if(document.getElementById('chatWindow').classList.contains('open')) renderizarContatosChat();
                 
                 if(_chatAtivo && _chatOnlineUsers) {
                     const myId = _usuarioAtual.user.replace(/\./g, '_');
@@ -7001,7 +7006,7 @@ rx="1.5" fill="#f59e0b"/>
             
             const publicUnread = _unreadPerChannel['public'] || 0;
 
-            // HTML DO GRUPO PÚBLICO
+            // HTML DO GRUPO PÚBLICO FICA FIXO NO TOPO
             let html = `
                 <div class="chat-contact ${_chatAtivo === 'global' ? 'active' : ''}" onclick="mudarCanalChat('global')">
                     <div class="chat-contact-avatar">
@@ -7016,24 +7021,31 @@ rx="1.5" fill="#f59e0b"/>
                 <div style="font-size:10px; font-weight:900; color:var(--text-muted); text-transform:uppercase; margin:15px 0 5px 10px; letter-spacing:1px;">Mensagens Privadas</div>
             `;
 
-            // HTML DAS MENSAGENS PRIVADAS
-            Object.entries(credenciaisEditor).forEach(([uid, cred]) => {
-                if(uid === myId) return;
-                const safeUid = uid.replace(/\./g, '_');
-                const perfil = perfilDoUsuario(uid) || { avatar: 'masculino', nome: cred.nome || uid };
-                const presence = _chatOnlineUsers[safeUid] || {};
+            // ORDENA OS CONTATOS PRIVADOS PELA ÚLTIMA ATIVIDADE
+            const contatosOrdenados = Object.entries(credenciaisEditor)
+                .filter(([uid]) => uid !== myId)
+                .map(([uid, cred]) => {
+                    const safeUid = uid.replace(/\./g, '_');
+                    const arr = [myId.replace(/\./g, '_'), safeUid].sort();
+                    const canalStr = `private_${arr[0]}_${arr[1]}`;
+                    const lastAct = _chatLastActivity[canalStr] || 0;
+                    return { uid, safeUid, cred, canalStr, lastAct };
+                });
+
+            contatosOrdenados.sort((a, b) => b.lastAct - a.lastAct);
+
+            contatosOrdenados.forEach(c => {
+                const perfil = perfilDoUsuario(c.uid) || { avatar: 'masculino', nome: c.cred.nome || c.uid };
+                const presence = _chatOnlineUsers[c.safeUid] || {};
                 const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000); 
-                
-                const arr = [myId.replace(/\./g, '_'), safeUid].sort();
-                const canalStr = `private_${arr[0]}_${arr[1]}`;
-                const privUnread = _unreadPerChannel[canalStr] || 0;
+                const privUnread = _unreadPerChannel[c.canalStr] || 0;
                 
                 html += `
-                    <div class="chat-contact ${_chatAtivo === safeUid ? 'active' : ''}" onclick="mudarCanalChat('${safeUid}')">
+                    <div class="chat-contact ${_chatAtivo === c.safeUid ? 'active' : ''}" onclick="mudarCanalChat('${c.safeUid}')">
                         <div class="chat-contact-avatar">
                             ${htmlAvatarPerfil(perfil)}
                             <div class="chat-online-dot ${isOnline ? '' : 'chat-offline-dot'}"></div>
-                            <span class="chat-contact-badge ${privUnread > 0 ? 'show' : ''}" id="chat_badge_${safeUid}">${privUnread > 9 ? '9+' : privUnread}</span>
+                            <span class="chat-contact-badge ${privUnread > 0 ? 'show' : ''}" id="chat_badge_${c.safeUid}">${privUnread > 9 ? '9+' : privUnread}</span>
                         </div>
                         <div class="chat-contact-info">
                             <div class="chat-contact-name">${perfil.nome}</div>
@@ -7048,20 +7060,18 @@ rx="1.5" fill="#f59e0b"/>
         function getChatChannelPath(targetId) {
             if(targetId === 'global') return 'public';
             const myId = _usuarioAtual.user.replace(/\./g, '_');
-            const arr = [myId, targetId].sort();
+            const arr = [myId, targetId.replace(/\./g, '_')].sort();
             return `private_${arr[0]}_${arr[1]}`;
         }
 
         async function mudarCanalChat(alvoId) {
             _chatAtivo = alvoId;
-            
-            // Zera o contador de mensagens não lidas da pessoa em que você clicou
             const canalPath = getChatChannelPath(alvoId);
             _unreadPerChannel[canalPath] = 0;
             localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
             _recalcularBadgeGlobal();
             
-            renderizarContatosChat(); // Isso vai redesenhar a bolinha já zerada (sumir com ela)
+            renderizarContatosChat(); 
             
             const headerInfo = document.getElementById('chatActiveHeader');
             if(alvoId === 'global') {
@@ -7077,6 +7087,32 @@ rx="1.5" fill="#f59e0b"/>
                 `;
             }
             await carregarMensagensChat(alvoId);
+        }
+
+        // --- RENDERIZADOR UNIVERSAL DE MENSAGENS ---
+        function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
+            const timeStr = new Date(m.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) + (m.edited && !m.deleted ? ' <span style="font-size:8px;">(Editado)</span>' : '');
+            
+            const actions = isMine && !m.deleted ? `
+                <div class="chat-msg-actions">
+                    <button class="chat-msg-action-btn" onclick="editarMensagemChat('${id}', this)" title="Editar Mensagem">✏️</button>
+                    <button class="chat-msg-action-btn" onclick="deletarMensagemChat('${id}')" title="Apagar">🗑️</button>
+                </div>
+            ` : '';
+            
+            const deletedStyle = m.deleted ? 'opacity:0.6; font-style:italic;' : '';
+            
+            return `
+                <div class="chat-msg-wrap ${isMine ? 'mine' : 'theirs'}" id="msg_${id}">
+                    ${!isMine ? `<div class="chat-msg-avatar" title="${perfil.nome}">${htmlAvatarPerfil(perfil)}</div>` : ''}
+                    <div class="chat-bubble" style="${deletedStyle}">
+                        ${actions}
+                        ${!isMine && alvoId === 'global' ? `<div class="chat-msg-name" style="color:#007AFF;">${perfil.nome}</div>` : ''}
+                        <div class="msg-text-content" data-raw="${htmlSafe(m.text)}">${htmlSafe(m.text).replace(/\n/g, '<br>')}</div>
+                        <div class="chat-msg-time">${timeStr}</div>
+                    </div>
+                </div>
+            `;
         }
 
         async function carregarMensagensChat(alvoId) {
@@ -7104,19 +7140,9 @@ rx="1.5" fill="#f59e0b"/>
                     _lastMsgId = id; 
                     const isMine = m.sender === myId;
                     const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
-                    const timeStr = new Date(m.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                    
-                    html += `
-                        <div class="chat-msg-wrap ${isMine ? 'mine' : 'theirs'}">
-                            ${!isMine ? `<div class="chat-msg-avatar" title="${perfil.nome}">${htmlAvatarPerfil(perfil)}</div>` : ''}
-                            <div class="chat-bubble">
-                                ${!isMine && alvoId === 'global' ? `<div class="chat-msg-name" style="color:#007AFF;">${perfil.nome}</div>` : ''}
-                                <div>${htmlSafe(m.text).replace(/\n/g, '<br>')}</div>
-                                <div class="chat-msg-time">${timeStr}</div>
-                            </div>
-                        </div>
-                    `;
+                    html += _buildMsgHtml(id, m, isMine, perfil, alvoId);
                 });
+                
                 area.innerHTML = html;
                 area.scrollTop = area.scrollHeight;
                 iniciarListenerDeMensagens(channel); 
@@ -7130,7 +7156,7 @@ rx="1.5" fill="#f59e0b"/>
             _pollMsgInterval = setInterval(async () => {
                 if(!document.getElementById('chatWindow').classList.contains('open')) return;
                 try {
-                    const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json?orderBy="$key"&limitToLast=5${AUTH? '&'+AUTH.replace('?','') : ''}`);
+                    const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json?orderBy="$key"&limitToLast=8${AUTH? '&'+AUTH.replace('?','') : ''}`);
                     const data = await res.json() || {};
                     const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
                     
@@ -7140,27 +7166,26 @@ rx="1.5" fill="#f59e0b"/>
                         const area = document.getElementById('chatMessagesArea');
                         
                         msgs.forEach(([id, m]) => {
-                            if (_lastMsgId === null) {
+                            const isMine = m.sender === myId;
+                            const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
+                            const existing = document.getElementById('msg_' + id);
+
+                            // Atualização Dinâmica (se editado ou apagado)
+                            if (existing) {
+                                const textEl = existing.querySelector('.msg-text-content');
+                                if (textEl && textEl.dataset.raw !== m.text) {
+                                    existing.outerHTML = _buildMsgHtml(id, m, isMine, perfil, _chatAtivo);
+                                }
+                            } 
+                            // Inserção de Nova Mensagem
+                            else if (_lastMsgId === null) {
                                 _lastMsgId = id; 
-                                if (m.sender !== myId) tocou = true;
+                                if (!isMine) tocou = true;
                             } else if (id > _lastMsgId) {
                                 _lastMsgId = id;
-                                if (m.sender !== myId) {
-                                    const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
-                                    const timeStr = new Date(m.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                                    
+                                if (!isMine) {
                                     if(area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
-
-                                    area.insertAdjacentHTML('beforeend', `
-                                        <div class="chat-msg-wrap theirs">
-                                            <div class="chat-msg-avatar" title="${perfil.nome}">${htmlAvatarPerfil(perfil)}</div>
-                                            <div class="chat-bubble">
-                                                ${_chatAtivo === 'global' ? `<div class="chat-msg-name" style="color:#007AFF;">${perfil.nome}</div>` : ''}
-                                                <div>${htmlSafe(m.text).replace(/\n/g, '<br>')}</div>
-                                                <div class="chat-msg-time">${timeStr}</div>
-                                            </div>
-                                        </div>
-                                    `);
+                                    area.insertAdjacentHTML('beforeend', _buildMsgHtml(id, m, isMine, perfil, _chatAtivo));
                                     area.scrollTop = area.scrollHeight;
                                     tocou = true;
                                 }
@@ -7170,7 +7195,7 @@ rx="1.5" fill="#f59e0b"/>
                         if (tocou) tocarSomNotificacao();
                     }
                 } catch(e){}
-            }, 3000);
+            }, 2500);
         }
 
         async function enviarMensagemChat() {
@@ -7185,31 +7210,51 @@ rx="1.5" fill="#f59e0b"/>
             const channel = getChatChannelPath(_chatAtivo);
             const msg = { sender: myId, text: text, ts: Date.now() };
 
-            const area = document.getElementById('chatMessagesArea');
-            if(area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
-            
-            const timeStr = new Date(msg.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-            area.insertAdjacentHTML('beforeend', `
-                <div class="chat-msg-wrap mine">
-                    <div class="chat-bubble">
-                        <div>${htmlSafe(text).replace(/\n/g, '<br>')}</div>
-                        <div class="chat-msg-time">${timeStr}</div>
-                    </div>
-                </div>
-            `);
-            area.scrollTop = area.scrollHeight;
-
             try {
+                // Ao contrário da UI Otimista de antes, vamos postar e renderizar com a ID oficial para permitir edição instântanea
                 const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, { method: 'POST', body: JSON.stringify(msg) });
                 const pData = await res.json();
                 if(pData && pData.name) {
-                    if (_lastMsgId === null || pData.name > _lastMsgId) {
-                        _lastMsgId = pData.name;
-                    }
+                    _lastMsgId = pData.name;
+                    const area = document.getElementById('chatMessagesArea');
+                    const perfil = perfilDoUsuario(myId.replace(/_/g, '.')) || { nome: myId, avatar: 'masculino' };
+                    if(area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
+                    area.insertAdjacentHTML('beforeend', _buildMsgHtml(pData.name, msg, true, perfil, _chatAtivo));
+                    area.scrollTop = area.scrollHeight;
+                    
+                    // Atualiza a memória de última atividade do canal localmente
+                    _chatLastActivity[channel] = msg.ts;
+                    localStorage.setItem('chatLastActivity', JSON.stringify(_chatLastActivity));
+                    renderizarContatosChat(); // Puxa para o topo
                 }
-            } catch(e) { }
+            } catch(e) { alert("Erro ao enviar mensagem"); }
             
             fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { method: 'PATCH', body: JSON.stringify({ typingIn: null }) });
+        }
+
+        // --- FUNÇÕES DE EDITAR E APAGAR ---
+        async function editarMensagemChat(msgId, btnEl) {
+            const textEl = btnEl.closest('.chat-bubble').querySelector('.msg-text-content');
+            const textoAtual = textEl.dataset.raw;
+            const novoTexto = window.prompt('Editar mensagem:', textoAtual);
+            
+            if (!novoTexto || novoTexto.trim() === '' || novoTexto === textoAtual) return;
+            
+            const channel = getChatChannelPath(_chatAtivo);
+            await fetch(`${FIREBASE_URL}/chat/messages/${channel}/${msgId}.json${AUTH}`, {
+                method: 'PATCH', body: JSON.stringify({ text: novoTexto.trim(), edited: true })
+            });
+            // O listener irá capturar e atualizar a interface automaticamente
+        }
+
+        async function deletarMensagemChat(msgId) {
+            if (!await customConfirm('Deseja apagar esta mensagem para todos?', 'Apagar', 'Cancelar')) return;
+            
+            const channel = getChatChannelPath(_chatAtivo);
+            await fetch(`${FIREBASE_URL}/chat/messages/${channel}/${msgId}.json${AUTH}`, {
+                method: 'PATCH', body: JSON.stringify({ text: '🚫 Mensagem apagada', deleted: true })
+            });
+            // O listener atualizará a interface
         }
 
         function handleChatEnter(e) {
@@ -7265,7 +7310,6 @@ rx="1.5" fill="#f59e0b"/>
             }
         }
 
-        // --- Notificações com Contadores Individuais e Fundo ---
         function _iniciarNotificacoesBackground() {
             if (_chatBgInterval) clearInterval(_chatBgInterval);
             
@@ -7286,9 +7330,9 @@ rx="1.5" fill="#f59e0b"/>
                 });
 
                 let tocouSom = false;
+                let reordenar = false; // Flag para saber se precisamos reorganizar a sidebar
 
                 await Promise.all(canais.map(async (canal) => {
-                    // Pula apenas o canal que o usuário está lendo AGORA com a janela aberta
                     if (isOpen && getChatChannelPath(_chatAtivo) === canal) {
                         if (_lastMsgId) {
                             lastMsgIds[canal] = _lastMsgId;
@@ -7305,6 +7349,13 @@ rx="1.5" fill="#f59e0b"/>
                         if (msgs.length > 0) {
                             const id = msgs[0][0];
                             const m = msgs[0][1];
+                            
+                            // Atualiza a memória de última atividade do canal para Ordenação
+                            if (!_chatLastActivity[canal] || m.ts > _chatLastActivity[canal]) {
+                                _chatLastActivity[canal] = m.ts;
+                                localStorage.setItem('chatLastActivity', JSON.stringify(_chatLastActivity));
+                                if (isOpen) reordenar = true; 
+                            }
                             
                             if (!lastMsgIds[canal]) {
                                 lastMsgIds[canal] = id; 
@@ -7325,6 +7376,8 @@ rx="1.5" fill="#f59e0b"/>
                     } catch(e) {}
                 }));
 
+                if (reordenar && isOpen) renderizarContatosChat();
+
                 if (tocouSom) {
                     localStorage.setItem('chatLastMsgIds', JSON.stringify(lastMsgIds));
                     localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
@@ -7343,7 +7396,6 @@ rx="1.5" fill="#f59e0b"/>
                 }
             }, 4500); 
 
-            // Reseta a bolinha vermelha geral ao clicar no botão FAB
             document.addEventListener('click', (e) => {
                 const btnChat = document.getElementById('btnChatToggle');
                 if(btnChat && btnChat.contains(e.target)) {
@@ -7355,6 +7407,7 @@ rx="1.5" fill="#f59e0b"/>
                 }
             });
         }
+    </script>
     </script>
 
 </body>
