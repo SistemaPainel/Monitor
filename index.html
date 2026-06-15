@@ -1857,6 +1857,18 @@
         .chat-msg-action-btn { background: transparent; border: none; cursor: pointer; font-size: 11px; padding: 4px; border-radius: 6px; transition: 0.2s; }
         .chat-msg-action-btn:hover { background: var(--input-bg); transform: scale(1.1); }
 
+/* ========================================================== */
+        /* FORÇA A EXIBIÇÃO DA BOLINHA DE NOTIFICAÇÃO (OVERRIDE)      */
+        /* ========================================================== */
+        .chat-contact-avatar { 
+            overflow: visible !important; 
+        }
+        .chat-contact-badge {
+            z-index: 99 !important;
+        }
+        .chat-contact-badge.show {
+            display: flex !important;
+        }
     </style>
 </head>
 <body>
@@ -2847,7 +2859,7 @@ rx="1.5" fill="#f59e0b"/>
                 <div class="chat-active-info" id="chatActiveHeader">
                     <div class="chat-contact-avatar"><span class="chat-group-icon">🌍</span></div>
                     <div>
-                        <div class="chat-contact-name" style="font-size:15px;">Grupo Talonário </div>
+                        <div class="chat-contact-name" style="font-size:15px;">Grupo Talonário</div>
                         <div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div>
                     </div>
                 </div>
