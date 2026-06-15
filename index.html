@@ -7471,5 +7471,329 @@ rx="1.5" fill="#f59e0b"/>
     </script>
     </script>
 
+
+    <!-- ========================================================================= -->
+    <!-- NEXUS BOT - ESTILO WHOBEE (PURO CSS + JS INTERATIVO) -->
+    <!-- ========================================================================= -->
+    <style>
+        @media (max-width: 1024px) {
+            #nexusBotContainer { display: none !important; }
+        }
+
+        #nexusBotContainer {
+            position: fixed;
+            bottom: 35px;
+            left: -400px;
+            z-index: 100004;
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+
+        #nexusBotContainer.show {
+            left: 35px;
+        }
+
+        /* --- O CORPO DO ROBÔ --- */
+        .nexus-bot-whobee {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: botHover 3.5s ease-in-out infinite;
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
+            pointer-events: auto; /* Permite interagir com ele */
+            cursor: pointer;
+            transform-style: preserve-3d;
+            perspective: 500px;
+        }
+
+        /* Cabeça (Cubo Escuro) */
+        .bot-head-w {
+            width: 75px;
+            height: 60px;
+            background: linear-gradient(135deg, #2a1f44, #0b0914);
+            border-radius: 12px;
+            box-shadow: 
+                inset 2px 2px 5px rgba(255,255,255,0.15), 
+                inset -2px -2px 10px rgba(0,0,0,0.8),
+                0 8px 15px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+            transform: rotateY(15deg) rotateX(-5deg); /* Dá um leve aspecto 3D */
+            transition: transform 0.2s ease-out;
+        }
+
+        /* Rosto (Tela Preta) */
+        .bot-face-w {
+            width: 55px;
+            height: 35px;
+            background: #020202;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,1);
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: 0 4px;
+        }
+
+        /* Olhos (Brancos e Brilhantes) */
+        .bot-eye-container {
+            width: 14px;
+            height: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .bot-eye-w {
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #fff, 0 0 15px rgba(255,255,255,0.8);
+            transition: transform 0.1s ease-out;
+            animation: botBlinkW 4s infinite;
+        }
+
+        /* Pescoço (Cilindro Metálico) */
+        .bot-neck-w {
+            width: 18px;
+            height: 16px;
+            background: linear-gradient(90deg, #111, #555, #111);
+            border-radius: 4px;
+            z-index: 2;
+            margin-top: -6px;
+            margin-bottom: -6px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* Corpo Base (Cubo Escuro Menor) */
+        .bot-body-w {
+            width: 55px;
+            height: 45px;
+            background: linear-gradient(135deg, #2a1f44, #0b0914);
+            border-radius: 10px;
+            box-shadow: 
+                inset 2px 2px 5px rgba(255,255,255,0.1), 
+                inset -2px -2px 10px rgba(0,0,0,0.8);
+            z-index: 1;
+            transform: rotateY(15deg);
+        }
+
+        /* Sombra no chão projetada pelo robô */
+        .nexus-bot-shadow {
+            width: 60px;
+            height: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 50%;
+            position: absolute;
+            bottom: -25px;
+            filter: blur(4px);
+            animation: shadowScale 3.5s ease-in-out infinite;
+        }
+
+        /* Balão de fala */
+        .bot-speech-bubble {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px 20px 20px 4px;
+            padding: 14px 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-width: 260px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.5;
+            opacity: 0;
+            transform: translateY(10px) scale(0.9);
+            transition: all 0.4s ease;
+            position: relative;
+            bottom: 30px;
+            pointer-events: auto;
+        }
+
+        .bot-speech-bubble.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Animações */
+        @keyframes botHover {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        @keyframes shadowScale {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(0.8); opacity: 0.2; }
+        }
+
+        @keyframes botBlinkW {
+            0%, 90%, 94%, 100% { height: 12px; }
+            92% { height: 2px; }
+        }
+    </style>
+
+    <div id="nexusBotContainer">
+        <div class="nexus-bot-whobee" id="nexusBotElement">
+            <div class="bot-head-w" id="botHead">
+                <div class="bot-face-w">
+                    <div class="bot-eye-container"><div class="bot-eye-w"></div></div>
+                    <div class="bot-eye-container"><div class="bot-eye-w"></div></div>
+                </div>
+            </div>
+            <div class="bot-neck-w"></div>
+            <div class="bot-body-w"></div>
+            <div class="nexus-bot-shadow"></div>
+        </div>
+        <div class="bot-speech-bubble" id="botSpeechBubble"></div>
+    </div>
+
+    <script>
+        // --- MOTOR DO ROBÔ INTERATIVO ---
+        const nexusBotContainer = document.getElementById('nexusBotContainer');
+        const botSpeechBubble = document.getElementById('botSpeechBubble');
+        const botHead = document.getElementById('botHead');
+        const botEyes = document.querySelectorAll('.bot-eye-w');
+        let _botTimeout1, _botTimeout2;
+
+        // Faz os olhos e a cabeça acompanharem o mouse
+        document.addEventListener('mousemove', (e) => {
+            if (!nexusBotContainer.classList.contains('show') || window.innerWidth <= 1024) return;
+
+            const rect = botHead.getBoundingClientRect();
+            const botX = rect.left + rect.width / 2;
+            const botY = rect.top + rect.height / 2;
+
+            // Calcula a distância do mouse para o robô
+            const deltaX = e.clientX - botX;
+            const deltaY = e.clientY - botY;
+
+            // Movimento suave dos olhos (limitado a um pequeno raio)
+            const eyeX = Math.max(-4, Math.min(4, deltaX * 0.01));
+            const eyeY = Math.max(-3, Math.min(3, deltaY * 0.01));
+
+            // Leve rotação da cabeça acompanhando o mouse
+            const headRotX = Math.max(-15, Math.min(5, (deltaY * -0.02) - 5));
+            const headRotY = Math.max(-5, Math.min(35, (deltaX * 0.02) + 15));
+
+            // Aplica as transformações
+            botEyes.forEach(eye => {
+                eye.style.transform = `translate(${eyeX}px, ${eyeY}px)`;
+            });
+            botHead.style.transform = `rotateY(${headRotY}deg) rotateX(${headRotX}deg)`;
+        });
+
+        // Se clicar no robô, ele dá uma "piscadinha" de interação
+        document.getElementById('nexusBotElement').addEventListener('click', () => {
+            falarComBot("Sim, eu estou de olho na produção! 👀", 4000);
+        });
+
+        // --- SISTEMA DE FALA ---
+        function falarComBot(mensagem, duracao = 6000) {
+            if (window.innerWidth <= 1024) return;
+
+            clearTimeout(_botTimeout1);
+            clearTimeout(_botTimeout2);
+
+            botSpeechBubble.innerHTML = mensagem;
+            nexusBotContainer.classList.add('show');
+            
+            _botTimeout1 = setTimeout(() => {
+                botSpeechBubble.classList.add('show');
+                // Efeito sonoro sutil
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator(); const g = ctx.createGain();
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1800, ctx.currentTime + 0.1);
+                    g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.05);
+                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                    osc.connect(g); g.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.25);
+                } catch(e) {}
+            }, 600);
+
+            _botTimeout2 = setTimeout(() => {
+                esconderBot();
+            }, duracao);
+        }
+
+        function esconderBot() {
+            botSpeechBubble.classList.remove('show');
+            setTimeout(() => {
+                nexusBotContainer.classList.remove('show');
+            }, 300);
+        }
+
+        function obterSaudacao() {
+            const hora = new Date().getHours();
+            if (hora >= 5 && hora < 12) return 'Bom dia';
+            if (hora >= 12 && hora < 18) return 'Boa tarde';
+            return 'Boa noite';
+        }
+
+        // 1. Intercepta o login para dar Boas-Vindas
+        if (!window._oldDefinirUsuarioAtualBotHook) {
+            window._oldDefinirUsuarioAtualBotHook = window.definirUsuarioAtual;
+            window.definirUsuarioAtual = function(role, user, nome, gravarSessao) {
+                if(window._oldDefinirUsuarioAtualBotHook) window._oldDefinirUsuarioAtualBotHook(role, user, nome, gravarSessao);
+
+                if (role !== 'viewer' && nome) {
+                    const hoje = new Date().toLocaleDateString('pt-BR');
+                    const ultimoLogin = localStorage.getItem('nexusBot_lastGreeting_' + user);
+
+                    if (ultimoLogin !== hoje) {
+                        localStorage.setItem('nexusBot_lastGreeting_' + user, hoje);
+                        const primeiroNome = nome.split(' ')[0];
+                        const saudacao = obterSaudacao();
+                        
+                        setTimeout(() => {
+                            falarComBot(`Oi, ${saudacao} <b>${primeiroNome}</b>! ✨<br>Vamos começar mais um dia excelente de trabalho!`, 8000);
+                        }, 1500);
+                    }
+                }
+            };
+        }
+
+        // 2. Intercepta o controle de inatividade para avisar 2 minutos antes
+        let _botAvisoInatividadeTimer = null;
+        if (!window._oldIniciarControleInatividadeBot) {
+            window._oldIniciarControleInatividadeBot = window.iniciarControleInatividade;
+
+            window.iniciarControleInatividade = function() {
+                if(window._oldIniciarControleInatividadeBot) window._oldIniciarControleInatividadeBot();
+                if (typeof userRole !== 'undefined' && userRole === 'viewer') return;
+                if (_botAvisoInatividadeTimer) clearTimeout(_botAvisoInatividadeTimer);
+
+                if (typeof INATIVIDADE_MS !== 'undefined') {
+                    const tempoAviso = INATIVIDADE_MS - (2 * 60 * 1000);
+                    if (tempoAviso > 0) {
+                        _botAvisoInatividadeTimer = setTimeout(() => {
+                            falarComBot(`⚠️ <b>Ei, não te vi por aqui!</b><br>Vou encerrar o sistema em 2 minutos por segurança, tá bom? Mexa o mouse para cancelar.`, 10000);
+                        }, tempoAviso);
+                    }
+                }
+            };
+        }
+
+        // 3. Cancela o robô caso o usuário faça logout
+        if (!window._oldFazerLogoutBotHook) {
+            window._oldFazerLogoutBotHook = window.fazerLogout;
+            window.fazerLogout = function(porInatividade) {
+                if (_botAvisoInatividadeTimer) clearTimeout(_botAvisoInatividadeTimer);
+                esconderBot();
+                if(window._oldFazerLogoutBotHook) window._oldFazerLogoutBotHook(porInatividade);
+            };
+        }
+    </script>
+
+
 </body>
 </html>
