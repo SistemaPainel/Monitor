@@ -2400,7 +2400,15 @@ rx="1.5" fill="#f59e0b"/>
                     <p class="gerente-sub">Aprovador: <span id="gerenteNomeAtual">--</span></p>
                 </div>
                 
+                <!-- Ações do Gerente (Perfil e Sair) -->
+                <div class="gerente-actions">
+                    <button class="profile-chip" id="btnPerfilGerente" onclick="abrirPerfil()" style="background:var(--stat-box);border-color:var(--glass-border);color:var(--text-main);">
+                        <span class="profile-chip-avatar" id="perfilChipAvatarGerente"></span>
+                        <span class="profile-chip-name" id="perfilChipNomeGerente">Perfil</span>
+                    </button>
+                    <button class="gerente-btn logout" onclick="fazerLogout()">🚪 Sair</button>
                 </div>
+            </div>
 
            
 
@@ -6918,16 +6926,57 @@ rx="1.5" fill="#f59e0b"/>
         let _lastMsgId = null;
         let _unreadPerChannel = JSON.parse(localStorage.getItem('chatUnreadPerChannel')) || {};
         let _chatLastActivity = JSON.parse(localStorage.getItem('chatLastActivity')) || {}; // Memória para ordenação
-
-        if (!window._oldAplicarPermissoes) {
-            window._oldAplicarPermissoes = aplicarPermissoesDeAcesso;
-            aplicarPermissoesDeAcesso = function() {
-                window._oldAplicarPermissoes();
-                const btnChat = document.getElementById('btnChatToggle');
-                if(btnChat) btnChat.style.display = (userRole === 'editor') ? 'flex' : 'none';
+// =========================================================================
+        // BLOQUEIO ABSOLUTO DO CHAT (EXCLUSIVO PARA EDITOR)
+        // =========================================================================
+        
+        // 1. Intercepta a definição do usuário para ligar/desligar o botão de forma global
+        if (!window._oldDefinirUsuarioAtual) {
+            window._oldDefinirUsuarioAtual = definirUsuarioAtual;
+            definirUsuarioAtual = function(role, user, nome, gravarSessao) {
+                // Executa o comportamento original
+                window._oldDefinirUsuarioAtual(role, user, nome, gravarSessao);
                 
-                if(userRole === 'editor') iniciarServicosChat();
-                else pararServicosChat();
+                // Força a visibilidade
+                const btnChat = document.getElementById('btnChatToggle');
+                if (btnChat) {
+                    btnChat.style.display = (role === 'editor') ? 'flex' : 'none';
+                }
+                
+                // Liga/Desliga os serviços do chat em background
+                if (role === 'editor') {
+                    if (typeof iniciarServicosChat === 'function') iniciarServicosChat();
+                } else {
+                    if (typeof pararServicosChat === 'function') pararServicosChat();
+                    
+                    // Se a janela do chat ficou aberta ao trocar de tela, fecha na marra
+                    const win = document.getElementById('chatWindow');
+                    const overlay = document.getElementById('chatOverlay');
+                    if(win) win.classList.remove('open');
+                    if(overlay) {
+                        overlay.style.opacity = '0';
+                        setTimeout(() => overlay.style.display = 'none', 300);
+                    }
+                }
+            };
+        }
+
+        // 2. Intercepta o Logout para matar o chat e esconder o botão na tela de Login
+        if (!window._oldFazerLogout) {
+            window._oldFazerLogout = fazerLogout;
+            fazerLogout = function(porInatividade) {
+                // Executa o logout original
+                window._oldFazerLogout(porInatividade);
+                
+                // Esconde o botão na tela inicial
+                const btnChat = document.getElementById('btnChatToggle');
+                if (btnChat) btnChat.style.display = 'none';
+                
+                // Para a telemetria do chat
+                if (typeof pararServicosChat === 'function') pararServicosChat();
+                
+                const win = document.getElementById('chatWindow');
+                if(win) win.classList.remove('open');
             };
         }
 
