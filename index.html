@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
+
         /* === VARIÁVEIS DE TEMA - VISION OS / SPATIAL UI === */
         :root {
             --bg-color-1: #e2e8f0;
@@ -1739,6 +1740,116 @@
             .req-meta { font-size: 10px; }
             .req-order-row { font-size: 11px; gap: 6px; }
         }
+/* ========================================================================= */
+        /* CHAT EXTRAORDINÁRIO - EDITOR (SPATIAL UI)                                 */
+        /* ========================================================================= */
+        
+        .chat-fab {
+            position: fixed; bottom: 105px; right: 35px; width: 60px; height: 60px;
+            background: linear-gradient(135deg, #007AFF, #5E5CE6); border-radius: 50%;
+            display: none; align-items: center; justify-content: center; font-size: 24px;
+            color: #fff; cursor: pointer; box-shadow: 0 10px 25px rgba(0,122,255,0.4);
+            border: 2px solid rgba(255,255,255,0.2); z-index: 100001; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .chat-fab:hover { transform: scale(1.1) translateY(-5px); box-shadow: 0 15px 35px rgba(0,122,255,0.6); }
+        .chat-fab .chat-badge {
+            position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff;
+            font-size: 10px; font-weight: 900; width: 22px; height: 22px; border-radius: 50%;
+            display: none; align-items: center; justify-content: center; border: 2px solid var(--bg-color-1);
+        }
+
+        .chat-overlay {
+            position: fixed; inset: 0; z-index: 100002; background: rgba(0,0,0,0.3); backdrop-filter: blur(5px);
+            display: none; opacity: 0; transition: opacity 0.3s;
+        }
+
+        .chat-window {
+            position: fixed; bottom: 35px; right: -850px; width: 800px; height: calc(100vh - 70px);
+            max-width: 95vw; background: var(--glass-bg); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            border: 1px solid var(--glass-border); border-radius: 28px; box-shadow: -15px 0 50px rgba(0,0,0,0.2);
+            z-index: 100003; display: flex; overflow: hidden; transition: right 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .chat-window.open { right: 35px; }
+
+        /* Sidebar de Contatos */
+        .chat-sidebar { width: 280px; border-right: 1px solid var(--glass-border); background: rgba(0,0,0,0.03); display: flex; flex-direction: column; }
+        .chat-sidebar-header { padding: 20px; border-bottom: 1px solid var(--glass-border); background: var(--stat-box); }
+        .chat-sidebar-title { font-size: 14px; font-weight: 900; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; }
+        .chat-contact-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px; }
+        
+        .chat-contact {
+            display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; cursor: pointer;
+            transition: 0.2s; border: 1px solid transparent; position: relative;
+        }
+        .chat-contact:hover { background: var(--input-bg); border-color: var(--glass-border); }
+        .chat-contact.active { background: linear-gradient(135deg, rgba(0,122,255,0.1), rgba(94,92,230,0.1)); border-color: rgba(0,122,255,0.3); }
+        .chat-contact-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #007AFF, #5E5CE6); flex-shrink: 0; position: relative; display:flex; align-items:center; justify-content:center; }
+.chat-contact-avatar img, .chat-contact-avatar svg { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        
+        /* BOLINHAS DO CONTATO */
+        .chat-online-dot { position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: #10b981; border: 2px solid var(--bg-color-1); border-radius: 50%; box-shadow: 0 0 5px rgba(16,185,129,0.5);}
+        .chat-offline-dot { background: #64748b; box-shadow: none; }
+        .chat-contact-badge {
+            position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff;
+            font-size: 9px; font-weight: 900; min-width: 18px; height: 18px; border-radius: 50%;
+            align-items: center; justify-content: center; border: 2px solid var(--bg-color-1);
+            font-family: 'JetBrains Mono', monospace; padding: 0 4px; box-sizing: border-box; z-index: 5;
+            transition: transform 0.2s; box-shadow: 0 2px 5px rgba(239,68,68,0.4);
+            /* Importante para não pegar conflito com as outras de display none do codigo base */
+            display: none; 
+        }
+        .chat-contact-badge.show { display: flex !important; }
+        
+        .chat-contact-info { flex: 1; min-width: 0; }
+        .chat-contact-name { font-size: 13px; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-contact-status { font-size: 10px; font-weight: 600; color: var(--text-muted); }
+        
+        /* Área Principal do Chat */
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: var(--stat-box); }
+        .chat-main-header { padding: 16px 24px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); }
+        .chat-active-info { display: flex; align-items: center; gap: 14px; }
+        .chat-close-btn { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 900; transition: 0.2s; }
+        .chat-close-btn:hover { background: #ef4444; color: #fff; }
+        
+        .chat-messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+        
+        /* Balões de Mensagem */
+        .chat-msg-wrap { display: flex; gap: 10px; max-width: 80%; animation: chatPopIn 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+        .chat-msg-wrap.mine { align-self: flex-end; flex-direction: row-reverse; }
+        .chat-msg-wrap.theirs { align-self: flex-start; }
+        
+        .chat-msg-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #ccc; display:flex; align-items:center; justify-content:center;}
+        .chat-msg-avatar img, .chat-msg-avatar svg { width:100%; height:100%; object-fit:cover; }
+        
+        .chat-bubble { padding: 12px 16px; border-radius: 18px; font-size: 13px; font-weight: 500; line-height: 1.5; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05);}
+        .chat-msg-wrap.mine .chat-bubble { background: linear-gradient(135deg, #007AFF, #5E5CE6); color: #fff; border-bottom-right-radius: 4px; }
+        .chat-msg-wrap.theirs .chat-bubble { background: var(--input-bg); border: 1px solid var(--glass-border); color: var(--text-main); border-bottom-left-radius: 4px; }
+        
+        .chat-msg-name { font-size: 10px; font-weight: 900; margin-bottom: 4px; opacity: 0.8; }
+        .chat-msg-time { font-size: 9px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; margin-top: 6px; text-align: right; }
+
+        /* Input Área */
+        .chat-input-area { padding: 20px 24px; border-top: 1px solid var(--glass-border); background: var(--glass-bg); display: flex; gap: 12px; align-items: flex-end; }
+        .chat-input { flex: 1; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 14px 18px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--text-main); outline: none; resize: none; max-height: 100px; min-height: 48px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); transition: 0.2s; }
+        .chat-input:focus { border-color: #007AFF; box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
+        .chat-send-btn { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #007AFF, #5E5CE6); border: none; color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 6px 15px rgba(0,122,255,0.3); transition: 0.2s; }
+        .chat-send-btn:hover { transform: scale(1.08); }
+
+        /* Typing Indicator */
+        .chat-typing { font-size: 11px; font-weight: 700; color: #007AFF; padding: 0 24px 10px; display: none; align-items: center; gap: 5px; animation: fadeIn 0.3s; }
+        .typing-dots span { display: inline-block; width: 4px; height: 4px; background: #007AFF; border-radius: 50%; animation: typingPulse 1.4s infinite ease-in-out both; }
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes chatPopIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes typingPulse { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        
+        @media(max-width: 768px) {
+            .chat-window { right: -100%; width: 100vw; height: 100vh; bottom: 0; border-radius: 0; flex-direction: column; }
+            .chat-window.open { right: 0; }
+            .chat-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--glass-border); height: 250px; flex-shrink: 0; }
+            .chat-fab { bottom: 20px; right: 20px; }
+        }
 
     </style>
 </head>
@@ -2270,15 +2381,10 @@ rx="1.5" fill="#f59e0b"/>
                     <h2 class="gerente-title">Painel de Aprovação - Reimpressões</h2>
                     <p class="gerente-sub">Aprovador: <span id="gerenteNomeAtual">--</span></p>
                 </div>
-                <div class="gerente-actions">
-                    <button class="profile-chip" id="btnPerfilGerente" onclick="abrirPerfil()">
-                        <span class="profile-chip-avatar" id="perfilChipAvatarGerente"></span>
-                        <span class="profile-chip-name" id="perfilChipNomeGerente">Perfil</span>
-                    </button>
-                    <button class="gerente-btn refresh" onclick="carregarReimpressoesGerente()">Atualizar</button>
-                    <button class="gerente-btn logout" onclick="fazerLogout()">Sair</button>
+                
                 </div>
-            </div>
+
+           
 
             <!-- ===== BOTÃO DE ANÁLISE DO GERENTE ===== -->
             <button class="btn-analytics-toggle" id="btnAnalyticsToggle" onclick="toggleAnalyticsGerente()">
@@ -2711,7 +2817,53 @@ rx="1.5" fill="#f59e0b"/>
             <button class="notif-reload-btn" onclick="recarregarNotificacoesFirebase()">↺ &nbsp; Atualizar do Servidor</button>
         </div>
     </div>
+ 
+    <button id="btnTema" class="btn-theme-floating" onclick="alternarTema()" title="Alternar Modo Imersivo">🌓</button>
+<!-- ========================================================================= -->
+    <!-- ESTRUTURA HTML DO CHAT -->
+    <!-- ========================================================================= -->
+    <button id="btnChatToggle" class="chat-fab" onclick="toggleChatWindow()">
+        💬<span class="chat-badge" id="chatUnreadBadge">0</span>
+    </button>
 
+    <div class="chat-overlay" id="chatOverlay" onclick="toggleChatWindow()"></div>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-sidebar">
+            <div class="chat-sidebar-header">
+                <div class="chat-sidebar-title">Comunicações <span style="font-size:18px;">📡</span></div>
+            </div>
+            <div class="chat-contact-list" id="chatContactList">
+                <!-- Contatos injetados via JS -->
+            </div>
+        </div>
+        <div class="chat-main">
+            <div class="chat-main-header">
+                <div class="chat-active-info" id="chatActiveHeader">
+                    <div class="chat-contact-avatar"><span class="chat-group-icon">🌍</span></div>
+                    <div>
+                        <div class="chat-contact-name" style="font-size:15px;">Grupo Global (Editores)</div>
+                        <div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div>
+                    </div>
+                </div>
+                <button class="chat-close-btn" onclick="toggleChatWindow()">✕</button>
+            </div>
+            
+            <div class="chat-messages" id="chatMessagesArea">
+                <!-- Mensagens injetadas via JS -->
+            </div>
+            
+            <div class="chat-typing" id="chatTypingIndicator">
+                <span id="chatTypingName">Alguém</span> está escrevendo <div class="typing-dots"><span></span><span></span><span></span></div>
+            </div>
+
+            <div class="chat-input-area">
+                <textarea id="chatInputMsg" class="chat-input" placeholder="Digite sua mensagem..." rows="1" oninput="handleChatTyping()" onkeydown="handleChatEnter(event)"></textarea>
+                <button class="chat-send-btn" onclick="enviarMensagemChat()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTÃO DO TEMA (AQUI É ONDE ELE JÁ ESTAVA) -->
     <button id="btnTema" class="btn-theme-floating" onclick="alternarTema()" title="Alternar Modo Imersivo">🌓</button>
 
     <script>
@@ -6735,7 +6887,474 @@ rx="1.5" fill="#f59e0b"/>
             body.innerHTML = html;
             btn.disabled = false; btn.textContent = '↺ Atualizar';
         }
+     // =========================================================================
+        // MOTOR LÓGICO DO CHAT - SPATIAL UI (COM CONTADORES INDIVIDUAIS NA FOTO)
+        // =========================================================================
+        let _chatAtivo = 'global'; 
+        let _chatOnlineUsers = {};
+        let _chatPresencaInterval = null;
+        let _chatTypingTimeout = null;
+        let _pollMsgInterval = null;
+        let _chatBgInterval = null; 
+        let _isPollingUsers = false; 
+        let _lastMsgId = null;
+        let _unreadPerChannel = JSON.parse(localStorage.getItem('chatUnreadPerChannel')) || {};
 
+        if (!window._oldAplicarPermissoes) {
+            window._oldAplicarPermissoes = aplicarPermissoesDeAcesso;
+            aplicarPermissoesDeAcesso = function() {
+                window._oldAplicarPermissoes();
+                const btnChat = document.getElementById('btnChatToggle');
+                if(btnChat) btnChat.style.display = (userRole === 'editor') ? 'flex' : 'none';
+                
+                if(userRole === 'editor') iniciarServicosChat();
+                else pararServicosChat();
+            };
+        }
+
+        function toggleChatWindow() {
+            const win = document.getElementById('chatWindow');
+            const overlay = document.getElementById('chatOverlay');
+            const isOpen = win.classList.contains('open');
+            
+            if(!isOpen) {
+                win.classList.add('open');
+                overlay.style.display = 'block';
+                setTimeout(() => overlay.style.opacity = '1', 10);
+                document.getElementById('chatUnreadBadge').style.display = 'none';
+                
+                // Ao abrir, zera os não lidos da aba que ele está abrindo por padrão (a última)
+                _unreadPerChannel[getChatChannelPath(_chatAtivo)] = 0;
+                localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
+                _recalcularBadgeGlobal();
+                
+                renderizarContatosChat();
+                carregarMensagensChat(_chatAtivo);
+                setTimeout(() => document.getElementById('chatInputMsg').focus(), 500);
+            } else {
+                win.classList.remove('open');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 300);
+                if (_pollMsgInterval) { clearInterval(_pollMsgInterval); _pollMsgInterval = null; }
+            }
+        }
+
+        async function iniciarServicosChat() {
+            if(!_usuarioAtual) return;
+            const myId = _usuarioAtual.user.replace(/\./g, '_');
+            
+            const presenceRef = `${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`;
+            const setOnline = () => fetch(presenceRef, { method: 'PATCH', body: JSON.stringify({ online: true, lastSeen: Date.now() }) });
+            await setOnline();
+            
+            if(_chatPresencaInterval) clearInterval(_chatPresencaInterval);
+            _chatPresencaInterval = setInterval(setOnline, 60000); 
+
+            if (!_isPollingUsers) {
+                _isPollingUsers = true;
+                _pollChatUsers();
+            }
+            
+            _iniciarNotificacoesBackground();
+            _recalcularBadgeGlobal();
+        }
+
+        function pararServicosChat() {
+            if(_chatPresencaInterval) clearInterval(_chatPresencaInterval);
+            if(_pollMsgInterval) clearInterval(_pollMsgInterval);
+            if(_chatBgInterval) clearInterval(_chatBgInterval);
+            _chatPresencaInterval = null; _pollMsgInterval = null; _chatBgInterval = null; _isPollingUsers = false;
+            
+            if(_usuarioAtual) {
+                const myId = _usuarioAtual.user.replace(/\./g, '_');
+                fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { method: 'PATCH', body: JSON.stringify({ online: false, lastSeen: Date.now() }) });
+            }
+        }
+
+        async function _pollChatUsers() {
+            if (!_isPollingUsers) return;
+            try {
+                const res = await fetch(`${FIREBASE_URL}/chat/users.json${AUTH}`);
+                if(res.ok) _chatOnlineUsers = await res.json() || {};
+                if(document.getElementById('chatWindow').classList.contains('open')) renderizarContatosChat();
+                
+                if(_chatAtivo && _chatOnlineUsers) {
+                    const myId = _usuarioAtual.user.replace(/\./g, '_');
+                    const isTyping = Object.entries(_chatOnlineUsers).find(([uid, data]) => uid !== myId && data.typingIn === _chatAtivo && (Date.now() - data.typingTs < 3000));
+                    const ind = document.getElementById('chatTypingIndicator');
+                    if(isTyping) {
+                        const perfil = perfilDoUsuario(isTyping[0].replace(/_/g, '.')) || { nome: isTyping[0] };
+                        document.getElementById('chatTypingName').textContent = perfil.nome;
+                        ind.style.display = 'flex';
+                    } else {
+                        ind.style.display = 'none';
+                    }
+                }
+            } catch(e){}
+            if(userRole === 'editor' && _isPollingUsers) setTimeout(_pollChatUsers, 3000);
+        }
+
+        function renderizarContatosChat() {
+            const list = document.getElementById('chatContactList');
+            if(!list || !_usuarioAtual) return;
+            const myId = _usuarioAtual.user;
+            
+            const publicUnread = _unreadPerChannel['public'] || 0;
+
+            // HTML DO GRUPO PÚBLICO
+            let html = `
+                <div class="chat-contact ${_chatAtivo === 'global' ? 'active' : ''}" onclick="mudarCanalChat('global')">
+                    <div class="chat-contact-avatar">
+                        <span class="chat-group-icon">🌍</span>
+                        <span class="chat-contact-badge ${publicUnread > 0 ? 'show' : ''}" id="chat_badge_global">${publicUnread > 9 ? '9+' : publicUnread}</span>
+                    </div>
+                    <div class="chat-contact-info">
+                        <div class="chat-contact-name">Grupo Global (Editores)</div>
+                        <div class="chat-contact-status">Canal Público</div>
+                    </div>
+                </div>
+                <div style="font-size:10px; font-weight:900; color:var(--text-muted); text-transform:uppercase; margin:15px 0 5px 10px; letter-spacing:1px;">Mensagens Privadas</div>
+            `;
+
+            // HTML DAS MENSAGENS PRIVADAS
+            Object.entries(credenciaisEditor).forEach(([uid, cred]) => {
+                if(uid === myId) return;
+                const safeUid = uid.replace(/\./g, '_');
+                const perfil = perfilDoUsuario(uid) || { avatar: 'masculino', nome: cred.nome || uid };
+                const presence = _chatOnlineUsers[safeUid] || {};
+                const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000); 
+                
+                const arr = [myId.replace(/\./g, '_'), safeUid].sort();
+                const canalStr = `private_${arr[0]}_${arr[1]}`;
+                const privUnread = _unreadPerChannel[canalStr] || 0;
+                
+                html += `
+                    <div class="chat-contact ${_chatAtivo === safeUid ? 'active' : ''}" onclick="mudarCanalChat('${safeUid}')">
+                        <div class="chat-contact-avatar">
+                            ${htmlAvatarPerfil(perfil)}
+                            <div class="chat-online-dot ${isOnline ? '' : 'chat-offline-dot'}"></div>
+                            <span class="chat-contact-badge ${privUnread > 0 ? 'show' : ''}" id="chat_badge_${safeUid}">${privUnread > 9 ? '9+' : privUnread}</span>
+                        </div>
+                        <div class="chat-contact-info">
+                            <div class="chat-contact-name">${perfil.nome}</div>
+                            <div class="chat-contact-status">${isOnline ? '<span style="color:#10b981;">Online</span>' : 'Offline'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        function getChatChannelPath(targetId) {
+            if(targetId === 'global') return 'public';
+            const myId = _usuarioAtual.user.replace(/\./g, '_');
+            const arr = [myId, targetId].sort();
+            return `private_${arr[0]}_${arr[1]}`;
+        }
+
+        async function mudarCanalChat(alvoId) {
+            _chatAtivo = alvoId;
+            
+            // Zera o contador de mensagens não lidas da pessoa em que você clicou
+            const canalPath = getChatChannelPath(alvoId);
+            _unreadPerChannel[canalPath] = 0;
+            localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
+            _recalcularBadgeGlobal();
+            
+            renderizarContatosChat(); // Isso vai redesenhar a bolinha já zerada (sumir com ela)
+            
+            const headerInfo = document.getElementById('chatActiveHeader');
+            if(alvoId === 'global') {
+                headerInfo.innerHTML = `
+                    <div class="chat-contact-avatar"><span class="chat-group-icon">🌍</span></div>
+                    <div><div class="chat-contact-name" style="font-size:15px;">Grupo Global (Editores)</div><div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div></div>
+                `;
+            } else {
+                const perfil = perfilDoUsuario(alvoId.replace(/_/g, '.')) || { nome: alvoId, avatar: 'masculino' };
+                headerInfo.innerHTML = `
+                    <div class="chat-contact-avatar">${htmlAvatarPerfil(perfil)}</div>
+                    <div><div class="chat-contact-name" style="font-size:15px;">${perfil.nome}</div><div class="chat-contact-status" id="chatHeaderStatus">Mensagem Direta</div></div>
+                `;
+            }
+            await carregarMensagensChat(alvoId);
+        }
+
+        async function carregarMensagensChat(alvoId) {
+            const area = document.getElementById('chatMessagesArea');
+            area.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px; font-weight:700;">Carregando mensagens...</div>';
+            
+            const channel = getChatChannelPath(alvoId);
+            try {
+                const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`);
+                const data = await res.json() || {};
+                
+                area.innerHTML = '';
+                if(Object.keys(data).length === 0) {
+                    area.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:12px; margin-top:auto;">Nenhuma mensagem neste chat. Diga olá! 👋</div>';
+                    _lastMsgId = null;
+                    iniciarListenerDeMensagens(channel);
+                    return;
+                }
+
+                const myId = _usuarioAtual.user.replace(/\./g, '_');
+                const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
+                
+                let html = '';
+                msgs.forEach(([id, m]) => {
+                    _lastMsgId = id; 
+                    const isMine = m.sender === myId;
+                    const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
+                    const timeStr = new Date(m.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                    
+                    html += `
+                        <div class="chat-msg-wrap ${isMine ? 'mine' : 'theirs'}">
+                            ${!isMine ? `<div class="chat-msg-avatar" title="${perfil.nome}">${htmlAvatarPerfil(perfil)}</div>` : ''}
+                            <div class="chat-bubble">
+                                ${!isMine && alvoId === 'global' ? `<div class="chat-msg-name" style="color:#007AFF;">${perfil.nome}</div>` : ''}
+                                <div>${htmlSafe(m.text).replace(/\n/g, '<br>')}</div>
+                                <div class="chat-msg-time">${timeStr}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                area.innerHTML = html;
+                area.scrollTop = area.scrollHeight;
+                iniciarListenerDeMensagens(channel); 
+            } catch(e) {
+                area.innerHTML = '<div style="text-align:center; color:#ef4444; font-size:12px;">Falha ao carregar o chat.</div>';
+            }
+        }
+
+        function iniciarListenerDeMensagens(channel) {
+            if(_pollMsgInterval) clearInterval(_pollMsgInterval);
+            _pollMsgInterval = setInterval(async () => {
+                if(!document.getElementById('chatWindow').classList.contains('open')) return;
+                try {
+                    const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json?orderBy="$key"&limitToLast=5${AUTH? '&'+AUTH.replace('?','') : ''}`);
+                    const data = await res.json() || {};
+                    const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
+                    
+                    if(msgs.length > 0) {
+                        let tocou = false;
+                        const myId = _usuarioAtual.user.replace(/\./g, '_');
+                        const area = document.getElementById('chatMessagesArea');
+                        
+                        msgs.forEach(([id, m]) => {
+                            if (_lastMsgId === null) {
+                                _lastMsgId = id; 
+                                if (m.sender !== myId) tocou = true;
+                            } else if (id > _lastMsgId) {
+                                _lastMsgId = id;
+                                if (m.sender !== myId) {
+                                    const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
+                                    const timeStr = new Date(m.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                                    
+                                    if(area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
+
+                                    area.insertAdjacentHTML('beforeend', `
+                                        <div class="chat-msg-wrap theirs">
+                                            <div class="chat-msg-avatar" title="${perfil.nome}">${htmlAvatarPerfil(perfil)}</div>
+                                            <div class="chat-bubble">
+                                                ${_chatAtivo === 'global' ? `<div class="chat-msg-name" style="color:#007AFF;">${perfil.nome}</div>` : ''}
+                                                <div>${htmlSafe(m.text).replace(/\n/g, '<br>')}</div>
+                                                <div class="chat-msg-time">${timeStr}</div>
+                                            </div>
+                                        </div>
+                                    `);
+                                    area.scrollTop = area.scrollHeight;
+                                    tocou = true;
+                                }
+                            }
+                        });
+                        
+                        if (tocou) tocarSomNotificacao();
+                    }
+                } catch(e){}
+            }, 3000);
+        }
+
+        async function enviarMensagemChat() {
+            const input = document.getElementById('chatInputMsg');
+            const text = input.value.trim();
+            if(!text || !_usuarioAtual) return;
+            
+            input.value = '';
+            input.style.height = '48px';
+            
+            const myId = _usuarioAtual.user.replace(/\./g, '_');
+            const channel = getChatChannelPath(_chatAtivo);
+            const msg = { sender: myId, text: text, ts: Date.now() };
+
+            const area = document.getElementById('chatMessagesArea');
+            if(area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
+            
+            const timeStr = new Date(msg.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+            area.insertAdjacentHTML('beforeend', `
+                <div class="chat-msg-wrap mine">
+                    <div class="chat-bubble">
+                        <div>${htmlSafe(text).replace(/\n/g, '<br>')}</div>
+                        <div class="chat-msg-time">${timeStr}</div>
+                    </div>
+                </div>
+            `);
+            area.scrollTop = area.scrollHeight;
+
+            try {
+                const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, { method: 'POST', body: JSON.stringify(msg) });
+                const pData = await res.json();
+                if(pData && pData.name) {
+                    if (_lastMsgId === null || pData.name > _lastMsgId) {
+                        _lastMsgId = pData.name;
+                    }
+                }
+            } catch(e) { }
+            
+            fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { method: 'PATCH', body: JSON.stringify({ typingIn: null }) });
+        }
+
+        function handleChatEnter(e) {
+            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagemChat(); }
+        }
+
+        function handleChatTyping() {
+            const input = document.getElementById('chatInputMsg');
+            input.style.height = 'auto'; input.style.height = (input.scrollHeight) + 'px';
+            if(!_usuarioAtual) return;
+            const myId = _usuarioAtual.user.replace(/\./g, '_');
+            fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { method: 'PATCH', body: JSON.stringify({ typingIn: _chatAtivo, typingTs: Date.now() }) });
+            
+            clearTimeout(_chatTypingTimeout);
+            _chatTypingTimeout = setTimeout(() => {
+                fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { method: 'PATCH', body: JSON.stringify({ typingIn: null }) });
+            }, 3000);
+        }
+
+        function _recalcularBadgeGlobal() {
+            const badge = document.getElementById('chatUnreadBadge');
+            if (!badge) return;
+            
+            let total = 0;
+            Object.values(_unreadPerChannel).forEach(v => total += v);
+            
+            if (total > 0 && !document.getElementById('chatWindow')?.classList.contains('open')) {
+                badge.textContent = total > 9 ? '9+' : total;
+                badge.style.display = 'flex';
+            } else if (total === 0) {
+                badge.style.display = 'none';
+                badge.textContent = '0';
+            }
+        }
+
+        function _destacarContatoNaSidebar(canalPath) {
+            const myId = _usuarioAtual.user.replace(/\./g, '_');
+            let targetId = 'global';
+            if (canalPath !== 'public') {
+                const parts = canalPath.replace('private_', '').split('_');
+                targetId = parts[0] === myId ? parts[1] : parts[0];
+            }
+            
+            const badgeEl = document.getElementById(`chat_badge_${targetId}`);
+            if (badgeEl) {
+                const count = _unreadPerChannel[canalPath] || 0;
+                if (count > 0) {
+                    badgeEl.textContent = count > 9 ? '9+' : count;
+                    badgeEl.classList.add('show');
+                    badgeEl.style.transform = 'scale(1.3)';
+                    setTimeout(() => badgeEl.style.transform = 'scale(1)', 250);
+                }
+            }
+        }
+
+        // --- Notificações com Contadores Individuais e Fundo ---
+        function _iniciarNotificacoesBackground() {
+            if (_chatBgInterval) clearInterval(_chatBgInterval);
+            
+            _chatBgInterval = setInterval(async () => {
+                if (userRole !== 'editor' || !_usuarioAtual) return;
+                
+                const isOpen = document.getElementById('chatWindow')?.classList.contains('open');
+                let lastMsgIds = JSON.parse(localStorage.getItem('chatLastMsgIds')) || {};
+                const myId = _usuarioAtual.user.replace(/\./g, '_');
+                
+                const canais = ['public'];
+                Object.keys(credenciaisEditor || {}).forEach(uid => {
+                    const safeUid = uid.replace(/\./g, '_');
+                    if (safeUid !== myId) {
+                        const arr = [myId, safeUid].sort();
+                        canais.push(`private_${arr[0]}_${arr[1]}`);
+                    }
+                });
+
+                let tocouSom = false;
+
+                await Promise.all(canais.map(async (canal) => {
+                    // Pula apenas o canal que o usuário está lendo AGORA com a janela aberta
+                    if (isOpen && getChatChannelPath(_chatAtivo) === canal) {
+                        if (_lastMsgId) {
+                            lastMsgIds[canal] = _lastMsgId;
+                            localStorage.setItem('chatLastMsgIds', JSON.stringify(lastMsgIds));
+                        }
+                        return; 
+                    }
+
+                    try {
+                        const res = await fetch(`${FIREBASE_URL}/chat/messages/${canal}.json?orderBy="$key"&limitToLast=1${AUTH ? '&'+AUTH.replace('?','') : ''}`);
+                        const data = await res.json() || {};
+                        const msgs = Object.entries(data);
+                        
+                        if (msgs.length > 0) {
+                            const id = msgs[0][0];
+                            const m = msgs[0][1];
+                            
+                            if (!lastMsgIds[canal]) {
+                                lastMsgIds[canal] = id; 
+                                if (m.sender !== myId && (Date.now() - m.ts < 180000)) {
+                                    tocouSom = true;
+                                    _unreadPerChannel[canal] = (_unreadPerChannel[canal] || 0) + 1;
+                                    _destacarContatoNaSidebar(canal);
+                                }
+                            } else if (id > lastMsgIds[canal]) {
+                                if (m.sender !== myId) {
+                                    tocouSom = true;
+                                    _unreadPerChannel[canal] = (_unreadPerChannel[canal] || 0) + 1;
+                                    _destacarContatoNaSidebar(canal);
+                                }
+                                lastMsgIds[canal] = id;
+                            }
+                        }
+                    } catch(e) {}
+                }));
+
+                if (tocouSom) {
+                    localStorage.setItem('chatLastMsgIds', JSON.stringify(lastMsgIds));
+                    localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
+                    tocarSomNotificacao();
+                    _recalcularBadgeGlobal();
+                    
+                    if (!isOpen) {
+                        const fab = document.getElementById('btnChatToggle');
+                        if(fab) {
+                            fab.style.transform = 'scale(1.15) translateY(-5px)';
+                            setTimeout(() => fab.style.transform = '', 300);
+                        }
+                    }
+                } else {
+                    localStorage.setItem('chatLastMsgIds', JSON.stringify(lastMsgIds));
+                }
+            }, 4500); 
+
+            // Reseta a bolinha vermelha geral ao clicar no botão FAB
+            document.addEventListener('click', (e) => {
+                const btnChat = document.getElementById('btnChatToggle');
+                if(btnChat && btnChat.contains(e.target)) {
+                    const badge = document.getElementById('chatUnreadBadge');
+                    if(badge) {
+                        badge.style.display = 'none';
+                        badge.textContent = '0';
+                    }
+                }
+            });
+        }
     </script>
 
 </body>
