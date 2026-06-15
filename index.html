@@ -7014,7 +7014,7 @@ rx="1.5" fill="#f59e0b"/>
                         <span class="chat-contact-badge ${publicUnread > 0 ? 'show' : ''}" id="chat_badge_global">${publicUnread > 9 ? '9+' : publicUnread}</span>
                     </div>
                     <div class="chat-contact-info">
-                        <div class="chat-contact-name">Grupo Global (Editores)</div>
+                        <div class="chat-contact-name">Grupo Talonário</div>
                         <div class="chat-contact-status">Canal Público</div>
                     </div>
                 </div>
@@ -7077,7 +7077,7 @@ rx="1.5" fill="#f59e0b"/>
             if(alvoId === 'global') {
                 headerInfo.innerHTML = `
                     <div class="chat-contact-avatar"><span class="chat-group-icon">🌍</span></div>
-                    <div><div class="chat-contact-name" style="font-size:15px;">Grupo Global (Editores)</div><div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div></div>
+                    <div><div class="chat-contact-name" style="font-size:15px;">Grupo Talonário</div><div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div></div>
                 `;
             } else {
                 const perfil = perfilDoUsuario(alvoId.replace(/_/g, '.')) || { nome: alvoId, avatar: 'masculino' };
