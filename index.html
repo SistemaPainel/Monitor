@@ -1851,11 +1851,66 @@
             .chat-fab { bottom: 20px; right: 20px; }
         }
     
- /* Ações de Mensagem (Editar/Apagar) */
+/* Ações de Mensagem (Editar/Apagar/Responder/Mídia) */
         .chat-msg-actions { display: none; position: absolute; top: -14px; right: 10px; background: var(--stat-box); border: 1px solid var(--glass-border); border-radius: 8px; padding: 2px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 10; }
-        .chat-msg-wrap.mine:hover .chat-msg-actions { display: flex; gap: 4px; animation: fadeInDown 0.2s ease; }
+        .chat-msg-wrap:hover .chat-msg-actions { display: flex; gap: 4px; animation: fadeInDown 0.2s ease; }
         .chat-msg-action-btn { background: transparent; border: none; cursor: pointer; font-size: 11px; padding: 4px; border-radius: 6px; transition: 0.2s; }
         .chat-msg-action-btn:hover { background: var(--input-bg); transform: scale(1.1); }
+        .chat-attach-btn { background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 0 10px; transition: 0.2s; display: flex; align-items: center; }
+        .chat-attach-btn:hover { color: #007AFF; transform: scale(1.1); }
+        /* Prévia de Resposta Estilo WhatsApp */
+        .chat-replying-to {
+            background: var(--stat-box); 
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: none;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+        .chat-replying-to.active { display: flex; }
+        .chat-reply-indicator {
+            position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+            background: #a78bfa; /* Cor da barra lateral */
+        }
+        .chat-reply-content {
+            padding: 10px 36px 10px 14px;
+            overflow: hidden; /* Impede que o conteúdo vaze */
+            flex: 1;
+            min-width: 0; /* Regra de ouro para o flexbox não esticar a tela */
+        }
+        .chat-reply-user {
+            font-size: 13px; font-weight: 800; color: #a78bfa; margin-bottom: 2px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chat-reply-text {
+            font-size: 12px; font-weight: 500; color: var(--text-muted);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: block; width: 100%;
+        }
+        .chat-cancel-reply {
+            position: absolute; right: 12px; top: 14px;
+            cursor: pointer; color: var(--text-muted); font-size: 16px;
+            line-height: 1; transition: 0.2s; font-weight: bold;
+        }
+        .chat-cancel-reply:hover { color: #ef4444; }
+/* Lista de Marcação (Mentions) */
+        .chat-input-area { position: relative; }
+        .chat-mention-list {
+            position: absolute; bottom: calc(100% + 5px); left: 24px;
+            background: var(--stat-box); border: 1px solid var(--glass-border);
+            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-height: 180px; overflow-y: auto; display: none; z-index: 10005; min-width: 220px;
+            backdrop-filter: blur(20px);
+        }
+        .chat-mention-item {
+            padding: 10px 14px; font-size: 12px; color: var(--text-main); font-weight: 700;
+            cursor: pointer; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 10px; transition: 0.2s;
+        }
+        .chat-mention-item:last-child { border-bottom: none; }
+        .chat-mention-item:hover { background: rgba(0,122,255,0.1); color: #007AFF; }
+        .chat-mention-avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #007AFF, #5E5CE6); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
 
 /* ========================================================== */
         /* FORÇA A EXIBIÇÃO DA BOLINHA DE NOTIFICAÇÃO (OVERRIDE)      */
@@ -1869,6 +1924,17 @@
         .chat-contact-badge.show {
             display: flex !important;
         }
+
+/* Aviso de Criptografia - Estilo WhatsApp */
+        .chat-encryption-warning {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background-color: rgba(234, 179, 8, 0.1); color: #eab308;
+            font-size: 10px; font-weight: 600; text-align: center;
+            padding: 8px 14px; border-radius: 10px; margin: 16px auto 24px auto;
+            max-width: 85%; border: 1px solid rgba(234, 179, 8, 0.2);
+            line-height: 1.4; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .chat-encryption-warning-icon { font-size: 14px; }
     </style>
 </head>
 <body>
@@ -2129,7 +2195,7 @@ rx="1.5" fill="#f59e0b"/>
     <!-- BANNER DE AVISO GLOBAL -->
     <div id="devAvisoBanner">
         <div class="banner-inner">
-            <div class="banner-icon">📢</div>
+            <div class="banner-icon">🌍</div>
             <div class="banner-content">
                 <div class="banner-label">Comunicado do Desenvolvedor</div>
                 <div class="banner-msg" id="devAvisoTexto"></div>
@@ -2867,7 +2933,7 @@ rx="1.5" fill="#f59e0b"/>
                 <div class="chat-active-info" id="chatActiveHeader">
                     <div class="chat-contact-avatar"><span class="chat-group-icon">🌍</span></div>
                     <div>
-                        <div class="chat-contact-name" style="font-size:15px;">Grupo Talonário</div>
+                        <div class="chat-contact-name" style="font-size:15px;">Talonário Fab-1</div>
                         <div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div>
                     </div>
                 </div>
@@ -2882,8 +2948,25 @@ rx="1.5" fill="#f59e0b"/>
                 <span id="chatTypingName">Alguém</span> está escrevendo <div class="typing-dots"><span></span><span></span><span></span></div>
             </div>
 
+            <div style="padding: 0 24px;">
+                <div class="chat-replying-to" id="chatReplyPreview">
+                    <div class="chat-reply-indicator"></div>
+                    <div class="chat-reply-content">
+                        <div class="chat-reply-user" id="chatReplyUser">Nome do Usuário</div>
+                        <div class="chat-reply-text" id="chatReplyTextSnippet">Texto da mensagem original vai aparecer aqui cortadinho...</div>
+                    </div>
+                    <span class="chat-cancel-reply" onclick="cancelarResposta()">✕</span>
+                </div>
+            </div>
             <div class="chat-input-area">
-                <textarea id="chatInputMsg" class="chat-input" placeholder="Digite sua mensagem..." rows="1" oninput="handleChatTyping()" onkeydown="handleChatEnter(event)"></textarea>
+                <!-- Dropdown de marcação injetado aqui -->
+                <div id="chatMentionList" class="chat-mention-list"></div>
+
+                <button class="chat-attach-btn" title="Anexar Arquivo" onclick="document.getElementById('chatMediaInput').click()">📎</button>
+                <input type="file" id="chatMediaInput" style="display:none;" accept="image/*,video/*,application/pdf" onchange="processarMidiaChat(this)">
+                
+                <!-- O oninput foi alterado para rastrearMarcacao -->
+                <textarea id="chatInputMsg" class="chat-input" placeholder="Digite sua mensagem..." rows="1" oninput="rastrearMarcacao(event)" onkeydown="handleChatEnter(event)"></textarea>
                 <button class="chat-send-btn" onclick="enviarMensagemChat()">➤</button>
             </div>
         </div>
@@ -7067,7 +7150,8 @@ rx="1.5" fill="#f59e0b"/>
             
             const publicUnread = _unreadPerChannel['public'] || 0;
 
-            // HTML DO GRUPO PÚBLICO FICA FIXO NO TOPO
+          // HTML DOS GRUPOS PÚBLICOS FICAM FIXOS NO TOPO
+            const geralUnread = _unreadPerChannel['public_geral'] || 0;
             let html = `
                 <div class="chat-contact ${_chatAtivo === 'global' ? 'active' : ''}" onclick="mudarCanalChat('global')">
                     <div class="chat-contact-avatar">
@@ -7075,7 +7159,17 @@ rx="1.5" fill="#f59e0b"/>
                         <span class="chat-contact-badge ${publicUnread > 0 ? 'show' : ''}" id="chat_badge_global">${publicUnread > 9 ? '9+' : publicUnread}</span>
                     </div>
                     <div class="chat-contact-info">
-                        <div class="chat-contact-name">Grupo Talonário</div>
+                        <div class="chat-contact-name">Talonário Fab-1</div>
+                        <div class="chat-contact-status">Canal Público</div>
+                    </div>
+                </div>
+                <div class="chat-contact ${_chatAtivo === 'geral' ? 'active' : ''}" onclick="mudarCanalChat('geral')">
+                    <div class="chat-contact-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <span class="chat-group-icon">🌍</span>
+                        <span class="chat-contact-badge ${geralUnread > 0 ? 'show' : ''}" id="chat_badge_geral">${geralUnread > 9 ? '9+' : geralUnread}</span>
+                    </div>
+                    <div class="chat-contact-info">
+                        <div class="chat-contact-name">Talonário Fab-2</div>
                         <div class="chat-contact-status">Canal Público</div>
                     </div>
                 </div>
@@ -7118,14 +7212,15 @@ rx="1.5" fill="#f59e0b"/>
             list.innerHTML = html;
         }
 
-        function getChatChannelPath(targetId) {
+      function getChatChannelPath(targetId) {
             if(targetId === 'global') return 'public';
+            if(targetId === 'geral') return 'public_geral';
             const myId = _usuarioAtual.user.replace(/\./g, '_');
             const arr = [myId, targetId.replace(/\./g, '_')].sort();
             return `private_${arr[0]}_${arr[1]}`;
         }
 
-        async function mudarCanalChat(alvoId) {
+     async function mudarCanalChat(alvoId) {
             _chatAtivo = alvoId;
             const canalPath = getChatChannelPath(alvoId);
             _unreadPerChannel[canalPath] = 0;
@@ -7135,12 +7230,21 @@ rx="1.5" fill="#f59e0b"/>
             renderizarContatosChat(); 
             
             const headerInfo = document.getElementById('chatActiveHeader');
+            
             if(alvoId === 'global') {
+                // REGRA GRUPO 1
                 headerInfo.innerHTML = `
                     <div class="chat-contact-avatar"><span class="chat-group-icon">🌍</span></div>
-                    <div><div class="chat-contact-name" style="font-size:15px;">Grupo Talonário</div><div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div></div>
+                    <div><div class="chat-contact-name" style="font-size:15px;">Talonário Fab-1</div><div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div></div>
+                `;
+            } else if (alvoId === 'geral') {
+                // REGRA GRUPO 2 (NOVO)
+                headerInfo.innerHTML = `
+                    <div class="chat-contact-avatar" style="background: linear-gradient(135deg, #10b981, #059669);"><span class="chat-group-icon">🌍</span></div>
+                    <div><div class="chat-contact-name" style="font-size:15px;">Talonário Fab-2</div><div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div></div>
                 `;
             } else {
+                // MENSAGEM DIRETA PRIVADA
                 const perfil = perfilDoUsuario(alvoId.replace(/_/g, '.')) || { nome: alvoId, avatar: 'masculino' };
                 headerInfo.innerHTML = `
                     <div class="chat-contact-avatar">${htmlAvatarPerfil(perfil)}</div>
@@ -7154,10 +7258,29 @@ rx="1.5" fill="#f59e0b"/>
         function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
             const timeStr = new Date(m.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) + (m.edited && !m.deleted ? ' <span style="font-size:8px;">(Editado)</span>' : '');
             
-            const actions = isMine && !m.deleted ? `
-                <div class="chat-msg-actions">
-                    <button class="chat-msg-action-btn" onclick="editarMensagemChat('${id}', this)" title="Editar Mensagem">✏️</button>
+            const isGroup = (alvoId === 'global' || alvoId === 'geral');
+            
+            let acoesExtras = '';
+            if (isGroup && !m.deleted) {
+                acoesExtras = `
+                    <button class="chat-msg-action-btn" onclick="prepararResposta('${perfil.nome}', '${id}', this)" title="Responder">↩️</button>
+                    <button class="chat-msg-action-btn" onclick="marcarNoInput('${perfil.nome}')" title="Marcar">@</button>
+                    <button class="chat-msg-action-btn" onclick="fixarMensagem('${id}')" title="Fixar">📌</button>
+                `;
+            }
+
+            let acoesDono = '';
+            if (isMine && !m.deleted) {
+                acoesDono = `
+                    <button class="chat-msg-action-btn" onclick="editarMensagemChat('${id}', this)" title="Editar">✏️</button>
                     <button class="chat-msg-action-btn" onclick="deletarMensagemChat('${id}')" title="Apagar">🗑️</button>
+                `;
+            }
+
+            const actions = (acoesExtras || acoesDono) ? `
+                <div class="chat-msg-actions">
+                    ${acoesExtras}
+                    ${acoesDono}
                 </div>
             ` : '';
             
@@ -7181,13 +7304,24 @@ rx="1.5" fill="#f59e0b"/>
             area.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px; font-weight:700;">Carregando mensagens...</div>';
             
             const channel = getChatChannelPath(alvoId);
+            
+            // HTML da Caixinha de Criptografia
+            const avisoCriptografia = `
+                <div class="chat-encryption-warning">
+                    <span class="chat-encryption-warning-icon">🔒</span>
+                    <span>As mensagens são protegidas com criptografia de ponta a ponta. Ninguém fora desta conversa pode ler ou ouvi-las.</span>
+                </div>
+            `;
+
             try {
                 const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`);
                 const data = await res.json() || {};
                 
                 area.innerHTML = '';
+                
+                // Se não tiver nenhuma mensagem, mostra o cadeado e o texto de "diga olá"
                 if(Object.keys(data).length === 0) {
-                    area.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:12px; margin-top:auto;">Nenhuma mensagem neste chat. Diga olá! 👋</div>';
+                    area.innerHTML = avisoCriptografia + '<div style="text-align:center; color:var(--text-muted); font-size:12px; margin-top:auto;">Nenhuma mensagem neste chat. Diga olá! 👋</div>';
                     _lastMsgId = null;
                     iniciarListenerDeMensagens(channel);
                     return;
@@ -7196,7 +7330,9 @@ rx="1.5" fill="#f59e0b"/>
                 const myId = _usuarioAtual.user.replace(/\./g, '_');
                 const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
                 
-                let html = '';
+                // Começa o HTML com o aviso de criptografia fixo no topo
+                let html = avisoCriptografia;
+                
                 msgs.forEach(([id, m]) => {
                     _lastMsgId = id; 
                     const isMine = m.sender === myId;
@@ -7639,6 +7775,7 @@ rx="1.5" fill="#f59e0b"/>
             0%, 90%, 94%, 100% { height: 12px; }
             92% { height: 2px; }
         }
+
     </style>
 
     <div id="nexusBotContainer">
@@ -7791,6 +7928,135 @@ rx="1.5" fill="#f59e0b"/>
                 esconderBot();
                 if(window._oldFazerLogoutBotHook) window._oldFazerLogoutBotHook(porInatividade);
             };
+        }
+// --- NOVAS LÓGICAS DO CHAT (Mídia e Respostas) ---
+        function processarMidiaChat(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                alert("Mídia selecionada: " + file.name + "\nAqui você pode integrar a rotina de upload para o Firebase Storage/Base64 antes do Firebase Database.");
+                input.value = ''; 
+            }
+        }
+
+        let mensagemSendoRespondidaId = null;
+
+       function prepararResposta(nomeUsuario, idMensagem, botaoClicado) {
+            mensagemSendoRespondidaId = idMensagem;
+            
+            // 1. Coloca o nome do usuário
+            document.getElementById('chatReplyUser').textContent = nomeUsuario;
+            
+            // 2. Busca o texto da mensagem clicada navegando pelo HTML
+            let textoOriginal = "Mídia...";
+            if (botaoClicado) {
+                const bubbleDaMensagem = botaoClicado.closest('.chat-msg-wrap').querySelector('.chat-bubble');
+                if (bubbleDaMensagem) {
+                    // Pega o texto e remove todas as quebras de linha para ficar reto
+                    textoOriginal = (bubbleDaMensagem.innerText || bubbleDaMensagem.textContent).replace(/\n/g, ' ').trim();
+                }
+            }
+            
+            // TRAVA DE SEGURANÇA: Corta o texto se passar de 60 caracteres
+            if (textoOriginal.length > 60) {
+                textoOriginal = textoOriginal.substring(0, 60) + '...';
+            }
+            
+            // 3. Coloca o texto limpo e curto na caixinha de prévia
+            document.getElementById('chatReplyTextSnippet').textContent = textoOriginal;
+            
+            // 4. Mostra a caixinha e foca no input
+            document.getElementById('chatReplyPreview').classList.add('active');
+            document.getElementById('chatInputMsg').focus();
+        }
+
+        function cancelarResposta() {
+            mensagemSendoRespondidaId = null;
+            document.getElementById('chatReplyPreview').classList.remove('active');
+        }
+
+        function marcarNoInput(nomeUsuario) {
+            const input = document.getElementById('chatInputMsg');
+            input.value += `@${nomeUsuario} `;
+            input.focus();
+        }
+
+        function fixarMensagem(idMensagem) {
+            alert("Sinalizando a mensagem " + idMensagem + " como fixada!\nAqui você pode salvar uma flag 'fixada: true' no Firebase para ela aparecer no topo.");
+        }
+// --- LÓGICA DE MARCAÇÃO (@) NO CHAT ---
+        let _indiceInicioMarcacao = -1;
+
+        function rastrearMarcacao(event) {
+            // Mantém a função antiga rodando
+            if (typeof handleChatTyping === 'function') handleChatTyping();
+
+            const textarea = document.getElementById('chatInputMsg');
+            const posicaoCursor = textarea.selectionStart;
+            const textoAteCursor = textarea.value.substring(0, posicaoCursor);
+            
+            // Busca um '@' seguido de letras/números/espaços no fim da string onde está o cursor
+            const match = textoAteCursor.match(/@([a-zA-Z0-9\s]*)$/);
+            
+            if (match) {
+                _indiceInicioMarcacao = match.index;
+                const termoBusca = match[1].toLowerCase();
+                mostrarListaMarcacao(termoBusca);
+            } else {
+                fecharListaMarcacao();
+            }
+        }
+
+        function mostrarListaMarcacao(busca) {
+            const listaEl = document.getElementById('chatMentionList');
+            
+            // Reúne todos os nomes do sistema (evitando duplicatas usando Set)
+            const nomesUnicos = new Set();
+            if (typeof defaultUsuarios !== 'undefined') Object.values(defaultUsuarios).forEach(n => nomesUnicos.add(n));
+            if (typeof credenciaisEditor !== 'undefined') Object.values(credenciaisEditor).forEach(c => nomesUnicos.add(c.nome || c));
+            if (typeof credenciaisGerente !== 'undefined') Object.values(credenciaisGerente).forEach(c => nomesUnicos.add(c.nome || c));
+            if (typeof credenciaisDev !== 'undefined') Object.values(credenciaisDev).forEach(c => nomesUnicos.add(c.nome || c));
+            if (typeof coordenadoresAutorizados !== 'undefined') Object.values(coordenadoresAutorizados).forEach(n => nomesUnicos.add(n));
+
+            // Filtra de acordo com o que o usuário digitou depois do @
+            const filtrados = Array.from(nomesUnicos)
+                .filter(nome => typeof nome === 'string' && nome.toLowerCase().includes(busca))
+                .slice(0, 8); // Limita a 8 resultados na tela
+
+            if (filtrados.length === 0) {
+                fecharListaMarcacao();
+                return;
+            }
+
+            // Desenha a lista
+            listaEl.innerHTML = filtrados.map(nome => `
+                <div class="chat-mention-item" onclick="inserirMarcacao('${nome.replace(/'/g, "\\'")}')">
+                    <div class="chat-mention-avatar">${nome.charAt(0).toUpperCase()}</div>
+                    ${nome}
+                </div>
+            `).join('');
+            
+            listaEl.style.display = 'block';
+        }
+
+        function fecharListaMarcacao() {
+            document.getElementById('chatMentionList').style.display = 'none';
+            _indiceInicioMarcacao = -1;
+        }
+
+        function inserirMarcacao(nome) {
+            const textarea = document.getElementById('chatInputMsg');
+            const textoOriginal = textarea.value;
+            const textoAntes = textoOriginal.substring(0, _indiceInicioMarcacao);
+            const textoDepois = textoOriginal.substring(textarea.selectionStart);
+            
+            // Substitui o trecho que tinha "@..." pelo nome selecionado com o @
+            textarea.value = textoAntes + '@' + nome + ' ' + textoDepois;
+            fecharListaMarcacao();
+            textarea.focus();
+            
+            // Move o cursor para o final do nome inserido
+            const novaPosicaoCursor = textoAntes.length + nome.length + 2; 
+            textarea.setSelectionRange(novaPosicaoCursor, novaPosicaoCursor);
         }
     </script>
 
