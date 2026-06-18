@@ -2979,7 +2979,7 @@ rx="1.5" fill="#f59e0b"/>
         // =========================================================================
         // CREDENCIAIS DO FIREBASE - COLE AQUI (Sem a barra / no final do URL)
         // =========================================================================
-        const FIREBASE_URL = "https://monitor-6e6bb-default-rtdb.firebaseio.com";
+        const FIREBASE_URL = "https://monitor-2-c0e10-default-rtdb.firebaseio.com";
         const FIREBASE_SECRET = "";
         const AUTH = FIREBASE_SECRET && !/^https?:\/\//i.test(FIREBASE_SECRET) ? `?auth=${encodeURIComponent(FIREBASE_SECRET)}` : "";
         // =========================================================================
@@ -7255,7 +7255,7 @@ rx="1.5" fill="#f59e0b"/>
         }
 
         // --- RENDERIZADOR UNIVERSAL DE MENSAGENS ---
-        // --- FUNÇÃO PARA ABRIR IMAGEM COM SEGURANÇA EM NOVA GUIA ---
+      // --- FUNÇÕES PARA ABRIR IMAGEM COM SEGURANÇA EM NOVA GUIA ---
         window.abrirImagemChat = function(srcBase64) {
             const novaGuia = window.open('');
             novaGuia.document.write(`
@@ -7263,6 +7263,39 @@ rx="1.5" fill="#f59e0b"/>
                     <head><title>Visualizador de Imagem - Monitor</title></head>
                     <body style="margin:0; background-color:#09090b; display:flex; align-items:center; justify-content:center; height:100vh;">
                         <img src="${srcBase64}" style="max-width:100%; max-height:100%; object-fit:contain; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                    </body>
+                </html>
+            `);
+            novaGuia.document.close();
+        };
+
+        window.abrirImagemChatNova = function(mediaId, thumbBase64) {
+            const novaGuia = window.open('');
+            novaGuia.document.write(`
+                <html>
+                    <head><title>Baixando Imagem...</title></head>
+                    <body style="margin:0; background-color:#09090b; display:flex; align-items:center; justify-content:center; height:100vh; flex-direction:column; font-family:sans-serif;">
+                        <img id="imgVisor" src="${thumbBase64}" style="max-width:100%; max-height:100%; object-fit:contain; filter:blur(15px); position:absolute; transition: filter 0.5s;">
+                        <div id="loader" style="z-index:10; background:rgba(0,0,0,0.8); color:#fff; padding:16px 28px; border-radius:12px; font-weight:bold; font-size:14px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); display:flex; align-items:center; gap:10px;">
+                            <span style="font-size: 20px;">⬇️</span> Baixando imagem original do cofre...
+                        </div>
+                        <script>
+                            fetch('${FIREBASE_URL}/chat/media/${mediaId}.json${AUTH}')
+                            .then(r => r.json())
+                            .then(data => {
+                                if(data && data.base64) {
+                                    document.getElementById('imgVisor').src = data.base64;
+                                    document.getElementById('imgVisor').style.filter = 'none';
+                                    document.getElementById('loader').style.display = 'none';
+                                    document.title = "Visualizador de Imagem - Monitor";
+                                } else {
+                                    document.getElementById('loader').innerHTML = '❌ Erro: Imagem não encontrada no cofre do servidor.';
+                                }
+                            })
+                            .catch(e => {
+                                document.getElementById('loader').innerHTML = '❌ Falha de conexão ao baixar a imagem.';
+                            });
+                        <\/script>
                     </body>
                 </html>
             `);
@@ -7305,9 +7338,30 @@ rx="1.5" fill="#f59e0b"/>
             let conteudoTexto = m.deleted ? '🚫 <i>Mensagem apagada</i>' : `<div class="msg-text-content" data-raw="${htmlSafe(m.text || '')}">${htmlSafe(m.text || '').replace(/\n/g, '<br>')}</div>`;
             
             let conteudoImagem = '';
-            if (m.imagemBase64 && !m.deleted) {
-                // AQUI MUDOU O ONCLICK PARA CHAMAR A NOSSA FUNÇÃO NOVA
-                conteudoImagem = `<img src="${m.imagemBase64}" style="max-width: 100%; border-radius: 8px; margin-top: 5px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onclick="window.abrirImagemChat(this.src)">`;
+            
+           if (m.thumbBase64 && m.mediaId && !m.deleted) {
+                // NOVO SISTEMA: Prévia Nítida e Compacta de Alta Performance (Estilo WhatsApp Oficial)
+                conteudoImagem = `
+                    <div style="position: relative; margin-top: 8px; cursor: pointer; border-radius: 8px; overflow: hidden; width: 220px; height: 220px; background: #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onclick="window.abrirImagemChatNova('${m.mediaId}', '${m.thumbBase64}')">
+                        
+                        <img src="${m.thumbBase64}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block;">
+                        
+                        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.15); z-index: 1;"></div>
+                        
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                            <div class="btn-download-chat-wpp" style="background: rgba(255, 255, 255, 0.9); color: #000; border-radius: 50%; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: transform 0.2s;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                            </div>
+                            <span style="color: #fff; font-size: 11px; font-weight: 800; margin-top: 6px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); letter-spacing: 0.5px;">BAIXAR HD</span>
+                        </div>
+                    </div>`;
+            } else if (m.imagemBase64 && !m.deleted) {
+                // SISTEMA ANTIGO
+                conteudoImagem = `<img src="${m.imagemBase64}" style="max-width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-top: 5px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onclick="window.abrirImagemChat(this.src)">`;
             }
 
             let replyHtml = '';
@@ -8101,7 +8155,6 @@ rx="1.5" fill="#f59e0b"/>
             if (!input.files || input.files.length === 0) return;
 
             const file = input.files[0];
-            console.log("[PASSO 2] Nome do arquivo:", file.name);
 
             if (!file.type.startsWith('image/')) {
                 alert('Por favor, selecione apenas imagens.');
@@ -8116,29 +8169,43 @@ rx="1.5" fill="#f59e0b"/>
             if (inputMsg) {
                 oldPlaceholder = inputMsg.placeholder;
                 inputMsg.value = '';
-                inputMsg.placeholder = "Enviando foto... aguarde ⏳";
+                inputMsg.placeholder = "Comprimindo arquivo... aguarde ⏳";
                 inputMsg.disabled = true;
             }
 
             try {
-                console.log("[PASSO 3] Lendo e comprimindo imagem...");
-                const base64Data = await new Promise((resolve, reject) => {
+                console.log("[PASSO 2] Gerando Miniatura e Imagem HD...");
+                
+                const imagensGeradas = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         const img = new Image();
                         img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const max = 600; 
-                            let w = img.width, h = img.height;
-
-                            if (w > max || h > max) {
-                                if (w > h) { h = Math.round(h * max / w); w = max; } 
-                                else { w = Math.round(w * max / h); h = max; }
+                            // 1. GERA A IMAGEM EM ALTA (Para ir pro Cofre - Máx 600px)
+                            const canvasFull = document.createElement('canvas');
+                            let wF = img.width, hF = img.height;
+                            if (wF > 600 || hF > 600) {
+                                if (wF > hF) { hF = Math.round(hF * 600 / wF); wF = 600; } 
+                                else { wF = Math.round(wF * 600 / hF); hF = 600; }
                             }
+                            canvasFull.width = wF; canvasFull.height = hF;
+                            canvasFull.getContext('2d').drawImage(img, 0, 0, wF, hF);
+                            const fullBase64 = canvasFull.toDataURL('image/jpeg', 0.75);
 
-                            canvas.width = w; canvas.height = h;
-                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                            resolve(canvas.toDataURL('image/jpeg', 0.7));
+                            // 2. GERA A MINIATURA EXTREMA (Para o Chat - Máx 100px)
+                            // 2. GERA A MINIATURA INTEGRADA (Nítida e Leve para o Chat - Máx 250px)
+                            const canvasThumb = document.createElement('canvas');
+                            let wT = img.width, hT = img.height;
+                            if (wT > 250 || hT > 250) {
+                                if (wT > hT) { hT = Math.round(hT * 250 / wT); wT = 250; } 
+                                else { wT = Math.round(wT * 250 / hT); hT = 250; }
+                            }
+                            canvasThumb.width = wT; canvasThumb.height = hT;
+                            canvasThumb.getContext('2d').drawImage(img, 0, 0, wT, hT);
+                            // Salvamos em JPEG com 55% de qualidade: Fica super nítido na tela, mas pesa quase nada!
+                            const thumbBase64 = canvasThumb.toDataURL('image/jpeg', 0.55); 
+
+                            resolve({ full: fullBase64, thumb: thumbBase64 });
                         };
                         img.onerror = () => reject(new Error("Erro ao gerar formato da imagem."));
                         img.src = ev.target.result;
@@ -8147,25 +8214,36 @@ rx="1.5" fill="#f59e0b"/>
                     reader.readAsDataURL(file);
                 });
 
-                console.log("[PASSO 4] Descobrindo o canal do Firebase...");
+                console.log("[PASSO 3] Enviando Imagem pesada para o cofre invisível...");
+                if (inputMsg) inputMsg.placeholder = "Guardando no cofre da nuvem... 🔒";
+
+                const mediaId = 'media_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
                 
-                // --- A MÁGICA QUE CORRIGE O ERRO DA SUA FOTO ESTÁ AQUI ---
+                const respMedia = await fetch(`${FIREBASE_URL}/chat/media/${mediaId}.json${AUTH}`, {
+                    method: 'PUT', // Usamos PUT pois já definimos a ID exata da mídia
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base64: imagensGeradas.full })
+                });
+
+                if (!respMedia.ok) throw new Error("A conexão com o Cofre falhou.");
+
+                console.log("[PASSO 4] Imagem guardada! Enviando miniatura para o chat...");
+                if (inputMsg) inputMsg.placeholder = "Desenhando balão do chat... 💬";
+
                 let channel;
                 if (typeof getChatChannelPath === 'function') {
                     channel = getChatChannelPath(_chatAtivo);
                 } else {
-                    // Se a função não existir, extrai o canal direto na marra
                     channel = typeof _chatAtivo === 'object' ? (_chatAtivo.id || _chatAtivo.telefone || "chat_desconhecido") : _chatAtivo;
                 }
                 
-                console.log("Canal identificado:", channel);
-
                 const myId = _usuarioAtual.user.replace(/\./g, '_');
 
                 const payload = {
                     sender: myId,
                     text: textoDigitado || "", 
-                    imagemBase64: base64Data, 
+                    thumbBase64: imagensGeradas.thumb, // Manda apenas a pulga pro chat
+                    mediaId: mediaId, // Salva o endereço do cofre para o clique
                     ts: Date.now()
                 };
 
@@ -8177,17 +8255,16 @@ rx="1.5" fill="#f59e0b"/>
                     if (typeof cancelarResposta === 'function') cancelarResposta();
                 }
 
-                console.log("[PASSO 5] Disparando pro banco de dados...");
-                const resp = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, {
+                const respChat = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                if (!resp.ok) throw new Error("A conexão com o banco de dados falhou.");
-                const pData = await resp.json();
+                if (!respChat.ok) throw new Error("Falha ao entregar a mensagem.");
+                const pData = await respChat.json();
                 
-                console.log("[PASSO 6] Sucesso Absoluto! ID:", pData.name);
+                console.log("[PASSO 5] Sucesso! Tudo processado.");
 
                 if (pData && pData.name) {
                     if (typeof _lastMsgId !== 'undefined') _lastMsgId = pData.name;
@@ -8206,7 +8283,7 @@ rx="1.5" fill="#f59e0b"/>
                 }
                 
             } catch (error) {
-                console.error("❌ NOVO ERRO GRAVE:", error);
+                console.error("❌ ERRO:", error);
                 alert("Erro: " + error.message);
                 if (inputMsg) inputMsg.value = textoDigitado; 
             } finally {
