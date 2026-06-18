@@ -7255,6 +7255,21 @@ rx="1.5" fill="#f59e0b"/>
         }
 
         // --- RENDERIZADOR UNIVERSAL DE MENSAGENS ---
+        // --- FUNÇÃO PARA ABRIR IMAGEM COM SEGURANÇA EM NOVA GUIA ---
+        window.abrirImagemChat = function(srcBase64) {
+            const novaGuia = window.open('');
+            novaGuia.document.write(`
+                <html>
+                    <head><title>Visualizador de Imagem - Monitor</title></head>
+                    <body style="margin:0; background-color:#09090b; display:flex; align-items:center; justify-content:center; height:100vh;">
+                        <img src="${srcBase64}" style="max-width:100%; max-height:100%; object-fit:contain; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                    </body>
+                </html>
+            `);
+            novaGuia.document.close();
+        };
+
+        // --- RENDERIZADOR UNIVERSAL DE MENSAGENS ---
         function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
             const timeStr = new Date(m.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) + (m.edited && !m.deleted ? ' <span style="font-size:8px;">(Editado)</span>' : '');
             
@@ -7285,14 +7300,35 @@ rx="1.5" fill="#f59e0b"/>
             ` : '';
             
             const deletedStyle = m.deleted ? 'opacity:0.6; font-style:italic;' : '';
+
+            // --- AQUI RENDERIZA O TEXTO, IMAGEM E RESPOSTAS ---
+            let conteudoTexto = m.deleted ? '🚫 <i>Mensagem apagada</i>' : `<div class="msg-text-content" data-raw="${htmlSafe(m.text || '')}">${htmlSafe(m.text || '').replace(/\n/g, '<br>')}</div>`;
+            
+            let conteudoImagem = '';
+            if (m.imagemBase64 && !m.deleted) {
+                // AQUI MUDOU O ONCLICK PARA CHAMAR A NOSSA FUNÇÃO NOVA
+                conteudoImagem = `<img src="${m.imagemBase64}" style="max-width: 100%; border-radius: 8px; margin-top: 5px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onclick="window.abrirImagemChat(this.src)">`;
+            }
+
+            let replyHtml = '';
+            if (m.replyTo && m.replyText && !m.deleted) {
+                replyHtml = `
+                    <div style="background: rgba(0,0,0,0.1); border-left: 3px solid #007AFF; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 10px; color: var(--text-muted);">
+                        <strong style="color: #007AFF;">${htmlSafe(m.replyTo)}</strong><br>
+                        ${htmlSafe(m.replyText)}
+                    </div>
+                `;
+            }
             
             return `
                 <div class="chat-msg-wrap ${isMine ? 'mine' : 'theirs'}" id="msg_${id}">
                     ${!isMine ? `<div class="chat-msg-avatar" title="${perfil.nome}">${htmlAvatarPerfil(perfil)}</div>` : ''}
                     <div class="chat-bubble" style="${deletedStyle}">
                         ${actions}
-                        ${!isMine && alvoId === 'global' ? `<div class="chat-msg-name" style="color:#007AFF;">${perfil.nome}</div>` : ''}
-                        <div class="msg-text-content" data-raw="${htmlSafe(m.text)}">${htmlSafe(m.text).replace(/\n/g, '<br>')}</div>
+                        ${!isMine && isGroup ? `<div class="chat-msg-name" style="color:#007AFF;">${perfil.nome}</div>` : ''}
+                        ${replyHtml}
+                        ${conteudoTexto}
+                        ${conteudoImagem}
                         <div class="chat-msg-time">${timeStr}</div>
                     </div>
                 </div>
@@ -7929,16 +7965,7 @@ rx="1.5" fill="#f59e0b"/>
                 if(window._oldFazerLogoutBotHook) window._oldFazerLogoutBotHook(porInatividade);
             };
         }
-// --- NOVAS LÓGICAS DO CHAT (Mídia e Respostas) ---
-        function processarMidiaChat(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                alert("Mídia selecionada: " + file.name + "\nAqui você pode integrar a rotina de upload para o Firebase Storage/Base64 antes do Firebase Database.");
-                input.value = ''; 
-            }
-        }
 
-        let mensagemSendoRespondidaId = null;
 
        function prepararResposta(nomeUsuario, idMensagem, botaoClicado) {
             mensagemSendoRespondidaId = idMensagem;
@@ -7985,6 +8012,7 @@ rx="1.5" fill="#f59e0b"/>
         }
 // --- LÓGICA DE MARCAÇÃO (@) NO CHAT ---
         let _indiceInicioMarcacao = -1;
+
 
         function rastrearMarcacao(event) {
             // Mantém a função antiga rodando
@@ -8059,7 +8087,139 @@ rx="1.5" fill="#f59e0b"/>
             textarea.setSelectionRange(novaPosicaoCursor, novaPosicaoCursor);
         }
     </script>
+<script>
+    window.addEventListener('load', () => {
+        let inputMidia = document.getElementById('chatMediaInput');
+        if (!inputMidia) return;
 
+        inputMidia.onchange = null; 
+
+        inputMidia.addEventListener('change', async function(e) {
+            console.log("[PASSO 1] Arquivo selecionado no PC");
+            
+            const input = e.target;
+            if (!input.files || input.files.length === 0) return;
+
+            const file = input.files[0];
+            console.log("[PASSO 2] Nome do arquivo:", file.name);
+
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor, selecione apenas imagens.');
+                input.value = '';
+                return;
+            }
+
+            const inputMsg = document.getElementById('chatInputMsg');
+            const textoDigitado = inputMsg ? inputMsg.value.trim() : '';
+            let oldPlaceholder = "Digite sua mensagem...";
+            
+            if (inputMsg) {
+                oldPlaceholder = inputMsg.placeholder;
+                inputMsg.value = '';
+                inputMsg.placeholder = "Enviando foto... aguarde ⏳";
+                inputMsg.disabled = true;
+            }
+
+            try {
+                console.log("[PASSO 3] Lendo e comprimindo imagem...");
+                const base64Data = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const max = 600; 
+                            let w = img.width, h = img.height;
+
+                            if (w > max || h > max) {
+                                if (w > h) { h = Math.round(h * max / w); w = max; } 
+                                else { w = Math.round(w * max / h); h = max; }
+                            }
+
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        };
+                        img.onerror = () => reject(new Error("Erro ao gerar formato da imagem."));
+                        img.src = ev.target.result;
+                    };
+                    reader.onerror = () => reject(new Error("O navegador não conseguiu ler o arquivo."));
+                    reader.readAsDataURL(file);
+                });
+
+                console.log("[PASSO 4] Descobrindo o canal do Firebase...");
+                
+                // --- A MÁGICA QUE CORRIGE O ERRO DA SUA FOTO ESTÁ AQUI ---
+                let channel;
+                if (typeof getChatChannelPath === 'function') {
+                    channel = getChatChannelPath(_chatAtivo);
+                } else {
+                    // Se a função não existir, extrai o canal direto na marra
+                    channel = typeof _chatAtivo === 'object' ? (_chatAtivo.id || _chatAtivo.telefone || "chat_desconhecido") : _chatAtivo;
+                }
+                
+                console.log("Canal identificado:", channel);
+
+                const myId = _usuarioAtual.user.replace(/\./g, '_');
+
+                const payload = {
+                    sender: myId,
+                    text: textoDigitado || "", 
+                    imagemBase64: base64Data, 
+                    ts: Date.now()
+                };
+
+                if (typeof mensagemSendoRespondidaId !== 'undefined' && mensagemSendoRespondidaId) {
+                    const replyUserEl = document.getElementById('chatReplyUser');
+                    const replyTextEl = document.getElementById('chatReplyTextSnippet');
+                    if (replyUserEl) payload.replyTo = replyUserEl.textContent;
+                    if (replyTextEl) payload.replyText = replyTextEl.textContent;
+                    if (typeof cancelarResposta === 'function') cancelarResposta();
+                }
+
+                console.log("[PASSO 5] Disparando pro banco de dados...");
+                const resp = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resp.ok) throw new Error("A conexão com o banco de dados falhou.");
+                const pData = await resp.json();
+                
+                console.log("[PASSO 6] Sucesso Absoluto! ID:", pData.name);
+
+                if (pData && pData.name) {
+                    if (typeof _lastMsgId !== 'undefined') _lastMsgId = pData.name;
+                    const area = document.getElementById('chatMessagesArea');
+                    
+                    let perfil = { nome: myId, avatar: 'masculino' };
+                    if (typeof perfilDoUsuario === 'function') {
+                        perfil = perfilDoUsuario(myId.replace(/_/g, '.')) || perfil;
+                    }
+                    
+                    if (area && typeof _buildMsgHtml === 'function') {
+                        if (area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
+                        area.insertAdjacentHTML('beforeend', _buildMsgHtml(pData.name, payload, true, perfil, _chatAtivo));
+                        area.scrollTop = area.scrollHeight;
+                    }
+                }
+                
+            } catch (error) {
+                console.error("❌ NOVO ERRO GRAVE:", error);
+                alert("Erro: " + error.message);
+                if (inputMsg) inputMsg.value = textoDigitado; 
+            } finally {
+                input.value = ''; 
+                if (inputMsg) {
+                    inputMsg.placeholder = oldPlaceholder;
+                    inputMsg.disabled = false;
+                    inputMsg.focus();
+                }
+            }
+        });
+    });
+    </script>
 
 </body>
 </html>
