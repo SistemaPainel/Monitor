@@ -475,8 +475,6 @@
             display: contents; /* Isso faz a cauda "sumir" e junta os últimos botões diretamente com o resto */
         }
 
-
-                }
                 .actions-tail .btn-sync,
                 .actions-tail .btn-visao-trigger,
                 .actions-tail .notif-bell-wrap,
@@ -2919,7 +2917,7 @@ rx="1.5" fill="#f59e0b"/>
     </button>
 
     <div class="chat-overlay" id="chatOverlay" onclick="toggleChatWindow()"></div>
-    <div class="chat-window" id="chatWindow">
+  <div class="chat-window" id="chatWindow">
         <div class="chat-sidebar">
             <div class="chat-sidebar-header">
                 <div class="chat-sidebar-title">Comunicações <span style="font-size:18px;">📡</span></div>
@@ -2928,7 +2926,7 @@ rx="1.5" fill="#f59e0b"/>
                 <!-- Contatos injetados via JS -->
             </div>
         </div>
-        <div class="chat-main">
+        <div class="chat-main" style="position: relative;">
             <div class="chat-main-header">
                 <div class="chat-active-info" id="chatActiveHeader">
                     <div class="chat-contact-avatar"><span class="chat-group-icon">🌍</span></div>
@@ -2937,7 +2935,12 @@ rx="1.5" fill="#f59e0b"/>
                         <div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div>
                     </div>
                 </div>
-                <button class="chat-close-btn" onclick="toggleChatWindow()">✕</button>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="chat-search-wrap" style="position: relative;">
+                        <input type="text" id="chatSearchInput" placeholder="🔍 Buscar..." oninput="filtrarMensagensChat()" style="background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 8px 14px; font-size: 11px; color: var(--text-main); font-family: 'Inter', sans-serif; outline: none; width: 140px; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                    </div>
+                    <button class="chat-close-btn" onclick="toggleChatWindow()">✕</button>
+                </div>
             </div>
             
             <div class="chat-messages" id="chatMessagesArea">
@@ -2958,22 +2961,36 @@ rx="1.5" fill="#f59e0b"/>
                     <span class="chat-cancel-reply" onclick="cancelarResposta()">✕</span>
                 </div>
             </div>
-            <div class="chat-input-area">
-                <!-- Dropdown de marcação injetado aqui -->
-                <div id="chatMentionList" class="chat-mention-list"></div>
 
-                <button class="chat-attach-btn" title="Anexar Arquivo" onclick="document.getElementById('chatMediaInput').click()">📎</button>
-                <input type="file" id="chatMediaInput" style="display:none;" accept="image/*,video/*,application/pdf" onchange="processarMidiaChat(this)">
+            <!-- PAINEL DE EMOJIS (OCULTO) -->
+            <div id="emojiPickerPanel" style="display: none; position: absolute; bottom: 85px; left: 24px; width: 320px; height: 240px; background: var(--stat-box); border: 1px solid var(--glass-border); border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 12px; z-index: 10006; overflow-y: auto; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px;">
+            </div>
+
+            <!-- ÁREA DE INPUT COM PRÉVIA EMBUTIDA (ESTILO GMAIL/WHATSAPP INLINE) -->
+            <div class="chat-input-area" style="flex-direction: column; align-items: stretch; padding: 12px 24px; gap: 8px;">
                 
-                <!-- O oninput foi alterado para rastrearMarcacao -->
-                <textarea id="chatInputMsg" class="chat-input" placeholder="Digite sua mensagem..." rows="1" oninput="rastrearMarcacao(event)" onkeydown="handleChatEnter(event)"></textarea>
-                <button class="chat-send-btn" onclick="enviarMensagemChat()">➤</button>
+                <!-- Caixa de Prévia da Imagem -->
+                <div id="chatInlineMediaPreview" style="display:none; position: relative; background: var(--stat-box); border: 1px solid var(--glass-border); border-radius: 12px; padding: 8px; width: max-content; max-width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.05); animation: chatPopIn 0.2s ease-out;">
+                    <button onclick="fecharPreviewMidia()" style="position: absolute; top: -8px; right: -8px; background: #ef4444; border: none; border-radius: 50%; width: 22px; height: 22px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 11px; transition: 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">✕</button>
+                    <img id="chatInlinePreviewImg" style="max-height: 100px; border-radius: 6px; object-fit: contain;">
+                    <div id="chatInlinePreviewName" style="font-size: 10px; color: var(--text-muted); margin-top: 6px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;">imagem.png</div>
+                </div>
+
+                <div style="display: flex; gap: 12px; align-items: flex-end; width: 100%;">
+                    <div id="chatMentionList" class="chat-mention-list"></div>
+
+                    <button class="chat-attach-btn" title="Emojis" onclick="toggleEmojiPicker('chatInputMsg')" style="font-size: 24px; opacity: 0.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">😀</button>
+
+                    <button class="chat-attach-btn" title="Anexar Arquivo" onclick="document.getElementById('chatMediaInput').click()">📎</button>
+                    <input type="file" id="chatMediaInput" style="display:none;" accept="image/*,video/*,application/pdf">
+                    
+                    <textarea id="chatInputMsg" class="chat-input" placeholder="Digite sua mensagem..." rows="1" oninput="if(typeof rastrearMarcacao === 'function') rastrearMarcacao(event)" onkeydown="if(typeof handleChatEnter === 'function') handleChatEnter(event)"></textarea>
+                    <button class="chat-send-btn" id="btnSendMain" onclick="enviarMensagemHibrida()">➤</button>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- BOTÃO DO TEMA (AQUI É ONDE ELE JÁ ESTAVA) -->
-    <button id="btnTema" class="btn-theme-floating" onclick="alternarTema()" title="Alternar Modo Imersivo">🌓</button>
+   
 
     <script>
         // =========================================================================
@@ -8140,163 +8157,651 @@ rx="1.5" fill="#f59e0b"/>
             const novaPosicaoCursor = textoAntes.length + nome.length + 2; 
             textarea.setSelectionRange(novaPosicaoCursor, novaPosicaoCursor);
         }
-    </script>
-<script>
-    window.addEventListener('load', () => {
-        let inputMidia = document.getElementById('chatMediaInput');
-        if (!inputMidia) return;
 
-        inputMidia.onchange = null; 
+// =========================================================================
+        // MOTOR DE CHAT: BUSCA, EMOJIS E MÍDIA INLINE
+        // =========================================================================
 
-        inputMidia.addEventListener('change', async function(e) {
-            console.log("[PASSO 1] Arquivo selecionado no PC");
-            
-            const input = e.target;
-            if (!input.files || input.files.length === 0) return;
+        // 1. MOTOR DE BUSCA
+        window.filtrarMensagensChat = function() {
+            var termo = document.getElementById('chatSearchInput').value.toLowerCase().trim();
+            var mensagens = document.querySelectorAll('.chat-msg-wrap');
+            mensagens.forEach(function(msg) {
+                var texto = msg.textContent.toLowerCase();
+                msg.style.display = texto.includes(termo) ? '' : 'none';
+            });
+        }
+        if (typeof mudarCanalChat === 'function') {
+            var _oldMudarCanalChatHook = mudarCanalChat;
+            window.mudarCanalChat = async function(alvoId) {
+                var searchInput = document.getElementById('chatSearchInput');
+                if(searchInput) { searchInput.value = ''; window.filtrarMensagensChat(); }
+                await _oldMudarCanalChatHook(alvoId);
+            };
+        }
 
-            const file = input.files[0];
+        // 2. MOTOR DE EMOJIS
+        var CHAT_EMOJIS = ['😀','😃','😄','😁','😆','😅','😂','🤣','🥲','☺️','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🥸','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','👍','👎','👏','🙌','👐','🤲','🤝','🙏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','💪'];
+        var activeEmojiInputId = null;
 
-            if (!file.type.startsWith('image/')) {
-                alert('Por favor, selecione apenas imagens.');
-                input.value = '';
-                return;
+        window.buildEmojiPicker = function() {
+            var panel = document.getElementById('emojiPickerPanel');
+            if (!panel) return;
+            panel.innerHTML = '';
+            CHAT_EMOJIS.forEach(function(emoji) {
+                var btn = document.createElement('button');
+                btn.textContent = emoji;
+                btn.style.cssText = 'background:transparent; border:none; font-size:24px; cursor:pointer; padding:4px; border-radius:8px; transition:0.2s; display:flex; align-items:center; justify-content:center;';
+                btn.onmouseover = function() { btn.style.background = 'rgba(0,122,255,0.15)'; };
+                btn.onmouseout = function() { btn.style.background = 'transparent'; };
+                btn.onclick = function(e) { e.preventDefault(); window.inserirEmoji(emoji); };
+                panel.appendChild(btn);
+            });
+        }
+
+        window.toggleEmojiPicker = function(inputId) {
+            var panel = document.getElementById('emojiPickerPanel');
+            if (!panel) return;
+            if (panel.style.display === 'grid' && activeEmojiInputId === inputId) {
+                panel.style.display = 'none'; activeEmojiInputId = null;
+            } else {
+                panel.style.display = 'grid'; activeEmojiInputId = inputId;
             }
+        }
 
-            const inputMsg = document.getElementById('chatInputMsg');
-            const textoDigitado = inputMsg ? inputMsg.value.trim() : '';
-            let oldPlaceholder = "Digite sua mensagem...";
+        window.inserirEmoji = function(emoji) {
+            if (!activeEmojiInputId) return;
+            var input = document.getElementById(activeEmojiInputId);
+            if (!input) return;
+            var start = input.selectionStart, end = input.selectionEnd, text = input.value;
+            input.value = text.slice(0, start) + emoji + text.slice(end);
+            input.selectionStart = input.selectionEnd = start + emoji.length;
+            input.focus();
+        }
+
+        document.addEventListener('click', function(e) {
+            var panel = document.getElementById('emojiPickerPanel');
+            if (panel && panel.style.display === 'grid' && !panel.contains(e.target) && !e.target.closest('.chat-attach-btn')) {
+                panel.style.display = 'none'; activeEmojiInputId = null;
+            }
+        });
+        window.addEventListener('load', window.buildEmojiPicker);
+
+        // 3. MÍDIA INLINE E ENVIO HÍBRIDO
+        var _arquivoMidiaPendente = null;
+
+        window.fecharPreviewMidia = function() {
+            var inlinePreview = document.getElementById('chatInlineMediaPreview');
+            if (inlinePreview) inlinePreview.style.display = 'none';
+            _arquivoMidiaPendente = null;
             
-            if (inputMsg) {
-                oldPlaceholder = inputMsg.placeholder;
-                inputMsg.value = '';
-                inputMsg.placeholder = "Comprimindo arquivo... aguarde ⏳";
+            var midiaInput = document.getElementById('chatMediaInput');
+            if (midiaInput) midiaInput.value = '';
+            
+            var chatInput = document.getElementById('chatInputMsg');
+            if (chatInput) chatInput.focus();
+            
+            var panelEmoji = document.getElementById('emojiPickerPanel');
+            if(panelEmoji) panelEmoji.style.display = 'none';
+        }
+
+        window.processarMidiaChat = function(input) {
+            if (!input.files || input.files.length === 0) return;
+            var file = input.files[0];
+            
+            if (!file.type.startsWith('image/')) { 
+                alert('Apenas imagens são suportadas nesta versão.'); 
+                input.value = ''; 
+                return; 
+            }
+            
+            _arquivoMidiaPendente = file;
+            
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                var imgEl = document.getElementById('chatInlinePreviewImg');
+                var nameEl = document.getElementById('chatInlinePreviewName');
+                var previewBox = document.getElementById('chatInlineMediaPreview');
+                var msgInput = document.getElementById('chatInputMsg');
+                
+                if(imgEl) imgEl.src = ev.target.result;
+                if(nameEl) nameEl.textContent = file.name;
+                if(previewBox) previewBox.style.display = 'block';
+                if(msgInput) msgInput.focus();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.enviarMensagemHibrida = async function() {
+            if (_arquivoMidiaPendente) { 
+                await window.confirmarEnvioMidiaChat(); 
+            } else if (typeof enviarMensagemChat === 'function') { 
+                enviarMensagemChat(); 
+            }
+        }
+
+        var _oldHandleChatEnter = window.handleChatEnter;
+        window.handleChatEnter = function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                window.enviarMensagemHibrida(); 
+            } else if (_oldHandleChatEnter) { 
+                _oldHandleChatEnter(e); 
+            }
+        };
+
+        window.confirmarEnvioMidiaChat = async function() {
+            if (!_arquivoMidiaPendente) return;
+            
+            var file = _arquivoMidiaPendente;
+            var inputMsg = document.getElementById('chatInputMsg');
+            var textoDigitado = inputMsg ? inputMsg.value.trim() : "";
+            
+            window.fecharPreviewMidia();
+            
+            var oldPlaceholder = inputMsg ? inputMsg.placeholder : "";
+            if(inputMsg) {
+                inputMsg.value = ''; 
+                inputMsg.placeholder = "Processando imagem... ⏳"; 
                 inputMsg.disabled = true;
             }
 
             try {
-                console.log("[PASSO 2] Gerando Miniatura e Imagem HD...");
-                
-                const imagensGeradas = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
+                var imagensGeradas = await new Promise((resolve, reject) => {
+                    var reader = new FileReader();
                     reader.onload = (ev) => {
-                        const img = new Image();
+                        var img = new Image();
                         img.onload = () => {
-                            // 1. GERA A IMAGEM EM ALTA (Para ir pro Cofre - Máx 600px)
-                            const canvasFull = document.createElement('canvas');
-                            let wF = img.width, hF = img.height;
-                            if (wF > 600 || hF > 600) {
+                            // 1. Full Image (600px)
+                            var canvasFull = document.createElement('canvas');
+                            var wF = img.width, hF = img.height;
+                            if (wF > 600 || hF > 600) { 
                                 if (wF > hF) { hF = Math.round(hF * 600 / wF); wF = 600; } 
-                                else { wF = Math.round(wF * 600 / hF); hF = 600; }
+                                else { wF = Math.round(wF * 600 / hF); hF = 600; } 
                             }
                             canvasFull.width = wF; canvasFull.height = hF;
                             canvasFull.getContext('2d').drawImage(img, 0, 0, wF, hF);
-                            const fullBase64 = canvasFull.toDataURL('image/jpeg', 0.75);
+                            var fullBase64 = canvasFull.toDataURL('image/jpeg', 0.75);
 
-                            // 2. GERA A MINIATURA EXTREMA (Para o Chat - Máx 100px)
-                            // 2. GERA A MINIATURA INTEGRADA (Nítida e Leve para o Chat - Máx 250px)
-                            const canvasThumb = document.createElement('canvas');
-                            let wT = img.width, hT = img.height;
-                            if (wT > 250 || hT > 250) {
+                            // 2. Thumb Image (250px)
+                            var canvasThumb = document.createElement('canvas');
+                            var wT = img.width, hT = img.height;
+                            if (wT > 250 || hT > 250) { 
                                 if (wT > hT) { hT = Math.round(hT * 250 / wT); wT = 250; } 
-                                else { wT = Math.round(wT * 250 / hT); hT = 250; }
+                                else { wT = Math.round(wT * 250 / hT); hT = 250; } 
                             }
                             canvasThumb.width = wT; canvasThumb.height = hT;
                             canvasThumb.getContext('2d').drawImage(img, 0, 0, wT, hT);
-                            // Salvamos em JPEG com 55% de qualidade: Fica super nítido na tela, mas pesa quase nada!
-                            const thumbBase64 = canvasThumb.toDataURL('image/jpeg', 0.55); 
-
+                            var thumbBase64 = canvasThumb.toDataURL('image/jpeg', 0.55); 
+                            
                             resolve({ full: fullBase64, thumb: thumbBase64 });
                         };
-                        img.onerror = () => reject(new Error("Erro ao gerar formato da imagem."));
+                        img.onerror = () => reject(new Error("Erro ao decodificar a imagem."));
                         img.src = ev.target.result;
                     };
-                    reader.onerror = () => reject(new Error("O navegador não conseguiu ler o arquivo."));
                     reader.readAsDataURL(file);
                 });
 
-                console.log("[PASSO 3] Enviando Imagem pesada para o cofre invisível...");
-                if (inputMsg) inputMsg.placeholder = "Guardando no cofre da nuvem... 🔒";
-
-                const mediaId = 'media_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                if(inputMsg) inputMsg.placeholder = "Enviando pro servidor... ☁️";
+                var mediaId = 'media_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
                 
-                const respMedia = await fetch(`${FIREBASE_URL}/chat/media/${mediaId}.json${AUTH}`, {
-                    method: 'PUT', // Usamos PUT pois já definimos a ID exata da mídia
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ base64: imagensGeradas.full })
+                var respMedia = await fetch(`${FIREBASE_URL}/chat/media/${mediaId}.json${AUTH}`, { 
+                    method: 'PUT', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ base64: imagensGeradas.full }) 
                 });
-
-                if (!respMedia.ok) throw new Error("A conexão com o Cofre falhou.");
-
-                console.log("[PASSO 4] Imagem guardada! Enviando miniatura para o chat...");
-                if (inputMsg) inputMsg.placeholder = "Desenhando balão do chat... 💬";
-
-                let channel;
-                if (typeof getChatChannelPath === 'function') {
-                    channel = getChatChannelPath(_chatAtivo);
-                } else {
-                    channel = typeof _chatAtivo === 'object' ? (_chatAtivo.id || _chatAtivo.telefone || "chat_desconhecido") : _chatAtivo;
-                }
                 
-                const myId = _usuarioAtual.user.replace(/\./g, '_');
+                if (!respMedia.ok) throw new Error("A conexão com o servidor falhou.");
 
-                const payload = {
-                    sender: myId,
+                var channel = typeof getChatChannelPath === 'function' 
+                    ? getChatChannelPath(_chatAtivo) 
+                    : (typeof _chatAtivo === 'object' ? (_chatAtivo.id || _chatAtivo.telefone || "chat_desconhecido") : _chatAtivo);
+                var myId = _usuarioAtual.user.replace(/\./g, '_');
+
+                var payload = { 
+                    sender: myId, 
                     text: textoDigitado || "", 
-                    thumbBase64: imagensGeradas.thumb, // Manda apenas a pulga pro chat
-                    mediaId: mediaId, // Salva o endereço do cofre para o clique
-                    ts: Date.now()
+                    thumbBase64: imagensGeradas.thumb, 
+                    mediaId: mediaId, 
+                    ts: Date.now() 
                 };
 
-                if (typeof mensagemSendoRespondidaId !== 'undefined' && mensagemSendoRespondidaId) {
-                    const replyUserEl = document.getElementById('chatReplyUser');
-                    const replyTextEl = document.getElementById('chatReplyTextSnippet');
-                    if (replyUserEl) payload.replyTo = replyUserEl.textContent;
-                    if (replyTextEl) payload.replyText = replyTextEl.textContent;
+                var replyUserEl = document.getElementById('chatReplyUser');
+                if (replyUserEl && replyUserEl.closest('.chat-replying-to') && replyUserEl.closest('.chat-replying-to').classList.contains('active')) {
+                    payload.replyTo = replyUserEl.textContent; 
+                    payload.replyText = document.getElementById('chatReplyTextSnippet').textContent;
                     if (typeof cancelarResposta === 'function') cancelarResposta();
                 }
 
-                const respChat = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!respChat.ok) throw new Error("Falha ao entregar a mensagem.");
-                const pData = await respChat.json();
+                if(inputMsg) inputMsg.placeholder = "Enviando mensagem... 💬";
                 
-                console.log("[PASSO 5] Sucesso! Tudo processado.");
+                var respChat = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                if (!respChat.ok) throw new Error("Falha ao entregar a mensagem.");
+                var pData = await respChat.json();
 
                 if (pData && pData.name) {
                     if (typeof _lastMsgId !== 'undefined') _lastMsgId = pData.name;
-                    const area = document.getElementById('chatMessagesArea');
-                    
-                    let perfil = { nome: myId, avatar: 'masculino' };
+                    var area = document.getElementById('chatMessagesArea');
+                    var perfil = { nome: myId, avatar: 'masculino' };
                     if (typeof perfilDoUsuario === 'function') {
                         perfil = perfilDoUsuario(myId.replace(/_/g, '.')) || perfil;
                     }
-                    
                     if (area && typeof _buildMsgHtml === 'function') {
-                        if (area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
+                        if (area.innerHTML.includes('Nenhuma mensagem')) area.innerHTML = '';
                         area.insertAdjacentHTML('beforeend', _buildMsgHtml(pData.name, payload, true, perfil, _chatAtivo));
                         area.scrollTop = area.scrollHeight;
                     }
                 }
-                
             } catch (error) {
-                console.error("❌ ERRO:", error);
-                alert("Erro: " + error.message);
-                if (inputMsg) inputMsg.value = textoDigitado; 
+                console.error(error);
+                alert("Erro ao enviar: " + error.message); 
+                if(inputMsg) inputMsg.value = textoDigitado; 
             } finally {
-                input.value = ''; 
-                if (inputMsg) {
-                    inputMsg.placeholder = oldPlaceholder;
-                    inputMsg.disabled = false;
+                if(inputMsg) {
+                    inputMsg.placeholder = "Digite sua mensagem..."; 
+                    inputMsg.disabled = false; 
                     inputMsg.focus();
                 }
             }
-        });
-    });
+        }
     </script>
+<style>
+        .chat-contact { position: relative; }
+        .chat-contact-options-btn {
+            background: transparent; border: none; color: var(--text-muted);
+            font-size: 18px; cursor: pointer; padding: 2px 6px; border-radius: 6px;
+            display: none; transition: 0.2s; line-height: 1; margin-left: auto;
+            opacity: 0.7;
+        }
+        .chat-contact:hover .chat-contact-options-btn { display: block; }
+        .chat-contact-options-btn:hover { background: var(--glass-border); color: var(--text-main); opacity: 1; }
 
+        .chat-opts-menu {
+            position: absolute; background: var(--stat-box);
+            border: 1px solid var(--glass-border); border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            z-index: 100010; display: none; flex-direction: column; overflow: hidden; min-width: 170px;
+        }
+        .chat-opts-menu.open { display: flex; animation: chatPopIn 0.2s ease-out; }
+        .chat-opts-menu button {
+            background: transparent; border: none; color: var(--text-main);
+            padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 800;
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05); font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .chat-opts-menu button:last-child { border-bottom: none; }
+        .chat-opts-menu button:hover { background: rgba(0,122,255,0.1); color: #007AFF; }
+        .chat-opts-menu button.danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
+    </style>
+
+    <script>
+        // 1. Criação do Menu Dinâmico
+        window.abrirMenuChatOpts = function(e, canal, nome, alvoId) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            let menu = document.getElementById('chatOptsMenuGlobal');
+            if (!menu) {
+                menu = document.createElement('div');
+                menu.id = 'chatOptsMenuGlobal';
+                menu.className = 'chat-opts-menu';
+                document.getElementById('chatWindow').appendChild(menu);
+
+                document.addEventListener('click', function(ev) {
+                    if (menu && !menu.contains(ev.target) && !ev.target.classList.contains('chat-contact-options-btn')) {
+                        menu.classList.remove('open');
+                    }
+                });
+            }
+
+            const muted = JSON.parse(localStorage.getItem('chatMuted') || '{}');
+            const blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+
+            const isMuted = muted[canal];
+            const isBlocked = blocked[canal];
+
+            menu.innerHTML = `
+                <button onclick="window.toggleMuteChat('${canal}', event)">
+                    <span style="font-size:14px;">${isMuted ? '🔔' : '🔕'}</span> ${isMuted ? 'Ativar Notificações' : 'Silenciar Chat'}
+                </button>
+                <button onclick="window.toggleBlockChat('${canal}', event)">
+                    <span style="font-size:14px;">${isBlocked ? '✅' : '🚫'}</span> ${isBlocked ? 'Desbloquear Contato' : 'Bloquear Contato'}
+                </button>
+                <button class="danger" onclick="window.excluirChatInteiro('${canal}', '${nome}', event)">
+                    <span style="font-size:14px;">🗑️</span> Excluir Conversa
+                </button>
+            `;
+
+            const btnRect = e.currentTarget.getBoundingClientRect();
+            const winRect = document.getElementById('chatWindow').getBoundingClientRect();
+
+            menu.style.top = (btnRect.bottom - winRect.top + 4) + 'px';
+            if ((btnRect.right - winRect.left) > 170) {
+                 menu.style.left = (btnRect.right - winRect.left - 160) + 'px';
+                 menu.style.right = 'auto';
+            } else {
+                 menu.style.left = 'auto';
+                 menu.style.right = '10px';
+            }
+            menu.classList.add('open');
+        }
+
+        // 2. Funções de Ação do Menu (ERRO CORRIGIDO AQUI)
+        window.toggleMuteChat = function(canal, e) {
+            e.stopPropagation();
+            const muted = JSON.parse(localStorage.getItem('chatMuted') || '{}');
+            muted[canal] = !muted[canal];
+            localStorage.setItem('chatMuted', JSON.stringify(muted));
+            document.getElementById('chatOptsMenuGlobal').classList.remove('open');
+            window.renderizarContatosChat();
+        };
+
+        window.toggleBlockChat = function(canal, e) {
+            e.stopPropagation();
+            const blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+            blocked[canal] = !blocked[canal];
+            localStorage.setItem('chatBlocked', JSON.stringify(blocked));
+            document.getElementById('chatOptsMenuGlobal').classList.remove('open');
+            window.renderizarContatosChat();
+            
+            // Usando _chatAtivo diretamente em vez de window._chatAtivo
+            if (typeof _chatAtivo !== 'undefined' && getChatChannelPath(_chatAtivo) === canal) {
+                window.carregarMensagensChat(_chatAtivo);
+            }
+        };
+
+        window.excluirChatInteiro = async function(canal, nome, e) {
+            e.stopPropagation();
+            document.getElementById('chatOptsMenuGlobal').classList.remove('open');
+            
+            if(!await customConfirm(`Tem certeza que deseja EXCLUIR todo o histórico com ${nome}?\nIsso apagará a conversa do Banco de Dados para todos.`, 'Excluir Definitivamente', 'Cancelar')) return;
+            
+            try {
+                // DELETE real no Firebase
+                await fetch(`${FIREBASE_URL}/chat/messages/${canal}.json${AUTH}`, { method: 'DELETE' });
+                
+                // Limpa o histórico local
+                if (typeof _chatLastActivity !== 'undefined') {
+                    delete _chatLastActivity[canal];
+                    localStorage.setItem('chatLastActivity', JSON.stringify(_chatLastActivity));
+                }
+                
+                // Usando _chatAtivo diretamente em vez de window._chatAtivo
+                if (typeof _chatAtivo !== 'undefined' && getChatChannelPath(_chatAtivo) === canal) {
+                    document.getElementById('chatMessagesArea').innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:12px; margin-top:auto;">Nenhuma mensagem neste chat. Diga olá! 👋</div>';
+                }
+                window.renderizarContatosChat();
+            } catch(error) {
+                alert("Erro ao excluir chat do banco: " + error.message);
+            }
+        };
+
+        // 3. Sobrescreve a renderização da Sidebar
+        window.renderizarContatosChat = function() {
+            const list = document.getElementById('chatContactList');
+            if(!list || !_usuarioAtual) return;
+            const myId = _usuarioAtual.user;
+
+            const publicUnread = _unreadPerChannel['public'] || 0;
+            const geralUnread = _unreadPerChannel['public_geral'] || 0;
+            
+            const muted = JSON.parse(localStorage.getItem('chatMuted') || '{}');
+            const blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+
+            let html = `
+                <div class="chat-contact ${_chatAtivo === 'global' ? 'active' : ''}" onclick="mudarCanalChat('global')">
+                    <div class="chat-contact-avatar">
+                        <span class="chat-group-icon">🌍</span>
+                        <span class="chat-contact-badge ${publicUnread > 0 ? 'show' : ''}" id="chat_badge_global">${publicUnread > 9 ? '9+' : publicUnread}</span>
+                    </div>
+                    <div class="chat-contact-info">
+                        <div class="chat-contact-name">${muted['public'] ? '🔕 ' : ''}Talonário Fab-1</div>
+                        <div class="chat-contact-status">Canal Público</div>
+                    </div>
+                    <button class="chat-contact-options-btn" onclick="abrirMenuChatOpts(event, 'public', 'Talonário Fab-1', 'global')">⋮</button>
+                </div>
+                <div class="chat-contact ${_chatAtivo === 'geral' ? 'active' : ''}" onclick="mudarCanalChat('geral')">
+                    <div class="chat-contact-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <span class="chat-group-icon">🌍</span>
+                        <span class="chat-contact-badge ${geralUnread > 0 ? 'show' : ''}" id="chat_badge_geral">${geralUnread > 9 ? '9+' : geralUnread}</span>
+                    </div>
+                    <div class="chat-contact-info">
+                        <div class="chat-contact-name">${muted['public_geral'] ? '🔕 ' : ''}Talonário Fab-2</div>
+                        <div class="chat-contact-status">Canal Público</div>
+                    </div>
+                    <button class="chat-contact-options-btn" onclick="abrirMenuChatOpts(event, 'public_geral', 'Talonário Fab-2', 'geral')">⋮</button>
+                </div>
+                <div style="font-size:10px; font-weight:900; color:var(--text-muted); text-transform:uppercase; margin:15px 0 5px 10px; letter-spacing:1px;">Mensagens Privadas</div>
+            `;
+
+            const contatosOrdenados = Object.entries(credenciaisEditor)
+                .filter(([uid]) => uid !== myId)
+                .map(([uid, cred]) => {
+                    const safeUid = uid.replace(/\./g, '_');
+                    const arr = [myId.replace(/\./g, '_'), safeUid].sort();
+                    const canalStr = `private_${arr[0]}_${arr[1]}`;
+                    const lastAct = (typeof _chatLastActivity !== 'undefined' ? _chatLastActivity[canalStr] : 0) || 0;
+                    return { uid, safeUid, cred, canalStr, lastAct };
+                });
+
+            contatosOrdenados.sort((a, b) => b.lastAct - a.lastAct);
+
+            contatosOrdenados.forEach(c => {
+                const perfil = perfilDoUsuario(c.uid) || { avatar: 'masculino', nome: c.cred.nome || c.uid };
+                const presence = _chatOnlineUsers[c.safeUid] || {};
+                const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000);
+                const privUnread = _unreadPerChannel[c.canalStr] || 0;
+                
+                const isBlocked = blocked[c.canalStr];
+                const isMuted = muted[c.canalStr];
+
+                html += `
+                    <div class="chat-contact ${_chatAtivo === c.safeUid ? 'active' : ''}" onclick="mudarCanalChat('${c.safeUid}')" style="${isBlocked ? 'opacity: 0.5;' : ''}">
+                        <div class="chat-contact-avatar">
+                            ${htmlAvatarPerfil(perfil)}
+                            <div class="chat-online-dot ${isOnline ? '' : 'chat-offline-dot'}"></div>
+                            <span class="chat-contact-badge ${privUnread > 0 ? 'show' : ''}" id="chat_badge_${c.safeUid}">${privUnread > 9 ? '9+' : privUnread}</span>
+                        </div>
+                        <div class="chat-contact-info">
+                            <div class="chat-contact-name">${isBlocked ? '🚫 ' : (isMuted ? '🔕 ' : '')}${perfil.nome}</div>
+                            <div class="chat-contact-status">${isOnline ? '<span style="color:#10b981;">Online</span>' : 'Offline'}</div>
+                        </div>
+                        <button class="chat-contact-options-btn" onclick="abrirMenuChatOpts(event, '${c.canalStr}', '${perfil.nome}', '${c.safeUid}')">⋮</button>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        };
+
+        // 4. Implementa as travas (Interceptadores)
+        var _originalCarregarMsgs = window.carregarMensagensChat;
+        window.carregarMensagensChat = async function(alvoId) {
+            var channel = getChatChannelPath(alvoId);
+            var blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+            if (blocked[channel]) {
+                var area = document.getElementById('chatMessagesArea');
+                area.innerHTML = '<div style="text-align:center; color:#ef4444; font-size:13px; margin-top:auto; padding: 30px;">🚫 Contato Bloqueado<br><span style="font-size:10px; color:var(--text-muted);">Você bloqueou a comunicação deste canal. Desbloqueie nas opções (⋮) para visualizar.</span></div>';
+                return;
+            }
+            if (_originalCarregarMsgs) await _originalCarregarMsgs(alvoId);
+        };
+
+        var _originalEnviarChat = window.enviarMensagemChat;
+        window.enviarMensagemChat = async function() {
+            var channel = getChatChannelPath(_chatAtivo);
+            var blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+            if (blocked[channel]) {
+                alert("🚫 Desbloqueie este contato antes de enviar mensagens.");
+                document.getElementById('chatInputMsg').value = '';
+                return;
+            }
+            if (_originalEnviarChat) _originalEnviarChat();
+        };
+
+        var _originalEnviarHibrida = window.enviarMensagemHibrida;
+        window.enviarMensagemHibrida = async function() {
+             var channel = getChatChannelPath(_chatAtivo);
+             var blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+             if (blocked[channel]) {
+                 alert("🚫 Desbloqueie este contato antes de enviar arquivos.");
+                 fecharPreviewMidia();
+                 return;
+             }
+             if (_originalEnviarHibrida) _originalEnviarHibrida();
+        };
+
+        // Aplica filtro de Mudo no Sino e Notificações (Background)
+        if (window._chatBgInterval) clearInterval(window._chatBgInterval);
+        window._iniciarNotificacoesBackground = function() {
+            if (window._chatBgInterval) clearInterval(window._chatBgInterval);
+
+            window._chatBgInterval = setInterval(async () => {
+                if (userRole !== 'editor' || !_usuarioAtual) return;
+
+                const isOpen = document.getElementById('chatWindow')?.classList.contains('open');
+                let lastMsgIds = JSON.parse(localStorage.getItem('chatLastMsgIds')) || {};
+                const myId = _usuarioAtual.user.replace(/\./g, '_');
+
+                const canais = ['public', 'public_geral'];
+                Object.keys(credenciaisEditor || {}).forEach(uid => {
+                    const safeUid = uid.replace(/\./g, '_');
+                    if (safeUid !== myId) {
+                        const arr = [myId, safeUid].sort();
+                        canais.push(`private_${arr[0]}_${arr[1]}`);
+                    }
+                });
+
+                let tocouSom = false;
+                let reordenar = false;
+
+                const muted = JSON.parse(localStorage.getItem('chatMuted') || '{}');
+                const blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+
+                await Promise.all(canais.map(async (canal) => {
+                    if (isOpen && getChatChannelPath(_chatAtivo) === canal) {
+                        if (typeof _lastMsgId !== 'undefined' && _lastMsgId) {
+                            lastMsgIds[canal] = _lastMsgId;
+                            localStorage.setItem('chatLastMsgIds', JSON.stringify(lastMsgIds));
+                        }
+                        return;
+                    }
+
+                    if (blocked[canal]) return;
+
+                    try {
+                        const res = await fetch(`${FIREBASE_URL}/chat/messages/${canal}.json?orderBy="$key"&limitToLast=1${AUTH ? '&'+AUTH.replace('?','') : ''}`);
+                        const data = await res.json() || {};
+                        const msgs = Object.entries(data);
+
+                        if (msgs.length > 0) {
+                            const id = msgs[0][0];
+                            const m = msgs[0][1];
+
+                            if (typeof _chatLastActivity !== 'undefined' && (!_chatLastActivity[canal] || m.ts > _chatLastActivity[canal])) {
+                                _chatLastActivity[canal] = m.ts;
+                                localStorage.setItem('chatLastActivity', JSON.stringify(_chatLastActivity));
+                                if (isOpen) reordenar = true;
+                            }
+
+                            if (!lastMsgIds[canal]) {
+                                lastMsgIds[canal] = id;
+                                if (m.sender !== myId && (Date.now() - m.ts < 180000)) {
+                                    if (!muted[canal]) tocouSom = true;
+                                    _unreadPerChannel[canal] = (_unreadPerChannel[canal] || 0) + 1;
+                                    _destacarContatoNaSidebar(canal);
+                                }
+                            } else if (id > lastMsgIds[canal]) {
+                                if (m.sender !== myId) {
+                                    if (!muted[canal]) tocouSom = true;
+                                    _unreadPerChannel[canal] = (_unreadPerChannel[canal] || 0) + 1;
+                                    _destacarContatoNaSidebar(canal);
+                                }
+                                lastMsgIds[canal] = id;
+                            }
+                        }
+                    } catch(e) {}
+                }));
+
+                if (reordenar && isOpen) window.renderizarContatosChat();
+
+                if (tocouSom) {
+                    localStorage.setItem('chatLastMsgIds', JSON.stringify(lastMsgIds));
+                    localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
+                    tocarSomNotificacao();
+                    if (typeof _recalcularBadgeGlobal === 'function') _recalcularBadgeGlobal();
+
+                    if (!isOpen) {
+                        const fab = document.getElementById('btnChatToggle');
+                        if(fab) {
+                            fab.style.transform = 'scale(1.15) translateY(-5px)';
+                            setTimeout(() => fab.style.transform = '', 300);
+                        }
+                    }
+                } else {
+                    localStorage.setItem('chatLastMsgIds', JSON.stringify(lastMsgIds));
+                }
+            }, 4500);
+        };
+
+        // Aplica filtro de Mudo no canal ativo (Foreground)
+        if (window._pollMsgInterval) clearInterval(window._pollMsgInterval);
+        window.iniciarListenerDeMensagens = function(channel) {
+            if (window._pollMsgInterval) clearInterval(window._pollMsgInterval);
+
+            const blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+            if (blocked[channel]) return;
+
+            window._pollMsgInterval = setInterval(async () => {
+                if(!document.getElementById('chatWindow').classList.contains('open')) return;
+                try {
+                    const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json?orderBy="$key"&limitToLast=8${AUTH? '&'+AUTH.replace('?','') : ''}`);
+                    const data = await res.json() || {};
+                    const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
+
+                    if(msgs.length > 0) {
+                        let tocou = false;
+                        const myId = _usuarioAtual.user.replace(/\./g, '_');
+                        const area = document.getElementById('chatMessagesArea');
+                        const muted = JSON.parse(localStorage.getItem('chatMuted') || '{}');
+
+                        msgs.forEach(([id, m]) => {
+                            const isMine = m.sender === myId;
+                            const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
+                            const existing = document.getElementById('msg_' + id);
+
+                            if (existing) {
+                                const textEl = existing.querySelector('.msg-text-content');
+                                if (textEl && textEl.dataset.raw !== m.text) {
+                                    existing.outerHTML = _buildMsgHtml(id, m, isMine, perfil, _chatAtivo);
+                                }
+                            }
+                            else if (typeof _lastMsgId !== 'undefined' && _lastMsgId === null) {
+                                _lastMsgId = id;
+                                if (!isMine && !muted[channel]) tocou = true;
+                            } else if (typeof _lastMsgId !== 'undefined' && id > _lastMsgId) {
+                                _lastMsgId = id;
+                                if (!isMine) {
+                                    if(area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
+                                    area.insertAdjacentHTML('beforeend', _buildMsgHtml(id, m, isMine, perfil, _chatAtivo));
+                                    area.scrollTop = area.scrollHeight;
+                                    if (!muted[channel]) tocou = true;
+                                }
+                            }
+                        });
+
+                        if (tocou && typeof tocarSomNotificacao === 'function') tocarSomNotificacao();
+                    }
+                } catch(e){}
+            }, 2500);
+        };
+        
+        window._iniciarNotificacoesBackground();
+    </script>
 </body>
 </html>
