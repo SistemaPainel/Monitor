@@ -3758,7 +3758,8 @@ rx="1.5" fill="#f59e0b"/>
             Object.entries(credenciaisEditor).forEach(([user, cred]) => {
                 const senha = (cred && typeof cred === 'object') ? cred.senha : cred;
                 const nome  = (cred && cred.nome) ? cred.nome : (defaultUsuarios[user] || user);
-                const row = _devItemRow(user, nome, `🔑 ${senha}`,
+                // SENHA OCULTA AQUI (Trocado ${senha} por ****)
+                const row = _devItemRow(user, nome, `🔑 ****`,
                     `devDelEditor('${user.replace(/'/g,"\\'")}')`, '#007AFF', user);
                 lista.appendChild(row);
             });
@@ -3793,7 +3794,7 @@ rx="1.5" fill="#f59e0b"/>
         }
 
         // ─── Gerentes ────────────────────────────────────────────────────────────
-        async function devRenderGerentes() {
+      async function devRenderGerentes() {
             const lista = document.getElementById('devGerLista');
             if (!lista) return;
             lista.innerHTML = '<p style="color:#64748b;font-size:12px;">Carregando...</p>';
@@ -3803,7 +3804,8 @@ rx="1.5" fill="#f59e0b"/>
             Object.entries(credenciaisGerente).forEach(([user, cred]) => {
                 const nome  = (cred && cred.nome)  ? cred.nome  : user;
                 const senha = (cred && cred.senha) ? cred.senha : '';
-                const row = _devItemRow(user, nome, `🔑 ${senha}`,
+                // SENHA OCULTA AQUI (Trocado ${senha} por ****)
+                const row = _devItemRow(user, nome, `🔑 ****`,
                     `devDelGerente('${user.replace(/'/g,"\\'")}')`, '#e11d48', user);
                 lista.appendChild(row);
             });
@@ -3885,7 +3887,8 @@ rx="1.5" fill="#f59e0b"/>
             for (const [user, cred] of Object.entries(credenciaisEditor)) {
                 const senha = (cred && typeof cred === 'object') ? cred.senha : cred;
                 const nome  = (cred && cred.nome) ? cred.nome : (defaultUsuarios[user] || user);
-                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">${senha}</td><td style="${tdDescStyle}">${nome}</td><td style="${tdDescStyle}">Acesso Editor – alterar status, PR manual, sincronizar dados</td></tr>`;
+                // SENHA MASCARADA NA TABELA (Trocado ${senha} por ****)
+                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">****</td><td style="${tdDescStyle}">${nome}</td><td style="${tdDescStyle}">Acesso Editor – alterar status, PR manual, sincronizar dados</td></tr>`;
             }
             html += `</table></div>`;
 
@@ -3896,7 +3899,8 @@ rx="1.5" fill="#f59e0b"/>
                 <table style="${tableStyle}">
                     <tr><th style="${thStyle}">Usuário</th><th style="${thStyle}">Senha</th><th style="${thStyle}">Nome Exibido</th><th style="${thStyle}">O que autentica</th></tr>`;
             for (const [user, cred] of Object.entries(credenciaisGerente)) {
-                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">${cred.senha}</td><td style="${tdDescStyle}">${cred.nome}</td><td style="${tdDescStyle}">Painel Gerente – aprovação de reimpressões</td></tr>`;
+                // SENHA MASCARADA NA TABELA (Trocado ${cred.senha} por ****)
+                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">****</td><td style="${tdDescStyle}">${cred.nome}</td><td style="${tdDescStyle}">Painel Gerente – aprovação de reimpressões</td></tr>`;
             }
             html += `</table></div>`;
 
@@ -3906,7 +3910,8 @@ rx="1.5" fill="#f59e0b"/>
                 <table style="${tableStyle}">
                     <tr><th style="${thStyle}">Usuário</th><th style="${thStyle}">Senha</th><th style="${thStyle}">O que autentica</th></tr>`;
             for (const [user, cred] of Object.entries(credenciaisDev)) {
-                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">${cred.senha}</td><td style="${tdDescStyle}">Painel Desenvolvedor – acesso total a todas as credenciais do sistema</td></tr>`;
+                // SENHA MASCARADA NA TABELA (Trocado ${cred.senha} por ****)
+                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">****</td><td style="${tdDescStyle}">Painel Desenvolvedor – acesso total a todas as credenciais do sistema</td></tr>`;
             }
             html += `</table></div>`;
 
