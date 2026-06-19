@@ -8969,6 +8969,319 @@ rx="1.5" fill="#f59e0b"/>
                 setTimeout(window.aplicarDestaqueMarcacoesExistentes, 100);
             };
         }
+// =========================================================================
+        // CORREÇÃO: SISTEMA DE RESPOSTAS (WHATSAPP STYLE VISUAL E ENVIO)
+        // =========================================================================
+
+        // 1. Atualiza a função de renderizar a mensagem para mostrar o bloco de resposta
+        if (typeof window._buildMsgHtml === 'function' && !window._buildMsgHtml_hooked) {
+            var originalBuildMsgHtml = window._buildMsgHtml;
+            window._buildMsgHtml = function(id, m, isMine, perfil, chatAtivo) {
+                var html = originalBuildMsgHtml(id, m, isMine, perfil, chatAtivo);
+                
+                // Se a mensagem no Firebase tem os dados de que é uma resposta
+                if (m.replyText) {
+                    // Proteção contra quebra de HTML
+                    var safeReplyUser = String(m.replyTo || 'Usuário').replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+                    var safeReplyText = String(m.replyText || '').replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+                    
+                    // Cores dinâmicas (se for você que enviou fica de um jeito, se foi o outro fica de outro)
+                    var replyColor = isMine ? 'rgba(255, 255, 255, 0.15)' : 'rgba(128, 128, 128, 0.1)';
+                    var replyBarColor = isMine ? 'rgba(255, 255, 255, 0.8)' : '#8b5cf6';
+                    var replyTextColor = isMine ? 'rgba(255, 255, 255, 0.85)' : 'var(--text-muted)';
+                    var replyNameColor = isMine ? '#ffffff' : '#8b5cf6';
+
+                    // O bloquinho visual da resposta
+                    var replyBlock = '<div style="background: ' + replyColor + '; border-left: 4px solid ' + replyBarColor + '; padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 11px; line-height: 1.3;">' +
+                                     '<strong style="color: ' + replyNameColor + '; display: block; margin-bottom: 2px; font-size: 11.5px;">' + safeReplyUser + '</strong>' +
+                                     '<span style="color: ' + replyTextColor + '; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px;">' + safeReplyText + '</span>' +
+                                     '</div>';
+                    
+                    // Injeta a caixa de resposta logo no início de dentro do balão da mensagem
+                    html = html.replace(/(<div[^>]*class="[^"]*chat-bubble[^"]*"[^>]*>)/i, '$1' + replyBlock);
+                }
+                return html;
+            };
+            window._buildMsgHtml_hooked = true;
+        }
+
+        // 2. Sobrescreve o Envio de Texto para capturar a Resposta e enviar pro banco
+        window.enviarMensagemChat = async function() {
+            var inputMsg = document.getElementById('chatInputMsg');
+            var textoDigitado = inputMsg ? inputMsg.value.trim() : "";
+            if (!textoDigitado) return;
+
+            var channel = typeof getChatChannelPath === 'function' 
+                ? getChatChannelPath(window._chatAtivo) 
+                : (typeof window._chatAtivo === 'object' ? (window._chatAtivo.id || window._chatAtivo.telefone || "public") : window._chatAtivo);
+            
+            var myId = window._usuarioAtual.user.replace(/\./g, '_');
+            
+            var payload = { 
+                sender: myId, 
+                text: textoDigitado, 
+                ts: Date.now() 
+            };
+
+            // CAPTURA A RESPOSTA: Se o painel de resposta estiver aberto, pega os dados
+            var replyPanel = document.getElementById('chatReplyPreview');
+            if (replyPanel && replyPanel.classList.contains('active')) {
+                payload.replyTo = document.getElementById('chatReplyUser').textContent;
+                payload.replyText = document.getElementById('chatReplyTextSnippet').textContent;
+            }
+
+            inputMsg.disabled = true;
+            
+            try {
+                var respChat = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                if (!respChat.ok) throw new Error("Falha ao enviar a mensagem.");
+                var pData = await respChat.json();
+
+                // Limpa o painel de resposta da tela depois de enviar
+                if (typeof window.cancelarResposta === 'function') window.cancelarResposta();
+                inputMsg.value = '';
+
+                // Renderiza na tela na hora
+                if (pData && pData.name) {
+                    if (typeof window._lastMsgId !== 'undefined') window._lastMsgId = pData.name;
+                    var area = document.getElementById('chatMessagesArea');
+                    var perfil = { nome: myId, avatar: 'masculino' };
+                    if (typeof perfilDoUsuario === 'function') perfil = perfilDoUsuario(myId.replace(/_/g, '.')) || perfil;
+                    
+                    if (area && typeof window._buildMsgHtml === 'function') {
+                        if (area.innerHTML.includes('Nenhuma mensagem')) area.innerHTML = '';
+                        area.insertAdjacentHTML('beforeend', window._buildMsgHtml(pData.name, payload, true, perfil, window._chatAtivo));
+                        area.scrollTop = area.scrollHeight;
+                    }
+                }
+            } catch (error) {
+                alert("Erro ao enviar mensagem: " + error.message);
+                inputMsg.value = textoDigitado;
+            } finally {
+                inputMsg.disabled = false;
+                inputMsg.focus();
+            }
+        };
+
+        // 3. Garante que o botão de cancelar a resposta "X" funciona 100%
+        window.cancelarResposta = function() {
+            var replyPanel = document.getElementById('chatReplyPreview');
+            if (replyPanel) {
+                replyPanel.classList.remove('active');
+                replyPanel.style.display = 'none'; // Segurança extra
+            }
+            var inputMsg = document.getElementById('chatInputMsg');
+            if (inputMsg) inputMsg.focus();
+        };
+
+// =========================================================================
+        // FORÇAR BOTÕES DE AÇÃO EM TODOS OS CHATS (PÚBLICO E PRIVADO)
+        // =========================================================================
+
+        document.getElementById('chatMessagesArea').addEventListener('mouseover', function(e) {
+            var wrap = e.target.closest('.chat-msg-wrap');
+            
+            // Se passou o mouse em uma mensagem e ela ainda não tem o menu de opções
+            if (wrap && !wrap.querySelector('.chat-msg-actions')) {
+                var isMine = wrap.classList.contains('mine');
+                var nameEl = wrap.querySelector('.chat-msg-name');
+                
+                // Captura o texto do balão ignorando a hora
+                var textContent = 'Mídia';
+                var textNode = wrap.querySelector('.msg-text-content');
+                if (textNode) {
+                    textContent = textNode.textContent;
+                } else {
+                    var bubble = wrap.querySelector('.chat-bubble');
+                    if (bubble) textContent = bubble.innerText.split('\n')[0]; 
+                }
+
+                var msgId = wrap.id ? wrap.id.replace('msg_', '') : '';
+                var safeName = nameEl ? nameEl.textContent.trim().replace(/'/g, "\\'") : 'Usuário';
+                var safeText = textContent.trim().replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                
+                var actions = document.createElement('div');
+                actions.className = 'chat-msg-actions';
+                
+                // Monta os botões dinamicamente
+                var htmlBtns = '<button class="chat-msg-action-btn" title="Responder" onclick="window.prepararResposta(\'' + safeName + '\', \'' + safeText + '\')">↩️</button>';
+                
+                if (!isMine) {
+                    htmlBtns += '<button class="chat-msg-action-btn" title="Mencionar" onclick="window.marcarUsuario(\'' + safeName + '\')">@</button>';
+                }
+                
+                // Botão de fixar para todos
+                htmlBtns += '<button class="chat-msg-action-btn" title="Fixar" onclick="window.fixarMensagemChat(\'' + safeName + '\', \'' + safeText + '\')">📌</button>';
+                
+                if (isMine) {
+                    htmlBtns += '<button class="chat-msg-action-btn" title="Apagar" onclick="window.apagarMensagemChat(\'' + msgId + '\', this)">🗑️</button>';
+                }
+
+                actions.innerHTML = htmlBtns;
+                wrap.appendChild(actions); // Anexa as opções na mensagem imediatamente
+            }
+        });
+
+        // --- FUNÇÕES DE AÇÃO DOS BOTÕES ---
+
+        window.prepararResposta = function(nome, texto) {
+            var replyPanel = document.getElementById('chatReplyPreview');
+            if (replyPanel) {
+                document.getElementById('chatReplyUser').textContent = nome;
+                document.getElementById('chatReplyTextSnippet').textContent = texto;
+                replyPanel.classList.add('active');
+                replyPanel.style.display = 'flex';
+                var inputMsg = document.getElementById('chatInputMsg');
+                if (inputMsg) inputMsg.focus();
+            }
+        };
+
+        window.marcarUsuario = function(nome) {
+            var input = document.getElementById('chatInputMsg');
+            if (input) {
+                var formatNome = nome.replace(/\s+/g, '_'); // Evita quebrar a regex
+                input.value += '@' + formatNome + ' ';
+                input.focus();
+            }
+        };
+
+        window.fixarMensagemChat = function(nome, texto) {
+            var banner = document.getElementById('chatPinnedMsg');
+            if (!banner) {
+                // Cria a barra de fixados abaixo do cabeçalho do chat
+                banner = document.createElement('div');
+                banner.id = 'chatPinnedMsg';
+                banner.style.cssText = 'background: rgba(139, 92, 246, 0.15); border-bottom: 1px solid rgba(139, 92, 246, 0.3); padding: 8px 24px; font-size: 11.5px; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; z-index: 10; animation: chatPopIn 0.3s;';
+                var header = document.querySelector('.chat-main-header');
+                header.insertAdjacentElement('afterend', banner);
+            }
+            banner.innerHTML = '<div style="display:flex; align-items:center; gap:10px; overflow:hidden;"><span style="font-size:16px;">📌</span><div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><strong>' + nome + ':</strong> ' + texto + '</div></div><button onclick="this.parentElement.style.display=\'none\'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-weight:900; font-size: 14px;">✕</button>';
+            banner.style.display = 'flex';
+        };
+
+        window.apagarMensagemChat = async function(idMsg, btnEl) {
+            if (!idMsg) return;
+            if (!confirm("Deseja apagar esta mensagem permanentemente para todos?")) return;
+            
+            // Pega o canal em que o usuário está agora
+            var channel = typeof getChatChannelPath === 'function' 
+                ? getChatChannelPath(window._chatAtivo) 
+                : (typeof window._chatAtivo === 'object' ? (window._chatAtivo.id || window._chatAtivo.telefone) : window._chatAtivo);
+            
+            try {
+                // Deleta a mensagem específica do Banco de Dados
+                await fetch(`${FIREBASE_URL}/chat/messages/${channel}/${idMsg}.json${AUTH}`, { method: 'DELETE' });
+                
+                var msgWrap = btnEl.closest('.chat-msg-wrap');
+                if (msgWrap) {
+                    // Substitui a mensagem na tela local por um aviso de apagado (Igual WhatsApp)
+                    msgWrap.innerHTML = '<div class="chat-bubble" style="background: transparent; border: 1px dashed var(--glass-border); color: var(--text-muted); font-style: italic; opacity: 0.7; font-size: 11px;">🚫 Mensagem apagada</div>';
+                }
+            } catch(e) {
+                alert("Erro ao tentar apagar a mensagem da nuvem.");
+            }
+        };
+    </script>
+<!-- ========================================================================= -->
+    <!-- CORREÇÃO DE ALINHAMENTO DAS OPÇÕES DA MENSAGEM                            -->
+    <!-- ========================================================================= -->
+    <style>
+        .chat-msg-wrap {
+            position: relative !important;
+        }
+        .chat-msg-actions {
+            right: 0px !important;
+            top: -16px !important;
+            opacity: 0;
+            animation: fadeInOpts 0.2s forwards;
+        }
+        .chat-msg-wrap:hover .chat-msg-actions {
+            display: flex !important;
+            opacity: 1;
+        }
+        @keyframes fadeInOpts {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+<script>
+        window.enviarMensagemChat = async function() {
+            var inputMsg = document.getElementById('chatInputMsg');
+            var textoDigitado = inputMsg ? inputMsg.value.trim() : "";
+            if (!textoDigitado) return;
+
+            // 1. Removemos o "window." que estava quebrando, acessando a variável diretamente
+            var channel = typeof getChatChannelPath === 'function' 
+                ? getChatChannelPath(_chatAtivo) 
+                : (typeof _chatAtivo === 'object' ? (_chatAtivo.id || _chatAtivo.telefone || "public") : _chatAtivo);
+                
+            // Bloqueio de contato
+            var blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
+            if (blocked[channel]) {
+                alert("🚫 Desbloqueie este contato antes de enviar mensagens.");
+                inputMsg.value = '';
+                return;
+            }
+
+            // Removemos o "window." aqui também
+            var myId = _usuarioAtual.user.replace(/\./g, '_');
+            
+            var payload = { 
+                sender: myId, 
+                text: textoDigitado, 
+                ts: Date.now() 
+            };
+
+            // 2. CAPTURA A RESPOSTA da caixinha (se ela estiver aberta)
+            var replyPanel = document.getElementById('chatReplyPreview');
+            if (replyPanel && replyPanel.classList.contains('active')) {
+                payload.replyTo = document.getElementById('chatReplyUser').textContent;
+                payload.replyText = document.getElementById('chatReplyTextSnippet').textContent;
+            }
+
+            inputMsg.disabled = true;
+            
+            try {
+                // 3. Manda pro Firebase
+                var respChat = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                if (!respChat.ok) throw new Error("Falha ao enviar a mensagem.");
+                var pData = await respChat.json();
+
+                // Limpa a caixinha de resposta da tela
+                if (typeof window.cancelarResposta === 'function') window.cancelarResposta();
+                inputMsg.value = '';
+
+                // Desenha a mensagem instantaneamente no balão
+                if (pData && pData.name) {
+                    if (typeof _lastMsgId !== 'undefined') _lastMsgId = pData.name;
+                    var area = document.getElementById('chatMessagesArea');
+                    var perfil = { nome: myId, avatar: 'masculino' };
+                    if (typeof perfilDoUsuario === 'function') perfil = perfilDoUsuario(myId.replace(/_/g, '.')) || perfil;
+                    
+                    if (area && typeof window._buildMsgHtml === 'function') {
+                        if (area.innerHTML.includes('Nenhuma mensagem')) area.innerHTML = '';
+                        area.insertAdjacentHTML('beforeend', window._buildMsgHtml(pData.name, payload, true, perfil, _chatAtivo));
+                        area.scrollTop = area.scrollHeight;
+                    }
+                }
+            } catch (error) {
+                alert("Erro ao enviar mensagem: " + error.message);
+                inputMsg.value = textoDigitado;
+            } finally {
+                inputMsg.disabled = false;
+                inputMsg.focus();
+            }
+        };
     </script>
 </body>
 </html>
