@@ -8802,6 +8802,76 @@ rx="1.5" fill="#f59e0b"/>
         };
         
         window._iniciarNotificacoesBackground();
+
+
+// =========================================================================
+        // CORREÇÃO: LIMPEZA DE NOTIFICAÇÕES FANTASMAS (BADGES)
+        // =========================================================================
+
+        window._recalcularBadgeGlobal = function() {
+            var localUnread = JSON.parse(localStorage.getItem('chatUnreadPerChannel') || '{}');
+            var unreadMap = (typeof _unreadPerChannel !== 'undefined' && Object.keys(_unreadPerChannel).length > 0) ? _unreadPerChannel : localUnread;
+            
+            var total = 0;
+            for (var canal in unreadMap) {
+                total += (parseInt(unreadMap[canal]) || 0);
+            }
+            
+            var fabBadge = document.getElementById('chatUnreadBadge');
+            if (fabBadge) {
+                if (total > 0) {
+                    fabBadge.textContent = total > 9 ? '9+' : total;
+                    fabBadge.style.display = 'flex';
+                } else {
+                    fabBadge.style.display = 'none';
+                    fabBadge.textContent = '0';
+                }
+            }
+        };
+
+        window._zerarUnreadDoCanalAtivo = function() {
+            if (typeof _chatAtivo === 'undefined' || !_chatAtivo) return;
+            
+            var channel = typeof getChatChannelPath === 'function' 
+                ? getChatChannelPath(_chatAtivo) 
+                : (typeof _chatAtivo === 'object' ? (_chatAtivo.id || _chatAtivo.telefone || "public") : _chatAtivo);
+
+            // Zera no banco local do navegador
+            var localUnread = JSON.parse(localStorage.getItem('chatUnreadPerChannel') || '{}');
+            localUnread[channel] = 0;
+            localStorage.setItem('chatUnreadPerChannel', JSON.stringify(localUnread));
+
+            // Zera na memória ativa
+            if (typeof _unreadPerChannel !== 'undefined') {
+                _unreadPerChannel[channel] = 0;
+            }
+
+            // Atualiza as bolinhas visuais na hora
+            window._recalcularBadgeGlobal();
+            if (typeof window.renderizarContatosChat === 'function') {
+                window.renderizarContatosChat();
+            }
+        };
+
+        // Zera ao clicar no botão flutuante de abrir o chat
+        var btnChatFab = document.getElementById('btnChatToggle');
+        if (btnChatFab) {
+            btnChatFab.addEventListener('click', function() {
+                setTimeout(window._zerarUnreadDoCanalAtivo, 200);
+            });
+        }
+
+        // Zera ao trocar de canal na barra lateral
+        if (typeof window.mudarCanalChat === 'function') {
+            var _oldMudarCanalChatZero = window.mudarCanalChat;
+            window.mudarCanalChat = async function(alvoId) {
+                await _oldMudarCanalChatZero(alvoId);
+                setTimeout(window._zerarUnreadDoCanalAtivo, 200);
+            };
+        }
+
+        // Remove sujeiras ao iniciar a tela
+        setTimeout(window._recalcularBadgeGlobal, 1000);
     </script>
 </body>
 </html>
