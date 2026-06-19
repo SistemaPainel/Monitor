@@ -8873,5 +8873,102 @@ rx="1.5" fill="#f59e0b"/>
         // Remove sujeiras ao iniciar a tela
         setTimeout(window._recalcularBadgeGlobal, 1000);
     </script>
+<!-- ========================================================================= -->
+    <!-- DESTAQUE DE MARCAÇÕES (@NOME)                                             -->
+    <!-- ========================================================================= -->
+    <style>
+        /* Estilo da bolha de marcação - TEMA VERMELHO (ALERTA) */
+        .chat-mention-highlight {
+            color: #ef4444;
+            font-weight: 900;
+            background: rgba(239, 68, 68, 0.12);
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            cursor: pointer;
+            margin: 0 2px;
+        }
+        .chat-mention-highlight:hover {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: rgba(239, 68, 68, 0.6);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(239, 68, 68, 0.35);
+        }
+        
+        /* Ajuste para quando o Modo Escuro estiver ativado */
+        body.dark-mode .chat-mention-highlight {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.15);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            box-shadow: 0 4px 10px rgba(248, 113, 113, 0.15);
+        }
+        body.dark-mode .chat-mention-highlight:hover {
+            background: rgba(248, 113, 113, 0.25);
+            border-color: rgba(248, 113, 113, 0.6);
+            box-shadow: 0 6px 15px rgba(248, 113, 113, 0.35);
+        }
+    </style>
+
+    <script>
+        // 1. Função que pinta o texto (Corrigida para Nomes Compostos)
+        window.destacarMarcacoesHTML = function(textEl) {
+            if (!textEl || textEl.dataset.parsedMention === 'true') return;
+            
+            textEl.dataset.parsedMention = 'true';
+            var html = textEl.innerHTML;
+            
+            // INTELIGÊNCIA: Captura o @ + Nome + Qualquer palavra seguinte que comece com Letra Maiúscula
+            var regex = /(^|\s)(@[a-zA-ZÀ-ÿ0-9_.\-]+(?:\s[A-ZÀ-Ÿ][a-zA-ZÀ-ÿ0-9_.\-]*)*)/g;
+            
+            textEl.innerHTML = html.replace(regex, '$1<span class="chat-mention-highlight">$2</span>');
+        };
+
+        // 2. Observador: Fica olhando a área de chat em tempo real
+        var chatObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) { 
+                        var msgs = node.classList && node.classList.contains('chat-msg-wrap') 
+                                   ? [node] 
+                                   : node.querySelectorAll ? node.querySelectorAll('.chat-msg-wrap') : [];
+                        
+                        msgs.forEach(function(msgWrap) {
+                            var textEl = msgWrap.querySelector('.msg-text-content');
+                            window.destacarMarcacoesHTML(textEl);
+                        });
+                    }
+                });
+            });
+        });
+
+        // 3. Ativa o observador assim que o site carrega
+        window.addEventListener('load', function() {
+            var area = document.getElementById('chatMessagesArea');
+            if (area) {
+                chatObserver.observe(area, { childList: true, subtree: true });
+            }
+        });
+
+        // 4. Varredura para mensagens antigas ao carregar um chat da barra lateral
+        window.aplicarDestaqueMarcacoesExistentes = function() {
+            var msgs = document.querySelectorAll('.chat-msg-wrap');
+            msgs.forEach(function(msgWrap) {
+                var textEl = msgWrap.querySelector('.msg-text-content');
+                window.destacarMarcacoesHTML(textEl);
+            });
+        };
+
+        // Injeta a varredura no carregador de mensagens original
+        if (typeof window.carregarMensagensChat === 'function') {
+            var _oldCarregarMsgsParaMarcacao = window.carregarMensagensChat;
+            window.carregarMensagensChat = async function(alvoId) {
+                await _oldCarregarMsgsParaMarcacao(alvoId);
+                setTimeout(window.aplicarDestaqueMarcacoesExistentes, 100);
+            };
+        }
+    </script>
 </body>
 </html>
