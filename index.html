@@ -7313,95 +7313,109 @@ rx="1.5" fill="#f59e0b"/>
             novaGuia.document.close();
         };
 
+// --- FORMATADOR ESTILO WHATSAPP ---
+function formatarTextoWhatsApp(texto) {
+    if (!texto) return '';
+    let txt = htmlSafe(texto);
+    // Negrito (*texto*)
+    txt = txt.replace(/\*(.*?)\*/g, '<strong style="font-weight: 900;">$1</strong>');
+    // Itálico (_texto_)
+    txt = txt.replace(/_(.*?)_/g, '<em style="font-style: italic;">$1</em>');
+    // Riscado (~texto~)
+    txt = txt.replace(/~(.*?)~/g, '<del style="text-decoration: line-through; opacity: 0.8;">$1</del>');
+    // Quebras de linha
+    return txt.replace(/\n/g, '<br>');
+}
+
         // --- RENDERIZADOR UNIVERSAL DE MENSAGENS ---
-        function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
-            const dateObj = new Date(m.ts);
-const dataStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-const horaStr = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-const timeStr = dataStr + ' às ' + horaStr + (m.edited && !m.deleted ? ' <span style="font-size:8px;">(Editado)</span>' : '');
-            
-            const isGroup = (alvoId === 'global' || alvoId === 'geral');
-            
-            let acoesExtras = '';
-            if (isGroup && !m.deleted) {
-                acoesExtras = `
-                    <button class="chat-msg-action-btn" onclick="prepararResposta('${perfil.nome}', '${id}', this)" title="Responder">↩️</button>
-                    <button class="chat-msg-action-btn" onclick="marcarNoInput('${perfil.nome}')" title="Marcar">@</button>
-                    <button class="chat-msg-action-btn" onclick="fixarMensagem('${id}')" title="Fixar">📌</button>
-                `;
-            }
+        // --- RENDERIZADOR UNIVERSAL DE MENSAGENS (WHATSAPP EDITION) ---
+function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
+    const dateObj = new Date(m.ts);
+    const dataStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    const horaStr = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const tempoExibicao = `${dataStr} ${horaStr}`; // Ex: 25/06/26 14:30
+    
+    // Sistema de Ticks (✓✓)
+    // Se a mensagem for sua, mostra os ticks. Simulando "Lido" (azul) se a mensagem for mais velha que 5 segundos, ou se vier com flag real do banco.
+    let ticksHtml = '';
+    if (isMine && !m.deleted) {
+        const isLido = m.read || (Date.now() - m.ts > 5000); // Lógica visual temporária
+        const tickClass = isLido ? 'read' : 'delivered';
+        const tickIcon = isLido ? '✓✓' : '✓';
+        ticksHtml = `<span class="chat-read-ticks ${tickClass}">${tickIcon}</span>`;
+    }
 
-            let acoesDono = '';
-            if (isMine && !m.deleted) {
-                acoesDono = `
-                    <button class="chat-msg-action-btn" onclick="editarMensagemChat('${id}', this)" title="Editar">✏️</button>
-                    <button class="chat-msg-action-btn" onclick="deletarMensagemChat('${id}')" title="Apagar">🗑️</button>
-                `;
-            }
+    const timeContainer = `
+        <div class="chat-msg-time-container">
+            <span class="chat-msg-time">${tempoExibicao}${m.edited && !m.deleted ? ' (Editado)' : ''}</span>
+            ${ticksHtml}
+        </div>
+    `;
+    
+    const isGroup = (alvoId === 'global' || alvoId === 'geral');
+    
+    let acoesExtras = '';
+    if (isGroup && !m.deleted) {
+        acoesExtras = `
+            <button class="chat-msg-action-btn" onclick="prepararResposta('${perfil.nome}', '${id}', this)" title="Responder">↩️</button>
+            <button class="chat-msg-action-btn" onclick="marcarNoInput('${perfil.nome}')" title="Marcar">@</button>
+            <button class="chat-msg-action-btn" onclick="fixarMensagem('${id}')" title="Fixar">📌</button>
+        `;
+    }
 
-            const actions = (acoesExtras || acoesDono) ? `
-                <div class="chat-msg-actions">
-                    ${acoesExtras}
-                    ${acoesDono}
+    let acoesDono = '';
+    if (isMine && !m.deleted) {
+        acoesDono = `
+            <button class="chat-msg-action-btn" onclick="editarMensagemChat('${id}', this)" title="Editar">✏️</button>
+            <button class="chat-msg-action-btn" onclick="deletarMensagemChat('${id}')" title="Apagar">🗑️</button>
+        `;
+    }
+
+    const actions = (acoesExtras || acoesDono) ? `<div class="chat-msg-actions">${acoesExtras}${acoesDono}</div>` : '';
+    
+    const deletedStyle = m.deleted ? 'opacity:0.6; font-style:italic;' : '';
+
+    // Aplica a formatação do WhatsApp no texto
+    const textoFinal = formatarTextoWhatsApp(m.text || '');
+    let conteudoTexto = m.deleted ? '🚫 <i>Mensagem apagada</i>' : `<div class="msg-text-content" data-raw="${htmlSafe(m.text || '')}" style="display: inline;">${textoFinal}</div>`;
+    
+    let conteudoImagem = '';
+    if (m.thumbBase64 && m.mediaId && !m.deleted) {
+        conteudoImagem = `
+            <div style="position: relative; margin-top: 4px; margin-bottom: 4px; cursor: pointer; border-radius: 8px; overflow: hidden; width: 220px; height: 220px; background: rgba(0,0,0,0.2);" onclick="window.abrirImagemChatNova('${m.mediaId}', '${m.thumbBase64}')">
+                <img src="${m.thumbBase64}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block;">
+                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.15); z-index: 1;"></div>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                    <div class="btn-download-chat-wpp" style="background: rgba(255, 255, 255, 0.9); color: #000; border-radius: 50%; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></div>
                 </div>
-            ` : '';
-            
-            const deletedStyle = m.deleted ? 'opacity:0.6; font-style:italic;' : '';
+            </div>`;
+    }
 
-            // --- AQUI RENDERIZA O TEXTO, IMAGEM E RESPOSTAS ---
-            let conteudoTexto = m.deleted ? '🚫 <i>Mensagem apagada</i>' : `<div class="msg-text-content" data-raw="${htmlSafe(m.text || '')}">${htmlSafe(m.text || '').replace(/\n/g, '<br>')}</div>`;
-            
-            let conteudoImagem = '';
-            
-           if (m.thumbBase64 && m.mediaId && !m.deleted) {
-                // NOVO SISTEMA: Prévia Nítida e Compacta de Alta Performance (Estilo WhatsApp Oficial)
-                conteudoImagem = `
-                    <div style="position: relative; margin-top: 8px; cursor: pointer; border-radius: 8px; overflow: hidden; width: 220px; height: 220px; background: #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onclick="window.abrirImagemChatNova('${m.mediaId}', '${m.thumbBase64}')">
-                        
-                        <img src="${m.thumbBase64}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block;">
-                        
-                        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.15); z-index: 1;"></div>
-                        
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
-                            <div class="btn-download-chat-wpp" style="background: rgba(255, 255, 255, 0.9); color: #000; border-radius: 50%; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: transform 0.2s;">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                            </div>
-                            <span style="color: #fff; font-size: 11px; font-weight: 800; margin-top: 6px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); letter-spacing: 0.5px;">BAIXAR HD</span>
-                        </div>
-                    </div>`;
-            } else if (m.imagemBase64 && !m.deleted) {
-                // SISTEMA ANTIGO
-                conteudoImagem = `<img src="${m.imagemBase64}" style="max-width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-top: 5px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onclick="window.abrirImagemChat(this.src)">`;
-            }
-
-            let replyHtml = '';
-            if (m.replyTo && m.replyText && !m.deleted) {
-                replyHtml = `
-                    <div style="background: rgba(0,0,0,0.1); border-left: 3px solid #007AFF; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 10px; color: var(--text-muted);">
-                        <strong style="color: #007AFF;">${htmlSafe(m.replyTo)}</strong><br>
-                        ${htmlSafe(m.replyText)}
-                    </div>
-                `;
-            }
-            
-            return `
-                <div class="chat-msg-wrap ${isMine ? 'mine' : 'theirs'}" id="msg_${id}">
-                    ${!isMine ? `<div class="chat-msg-avatar" title="${perfil.nome}">${htmlAvatarPerfil(perfil)}</div>` : ''}
-                    <div class="chat-bubble" style="${deletedStyle}">
-                        ${actions}
-                        ${!isMine && isGroup ? `<div class="chat-msg-name" style="color:#007AFF;">${perfil.nome}</div>` : ''}
-                        ${replyHtml}
-                        ${conteudoTexto}
-                        ${conteudoImagem}
-                        <div class="chat-msg-time">${timeStr}</div>
-                    </div>
-                </div>
-            `;
-        }
+    let replyHtml = '';
+    if (m.replyTo && m.replyText && !m.deleted) {
+        replyHtml = `
+            <div style="background: rgba(0,0,0,0.2); border-left: 4px solid ${isMine ? '#53bdeb' : '#007AFF'}; padding: 4px 8px; border-radius: 6px; margin-bottom: 6px; font-size: 11px;">
+                <strong style="color: ${isMine ? '#53bdeb' : '#007AFF'};">${htmlSafe(m.replyTo)}</strong><br>
+                <span style="color: rgba(255,255,255,0.8);">${formatarTextoWhatsApp(m.replyText)}</span>
+            </div>
+        `;
+    }
+    
+    // O clearfix garante que a hora e os ticks fiquem ajustados no canto inferior direito
+    return `
+        <div class="chat-msg-wrap ${isMine ? 'mine' : 'theirs'}" id="msg_${id}">
+            <div class="chat-bubble" style="${deletedStyle}">
+                ${actions}
+                ${!isMine && isGroup ? `<div class="chat-msg-name" style="color:#53bdeb; margin-bottom:4px;">${perfil.nome}</div>` : ''}
+                ${replyHtml}
+                ${conteudoImagem}
+                ${conteudoTexto}
+                ${timeContainer}
+                <div style="clear: both;"></div>
+            </div>
+        </div>
+    `;
+}
 
         async function carregarMensagensChat(alvoId) {
             const area = document.getElementById('chatMessagesArea');
@@ -7432,7 +7446,7 @@ const timeStr = dataStr + ' às ' + horaStr + (m.edited && !m.deleted ? ' <span 
                 }
 
                 const myId = _usuarioAtual.user.replace(/\./g, '_');
-                const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
+               const msgs = Object.entries(data).sort((a,b) => a[1].ts - b[1].ts);
                 
                 // Começa o HTML com o aviso de criptografia fixo no topo
                 let html = avisoCriptografia;
@@ -7459,7 +7473,7 @@ const timeStr = dataStr + ' às ' + horaStr + (m.edited && !m.deleted ? ' <span 
                 try {
                     const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json?orderBy="$key"&limitToLast=8${AUTH? '&'+AUTH.replace('?','') : ''}`);
                     const data = await res.json() || {};
-                    const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
+                    const msgs = Object.entries(data).sort((a,b) => a[1].ts - b[1].ts);
                     
                     if(msgs.length > 0) {
                         let tocou = false;
@@ -7879,6 +7893,51 @@ const timeStr = dataStr + ' às ' + horaStr + (m.edited && !m.deleted ? ' <span 
             0%, 90%, 94%, 100% { height: 12px; }
             92% { height: 2px; }
         }
+
+/* --- WHATSAPP STYLE BUBBLES --- */
+.chat-msg-wrap.mine .chat-bubble { 
+    background: #005c4b; /* Verde WhatsApp Dark */
+    color: #e9edef; 
+    border-radius: 12px 0px 12px 12px; /* Cauda na direita */
+    box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
+}
+.chat-msg-wrap.theirs .chat-bubble { 
+    background: #202c33; /* Cinza WhatsApp Dark */
+    border: none;
+    color: #e9edef; 
+    border-radius: 0px 12px 12px 12px; /* Cauda na esquerda */
+    box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
+}
+.chat-msg-wrap { margin-bottom: 2px; } /* Menos espaço entre mensagens seguidas */
+
+/* --- WHATSAPP TICKS (✓✓) E HORA --- */
+.chat-msg-time-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 2px;
+    margin-bottom: -6px;
+    margin-right: -6px;
+    float: right;
+    clear: both;
+}
+.chat-msg-time { 
+    font-size: 11px; 
+    font-family: 'Inter', sans-serif; 
+    color: rgba(255,255,255,0.6); 
+    margin-top: 0;
+}
+.chat-read-ticks {
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+}
+.chat-read-ticks.read { color: #53bdeb; /* Azul WhatsApp */ }
+.chat-read-ticks.delivered { color: rgba(255,255,255,0.6); /* Cinza claro */ }
+
+/* Ocultar avatares em mensagens diretas para ficar mais limpo como o Wpp */
+.chat-msg-avatar { display: none; }
 
     </style>
 
