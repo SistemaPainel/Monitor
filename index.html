@@ -8024,6 +8024,7 @@ function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
 
        
 // --- SISTEMA DE FALA E PERSONALIDADE ---
+      // --- SISTEMA DE FALA E PERSONALIDADE ---
         function falarComBot(mensagem, duracao = 6000) {
             if (window.innerWidth <= 1024) return;
 
@@ -8076,23 +8077,109 @@ function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
             return null;
         }
 
-        // Interação ao clicar no robô
+        // --- INTELIGÊNCIA DE TURNOS E CLIMA ---
+        async function obterClimaAtual() {
+            try {
+                // Coordenadas aproximadas de Vitória da Conquista, BA
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-14.8661&longitude=-40.8394&current_weather=true');
+                const data = await res.json();
+                const code = data.current_weather.weathercode;
+                
+                // Interpretação simplificada dos códigos da Organização Meteorológica Mundial (WMO)
+                if (code === 0) return "o céu está limpinho lá fora. ☀️";
+                if (code > 0 && code <= 3) return "o tempo está meio nublado lá fora. ☁️";
+                if (code >= 45 && code <= 48) return "está com um pouco de neblina lá fora. 🌫️";
+                if (code >= 51 && code <= 69) return "tá rolando uma chuvinha lá fora, cuidado se for sair! 🌧️";
+                if (code >= 71) return "o tempo fechou e tá chovendo forte lá fora. ⛈️";
+                return "o clima está agradável lá fora. 🌤️";
+            } catch(e) {
+                return "não consegui olhar pela janela agora, mas espero que o clima esteja bom! 🌥️";
+            }
+        }
+
+        function checarFimDeTurno(minutosAviso = 45) {
+            const agora = new Date();
+            const totalMinutosAtual = (agora.getHours() * 60) + agora.getMinutes();
+
+            // Lógica de turnos em minutos totais do dia
+            const turnos = [
+                { inicio: 7*60 + 3,  fim: 15*60 + 43 }, // 07:03 as 15:43
+                { inicio: 15*60 + 43, fim: 24*60 + 6 }, // 15:43 as 00:06 (24h + 6m para facilitar a matemática)
+                { inicio: 0*60 + 6,   fim: 7*60 + 3 }   // 00:06 as 07:03
+            ];
+
+            // Ajuste especial para o tempo atual se estiver entre 00:00 e 00:06 (pertence ao turno 2 matematicamente)
+            let tempoParaCalculo = totalMinutosAtual;
+            if (tempoParaCalculo <= 6) {
+                tempoParaCalculo += 24 * 60; // Trata 00:05 como 24:05 para bater com o fim do Turno 2
+            }
+
+            for (let t of turnos) {
+                let diff = t.fim - tempoParaCalculo;
+                // Se faltam "minutosAviso" ou menos para o fim, dispara a flag
+                if (diff > 0 && diff <= minutosAviso) {
+                    return { acabando: true, minutosRestantes: diff };
+                }
+            }
+            return { acabando: false };
+        }
+
+        let _botIntelectoInterval = null;
+        let _avisoTurnoJaDado = false;
+
+        function iniciarCerebroDoBot() {
+            if (_botIntelectoInterval) clearInterval(_botIntelectoInterval);
+            
+            // Verifica o contexto a cada 5 minutos para não sobrecarregar
+            _botIntelectoInterval = setInterval(async () => {
+                if (typeof userRole !== 'undefined' && userRole === 'viewer') return;
+                if (!_usuarioAtual) return;
+
+                const turno = checarFimDeTurno(40); // Avisa se faltar 40 minutos ou menos
+
+                if (turno.acabando && !_avisoTurnoJaDado) {
+                    _avisoTurnoJaDado = true; // Trava para não repetir a mensagem
+                    const clima = await obterClimaAtual();
+                    const nome = _usuarioAtual.nome.split(' ')[0];
+                    
+                    const msg = `Que grande dia de trabalho, hein <b>${nome}</b>?! 🛠️<br>Se organize pois nosso turno acaba em cerca de ${turno.minutosRestantes} minutos. Ah, e ${clima}`;
+                    falarComBot(msg, 12000);
+                } 
+                else if (!turno.acabando) {
+                    _avisoTurnoJaDado = false; // Destrava para o próximo turno
+
+                    // Aleatoriedade para não ser chato (Aproximadamente 5% de chance de falar algo aleatório a cada 5 min)
+                    if (Math.random() < 0.05) {
+                        const nome = _usuarioAtual.nome.split(' ')[0];
+                        const falasSpontaneas = [
+                            `Tudo rodando liso por aqui, <b>${nome}</b>. Pode focar no que importa! 🚀`,
+                            `Lembre-se de beber uma água, <b>${nome}</b>! Deixa que da telemetria cuido eu. 💧`,
+                            `As matrizes estão com um bom ritmo agora. Vamos manter o fluxo! 🏭`,
+                            `Se precisar inverter alguma estação, estou de prontidão para registrar! 🔄`
+                        ];
+                        const msg = falasSpontaneas[Math.floor(Math.random() * falasSpontaneas.length)];
+                        falarComBot(msg, 7000);
+                    }
+                }
+            }, 5 * 60 * 1000); // 5 minutos
+        }
+
+        // --- INTERAÇÕES MANUAIS DO ROBÔ ---
         document.getElementById('nexusBotElement').addEventListener('click', () => {
             const nome = _usuarioAtual ? _usuarioAtual.nome.split(' ')[0] : 'colega';
-            const frasesSpontaneas = [
+            const frasesClick = [
                 `Estou de olho na produção, <b>${nome}</b>! 👀 Tudo mapeado.`,
                 `Sistemas operando dentro da normalidade, chefe! 🚀`,
                 `A telemetria está voando hoje, <b>${nome}</b>! ⚡`,
                 `Tudo sob controle no Nexus. Precisando, é só chamar! 🤖`,
                 `Analisando os dados da malha... Tudo verde por aqui! ✅`,
-                `Fala <b>${nome}</b>! Pronto para batermos as metas hoje? 🎯`,
-                `Monitorando... Calculando... Concluído: Você está fazendo um ótimo trabalho! ⭐`
+                `Fala <b>${nome}</b>! Pronto para batermos as metas hoje? 🎯`
             ];
-            const msg = frasesSpontaneas[Math.floor(Math.random() * frasesSpontaneas.length)];
+            const msg = frasesClick[Math.floor(Math.random() * frasesClick.length)];
             falarComBot(msg, 5000);
         });
 
-        // 1. Intercepta o login para dar Boas-Vindas
+        // 1. Intercepta o login para dar Boas-Vindas e ligar o Cérebro
         if (!window._oldDefinirUsuarioAtualBotHook) {
             window._oldDefinirUsuarioAtualBotHook = window.definirUsuarioAtual;
             window.definirUsuarioAtual = function(role, user, nome, gravarSessao) {
@@ -8107,12 +8194,14 @@ function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
                         const primeiroNome = nome.split(' ')[0];
                         const saudacao = obterSaudacao();
                         const msgExtra = obterDatasComemorativas();
-                        const fraseApoio = msgExtra ? msgExtra : "Vamos começar mais um dia excelente de trabalho!";
+                        const fraseApoio = msgExtra ? msgExtra : "Vamos começar mais um dia excelente de trabalho na planta!";
                         
                         setTimeout(() => {
                             falarComBot(`Oi, ${saudacao} <b>${primeiroNome}</b>! ✨<br>${fraseApoio}`, 9000);
                         }, 1500);
                     }
+                    // Liga a inteligência contínua
+                    iniciarCerebroDoBot();
                 }
             };
         }
@@ -8144,131 +8233,10 @@ function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
             window._oldFazerLogoutBotHook = window.fazerLogout;
             window.fazerLogout = function(porInatividade) {
                 if (_botAvisoInatividadeTimer) clearTimeout(_botAvisoInatividadeTimer);
+                if (_botIntelectoInterval) clearInterval(_botIntelectoInterval);
                 esconderBot();
                 if(window._oldFazerLogoutBotHook) window._oldFazerLogoutBotHook(porInatividade);
             };
-        }
-
-
-
-       function prepararResposta(nomeUsuario, idMensagem, botaoClicado) {
-            mensagemSendoRespondidaId = idMensagem;
-            
-            // 1. Coloca o nome do usuário
-            document.getElementById('chatReplyUser').textContent = nomeUsuario;
-            
-            // 2. Busca o texto da mensagem clicada navegando pelo HTML
-            let textoOriginal = "Mídia...";
-            if (botaoClicado) {
-                const bubbleDaMensagem = botaoClicado.closest('.chat-msg-wrap').querySelector('.chat-bubble');
-                if (bubbleDaMensagem) {
-                    // Pega o texto e remove todas as quebras de linha para ficar reto
-                    textoOriginal = (bubbleDaMensagem.innerText || bubbleDaMensagem.textContent).replace(/\n/g, ' ').trim();
-                }
-            }
-            
-            // TRAVA DE SEGURANÇA: Corta o texto se passar de 60 caracteres
-            if (textoOriginal.length > 60) {
-                textoOriginal = textoOriginal.substring(0, 60) + '...';
-            }
-            
-            // 3. Coloca o texto limpo e curto na caixinha de prévia
-            document.getElementById('chatReplyTextSnippet').textContent = textoOriginal;
-            
-            // 4. Mostra a caixinha e foca no input
-            document.getElementById('chatReplyPreview').classList.add('active');
-            document.getElementById('chatInputMsg').focus();
-        }
-
-        function cancelarResposta() {
-            mensagemSendoRespondidaId = null;
-            document.getElementById('chatReplyPreview').classList.remove('active');
-        }
-
-        function marcarNoInput(nomeUsuario) {
-            const input = document.getElementById('chatInputMsg');
-            input.value += `@${nomeUsuario} `;
-            input.focus();
-        }
-
-        function fixarMensagem(idMensagem) {
-            alert("Sinalizando a mensagem " + idMensagem + " como fixada!\nAqui você pode salvar uma flag 'fixada: true' no Firebase para ela aparecer no topo.");
-        }
-// --- LÓGICA DE MARCAÇÃO (@) NO CHAT ---
-        let _indiceInicioMarcacao = -1;
-
-
-        function rastrearMarcacao(event) {
-            // Mantém a função antiga rodando
-            if (typeof handleChatTyping === 'function') handleChatTyping();
-
-            const textarea = document.getElementById('chatInputMsg');
-            const posicaoCursor = textarea.selectionStart;
-            const textoAteCursor = textarea.value.substring(0, posicaoCursor);
-            
-            // Busca um '@' seguido de letras/números/espaços no fim da string onde está o cursor
-            const match = textoAteCursor.match(/@([a-zA-Z0-9\s]*)$/);
-            
-            if (match) {
-                _indiceInicioMarcacao = match.index;
-                const termoBusca = match[1].toLowerCase();
-                mostrarListaMarcacao(termoBusca);
-            } else {
-                fecharListaMarcacao();
-            }
-        }
-
-        function mostrarListaMarcacao(busca) {
-            const listaEl = document.getElementById('chatMentionList');
-            
-            // Reúne todos os nomes do sistema (evitando duplicatas usando Set)
-            const nomesUnicos = new Set();
-            if (typeof defaultUsuarios !== 'undefined') Object.values(defaultUsuarios).forEach(n => nomesUnicos.add(n));
-            if (typeof credenciaisEditor !== 'undefined') Object.values(credenciaisEditor).forEach(c => nomesUnicos.add(c.nome || c));
-            if (typeof credenciaisGerente !== 'undefined') Object.values(credenciaisGerente).forEach(c => nomesUnicos.add(c.nome || c));
-            if (typeof credenciaisDev !== 'undefined') Object.values(credenciaisDev).forEach(c => nomesUnicos.add(c.nome || c));
-            if (typeof coordenadoresAutorizados !== 'undefined') Object.values(coordenadoresAutorizados).forEach(n => nomesUnicos.add(n));
-
-            // Filtra de acordo com o que o usuário digitou depois do @
-            const filtrados = Array.from(nomesUnicos)
-                .filter(nome => typeof nome === 'string' && nome.toLowerCase().includes(busca))
-                .slice(0, 8); // Limita a 8 resultados na tela
-
-            if (filtrados.length === 0) {
-                fecharListaMarcacao();
-                return;
-            }
-
-            // Desenha a lista
-            listaEl.innerHTML = filtrados.map(nome => `
-                <div class="chat-mention-item" onclick="inserirMarcacao('${nome.replace(/'/g, "\\'")}')">
-                    <div class="chat-mention-avatar">${nome.charAt(0).toUpperCase()}</div>
-                    ${nome}
-                </div>
-            `).join('');
-            
-            listaEl.style.display = 'block';
-        }
-
-        function fecharListaMarcacao() {
-            document.getElementById('chatMentionList').style.display = 'none';
-            _indiceInicioMarcacao = -1;
-        }
-
-        function inserirMarcacao(nome) {
-            const textarea = document.getElementById('chatInputMsg');
-            const textoOriginal = textarea.value;
-            const textoAntes = textoOriginal.substring(0, _indiceInicioMarcacao);
-            const textoDepois = textoOriginal.substring(textarea.selectionStart);
-            
-            // Substitui o trecho que tinha "@..." pelo nome selecionado com o @
-            textarea.value = textoAntes + '@' + nome + ' ' + textoDepois;
-            fecharListaMarcacao();
-            textarea.focus();
-            
-            // Move o cursor para o final do nome inserido
-            const novaPosicaoCursor = textoAntes.length + nome.length + 2; 
-            textarea.setSelectionRange(novaPosicaoCursor, novaPosicaoCursor);
         }
 
 // =========================================================================
