@@ -4337,6 +4337,25 @@ rx="1.5" fill="#f59e0b"/>
             } catch(e) {}
         }
 
+function tocarSomNotificacao() {
+    try {
+        const ctx = _getAudioCtx(); 
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator(); 
+        const g = ctx.createGain();
+        osc.type = 'triangle'; 
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+        g.gain.setValueAtTime(0, ctx.currentTime); 
+        g.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.connect(g); 
+        g.connect(ctx.destination); 
+        osc.start(ctx.currentTime); 
+        osc.stop(ctx.currentTime + 0.4);
+    } catch(e) {}
+}
+
         let _giroAlertasEmitidos = new Set();
         function verificarAlertasGiroBaixo(grupo, listaEstacoes) {
             const limiteGiro = 48;
@@ -5266,7 +5285,7 @@ rx="1.5" fill="#f59e0b"/>
                 tocarSomNotificacao();
                 await customAlert('✅ Reimpressao autorizada por ' + _gerenteAprovadorAtual + '.\n\nA solicitacao foi removida da sua fila.');
             } catch(e) {
-                await customAlert('APROVADO!.');
+                await customAlert('Falha ao autorizar reimpressao. Verifique a conexão.');
             }
         }
         
