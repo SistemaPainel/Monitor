@@ -2881,6 +2881,16 @@ rx="1.5" fill="#f59e0b"/>
                 <div class="btn-visao-wrap" id="btnVisaoWrap">
                     <button class="btn-visao-trigger" onclick="toggleMenuVisao(event)">✦ Visão ▾</button>
                     <div class="btn-visao-menu" id="menuVisao">
+
+
+                    <button onclick="abrirAlmoxarifadoMtz(); fecharMenuVisao()">
+                        <span class="vm-icon">🗄️</span>
+                        <span class="vm-label">
+                            <span class="vm-title">Almoxarifado</span>
+                            <span class="vm-sub">Estoque de Matrizes</span>
+                        </span>
+                    </button>
+                                        
                         <button onclick="abrirDashboard(); fecharMenuVisao()">
                             <span class="vm-icon">✨</span>
                             <span class="vm-label">
@@ -3069,6 +3079,43 @@ rx="1.5" fill="#f59e0b"/>
     </div> 
     
     <!-- MODAL VISÃO MACRO PLANTA -->
+
+<div id="almoxarifadoMtzOverlay" class="wip-overlay" style="display:none;" onclick="if(event.target===this) fecharAlmoxarifadoMtz()">
+    <div class="wip-modal" style="max-width: 900px; width: 95vw; max-height: 90vh;">
+        <div class="wip-header" style="flex-wrap: wrap; gap: 15px;">
+            <h2 class="wip-header-title"><span>🗄️</span> Almoxarifado de Matrizes Cadastradas PCPRE039 </h2>
+            
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                <input type="text" id="filtroMtzBusca" placeholder="🔍 Buscar modelo ou tamanho..." oninput="filtrarTabelaMtz()" style="padding: 10px 14px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main); font-size: 12px; outline: none; width: 220px; font-weight: 600;">
+                
+                <button class="kpi-close-btn" style="border-radius: 12px; width: 40px; height: 40px; font-size: 18px;" onclick="toggleConfigMtz()" title="Atualizar Base de Dados">⚙️</button>
+                <button class="kpi-close-btn" style="border-radius: 12px; width: 40px; height: 40px; font-size: 16px; background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3);" onclick="fecharAlmoxarifadoMtz()">✕</button>
+            </div>
+        </div>
+
+        <div id="painelAtualizaMtz" style="display: none; padding: 20px 30px; background: var(--stat-box); border-bottom: 1px solid var(--glass-border); box-shadow: inset 0 -10px 20px rgba(0,0,0,0.05);">
+            <h3 style="margin-top: 0; font-size: 14px; color: #007AFF; display: flex; align-items: center; gap: 8px;">⚙️ Atualizar Base de Dados (Substituição Completa)</h3>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
+                Copie os dados diretamente da tabela do seu sistema <b>(MDL_NOME, TAMANHO, QT_MATRIZ, METAHORA)</b> e cole na caixa abaixo.
+                <br><span style="color: #ef4444; font-weight: bold;">Atenção: A base de dados existente será apagada e substituída por estes novos dados.</span>
+            </p>
+            
+            <textarea id="mtzPasteArea" placeholder="Cole os dados tabulados aqui (Ctrl+V)..." style="width: 100%; height: 140px; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 14px; color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 11px; resize: vertical; margin-bottom: 12px; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);"></textarea>
+            
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <button onclick="processarEAtualizarMtz()" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.8px; box-shadow: 0 6px 15px rgba(239,68,68,0.3); transition: 0.2s;">⚠️ Excluir Antiga e Salvar Nova</button>
+                <button onclick="toggleConfigMtz()" style="background: var(--input-bg); color: var(--text-main); border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.8px; transition: 0.2s;">Cancelar</button>
+                <span id="mtzUpdateStatus" style="font-size: 11px; font-weight: bold; margin-left: 10px;"></span>
+            </div>
+        </div>
+
+        <div class="wip-body" id="almoxarifadoMtzBody" style="padding: 24px 30px; overflow-y: auto; max-height: calc(90vh - 160px);">
+            <p style="text-align:center;color:var(--text-muted);font-weight:700;">Carregando banco de matrizes...</p>
+        </div>
+    </div>
+</div>
+
+
     <div id="macroModalOverlay" class="wip-overlay" style="display:none;" onclick="if(event.target===this) fecharVisaoMacro()">
         <div class="wip-modal" style="max-width:1400px;width:98vw;max-height:95vh;">
             <div class="wip-header">
@@ -6740,56 +6787,315 @@ function tocarSomNotificacao() {
         let _macroData = {}; // { "Grupo 1": { 1: {...}, 2: {...} }, ... }
         let _macroCarregando = false;
 
-        async function abrirVisaoMacro() {
-            document.getElementById('macroModalOverlay').style.display = 'flex';
-            document.getElementById('macroFiltroGrupo').value = 'TODOS';
-            document.getElementById('macroFiltroStatus').value = 'TODOS';
-            await atualizarMacro();
+// =========================================================================
+// ALMOXARIFADO DE MATRIZES
+// =========================================================================
+// =========================================================================
+// ALMOXARIFADO DE MATRIZES COM PESQUISA E ATUALIZAÇÃO
+// =========================================================================
+
+let _dadosMtzOriginais = {}; // Cache local para a barra de pesquisa não gastar internet
+
+function abrirAlmoxarifadoMtz() {
+    document.getElementById('almoxarifadoMtzOverlay').style.display = 'flex';
+    document.getElementById('painelAtualizaMtz').style.display = 'none'; // Garante que a engrenagem feche ao abrir a tela
+    document.getElementById('filtroMtzBusca').value = '';
+    carregarDadosAlmoxarifadoMtz();
+}
+
+function fecharAlmoxarifadoMtz() {
+    document.getElementById('almoxarifadoMtzOverlay').style.display = 'none';
+}
+
+// Mostra ou Oculta a área de colar os dados (Engrenagem)
+function toggleConfigMtz() {
+    const painel = document.getElementById('painelAtualizaMtz');
+    
+    // Bloqueio de segurança: Apenas Editores, Gerentes ou Devs podem acessar
+    if (userRole === 'viewer') {
+        customAlert('Acesso Negado: Apenas Editores e Gerentes podem atualizar a base de matrizes.');
+        return;
+    }
+
+    if (painel.style.display === 'none') {
+        painel.style.display = 'block';
+        document.getElementById('mtzPasteArea').value = '';
+        document.getElementById('mtzUpdateStatus').innerHTML = '';
+        document.getElementById('mtzPasteArea').focus();
+    } else {
+        painel.style.display = 'none';
+    }
+}
+
+// Baixa os dados do Firebase e guarda na memória
+async function carregarDadosAlmoxarifadoMtz() {
+    const body = document.getElementById('almoxarifadoMtzBody');
+    body.innerHTML = '<div style="text-align:center; padding:60px 20px;"><p style="color:var(--text-main);font-weight:900;font-size:16px;">⏳ Buscando dados do almoxarifado...</p></div>';
+
+    try {
+        const resp = await fetch(`${FIREBASE_URL}/matrizes.json${AUTH}`);
+        if (!resp.ok) throw new Error(`HTTP Error: ${resp.status}`);
+        
+        const data = await resp.json() || {};
+        if (data.error) throw new Error(`Firebase: ${data.error}`);
+
+        _dadosMtzOriginais = data; // Guarda o banco original na variável global
+        renderizarTabelaMtz();     // Monta a tela
+    } catch (err) {
+        body.innerHTML = `
+            <div style="text-align:center; padding:40px 20px;">
+                <p style="color:#ef4444;font-weight:900;font-size:14px;">❌ Falha ao carregar os dados.</p>
+                <p style="color:var(--text-muted);font-size:11px;margin-top:10px;font-family:monospace;">${err.message}</p>
+            </div>`;
+    }
+}
+
+// Filtra e Monta o HTML da tabela
+function renderizarTabelaMtz(filtro = '') {
+    const body = document.getElementById('almoxarifadoMtzBody');
+    const data = _dadosMtzOriginais;
+    const termoBusca = filtro.toLowerCase().trim();
+
+    // Filtra modelos válidos (tira nulls)
+    const modelosValidos = Object.keys(data).filter(key => data[key] && typeof data[key] === 'object');
+
+    if (modelosValidos.length === 0) {
+        body.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-weight:700;padding:40px;">Nenhuma matriz cadastrada na base de dados.</p>';
+        return;
+    }
+
+    let html = `
+    <table class="wip-table">
+        <thead>
+            <tr>
+                <th style="width: 40%; text-align: left;">Modelo / Matriz</th>
+                <th style="width: 20%; text-align: center;">Tamanho (TM)</th>
+                <th style="width: 20%; text-align: center;">Quantidade</th>
+                <th style="width: 20%; text-align: center;">Meta Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    let temResultados = false;
+
+    modelosValidos.sort().forEach(modelo => {
+        const tamanhosObj = data[modelo];
+        const tamanhosKeys = Object.keys(tamanhosObj)
+            .filter(tm => tamanhosObj[tm] && typeof tamanhosObj[tm] === 'object')
+            .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+        
+        if (tamanhosKeys.length === 0) return; 
+
+        // LÓGICA DO FILTRO: Verifica se o termo está no nome do Modelo ou no Tamanho
+        const modeloMatch = modelo.toLowerCase().includes(termoBusca);
+        let tamanhosFiltrados = tamanhosKeys;
+
+        if (termoBusca && !modeloMatch) {
+            // Se o modelo não bater com a busca, checa se algum tamanho bate
+            tamanhosFiltrados = tamanhosKeys.filter(tm => tm.toLowerCase().includes(termoBusca));
         }
 
-        function fecharVisaoMacro() {
-            document.getElementById('macroModalOverlay').style.display = 'none';
-        }
+        if (tamanhosFiltrados.length === 0) return; // Se nada bater, oculta este modelo
+        
+        temResultados = true;
+        const rowSpan = tamanhosFiltrados.length;
+        let isFirst = true;
 
-        async function atualizarMacro() {
-            if (_macroCarregando) return;
-            _macroCarregando = true;
-            const body = document.getElementById('macroBody');
-            body.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-weight:700;padding:40px 0;">⏳ Carregando dados de todos os grupos...</p>';
+        tamanhosFiltrados.forEach(tm => {
+            const info = tamanhosObj[tm];
+            const qtd = info.quantidade || 0;
+            const meta = info.metaHora || '--';
 
-            const grupos = ['Grupo 1','Grupo 2','Grupo 3','Grupo 4','Grupo 5','Grupo 6','Grupo 7','Grupo 8'];
-            _macroData = {};
-
-            try {
-                const respAloc = await fetch(`${FIREBASE_URL}/alocacao.json${AUTH}`);
-                const alocAll = (await respAloc.json()) || {};
-
-                for (const g of grupos) {
-                    const numEst = (g === 'Grupo 4' || g === 'Grupo 5') ? 48 : 36;
-                    const alocGrupo = alocAll[g] || {};
-                    const estacoes = {};
-                    for (let i = 1; i <= numEst; i++) {
-                        const item = alocGrupo[i];
-                        estacoes[i] = {
-                            status: (item && item.status) ? item.status : 'parada',
-                            modelo: (item && item.modelo) ? item.modelo : '',
-                            tamanho: (item && item.tamanho) ? String(item.tamanho).replace('.', ',').trim() : '',
-                            giro: item && item.giro ? parseInt(item.giro) : 0,
-                            prManual: item && item.prManual ? parseInt(item.prManual) : 0,
-                            vazia: !(item && item.modelo && item.modelo !== 'Não Alocado' && item.modelo !== 'VAZIO' && item.modelo !== '')
-                        };
-                    }
-                    _macroData[g] = { estacoes, numEst };
-                }
-            } catch(e) {
-                body.innerHTML = '<p style="text-align:center;color:#ef4444;font-weight:800;padding:40px 0;">❌ Falha ao carregar dados. Verifique a conexão com o Firebase.</p>';
-                _macroCarregando = false;
-                return;
+            html += `<tr class="wip-tr-hover">`;
+            if (isFirst) {
+                html += `<td rowspan="${rowSpan}" class="wip-group-cell wip-model-cell" style="vertical-align: middle;">${htmlSafe(modelo)}</td>`;
+                isFirst = false;
             }
+            html += `
+                <td class="wip-tam-cell" style="text-align: center;">${htmlSafe(tm)}</td>
+                <td style="text-align: center; font-weight: 900; color: #007AFF; font-size: 14px;">${qtd}</td>
+                <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: var(--text-main); font-weight: 800;">${meta}</td>
+            </tr>`;
+        });
+    });
 
-            _macroCarregando = false;
-            renderMacroPlanta();
+    html += `</tbody></table>`;
+    
+    if (!temResultados) {
+        html = `<div style="text-align:center; padding:60px 20px;"><p style="color:var(--text-muted);font-weight:700;font-size:14px;">Nenhuma matriz corresponde à busca "${filtro}".</p></div>`;
+    }
+
+    body.innerHTML = html;
+}
+
+// Disparado ao digitar na barra de pesquisa
+function filtrarTabelaMtz() {
+    const termoBusca = document.getElementById('filtroMtzBusca').value;
+    renderizarTabelaMtz(termoBusca);
+}
+
+// Lógica pesada que converte os dados da tela colada em JSON para o Firebase
+// Filtra e Monta o HTML da tabela
+function renderizarTabelaMtz(filtro = '') {
+    const body = document.getElementById('almoxarifadoMtzBody');
+    const data = _dadosMtzOriginais;
+    const termoBusca = filtro.toLowerCase().trim();
+
+    const modelosValidos = Object.keys(data).filter(key => data[key] && typeof data[key] === 'object');
+
+    if (modelosValidos.length === 0) {
+        body.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-weight:700;padding:40px;">Nenhuma matriz cadastrada na base de dados.</p>';
+        return;
+    }
+
+    let html = `
+    <table class="wip-table">
+        <thead>
+            <tr>
+                <th style="width: 40%; text-align: left;">Modelo / Matriz</th>
+                <th style="width: 20%; text-align: center;">Tamanho (TM)</th>
+                <th style="width: 20%; text-align: center;">Quantidade</th>
+                <th style="width: 20%; text-align: center;">Meta Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    let temResultados = false;
+
+    modelosValidos.sort().forEach(modelo => {
+        const tamanhosObj = data[modelo];
+        const tamanhosKeys = Object.keys(tamanhosObj)
+            .filter(tm => tamanhosObj[tm] && typeof tamanhosObj[tm] === 'object')
+            .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+        
+        if (tamanhosKeys.length === 0) return; 
+
+        const modeloMatch = modelo.toLowerCase().includes(termoBusca);
+        let tamanhosFiltrados = tamanhosKeys;
+
+        if (termoBusca && !modeloMatch) {
+            tamanhosFiltrados = tamanhosKeys.filter(tm => tm.toLowerCase().includes(termoBusca));
         }
+
+        if (tamanhosFiltrados.length === 0) return; 
+        
+        temResultados = true;
+        const rowSpan = tamanhosFiltrados.length;
+        let isFirst = true;
+
+        tamanhosFiltrados.forEach(tm => {
+            const info = tamanhosObj[tm];
+            const qtd = info.quantidade || 0;
+            const meta = info.metaHora || '--';
+            // Usa o tamanho original com a barra se existir, senão usa a chave tratada
+            const nomeTamanhoExibicao = info.tamanhoOriginal || tm;
+
+            html += `<tr class="wip-tr-hover">`;
+            if (isFirst) {
+                html += `<td rowspan="${rowSpan}" class="wip-group-cell wip-model-cell" style="vertical-align: middle;">${htmlSafe(modelo)}</td>`;
+                isFirst = false;
+            }
+            html += `
+                <td class="wip-tam-cell" style="text-align: center;">${htmlSafe(nomeTamanhoExibicao)}</td>
+                <td style="text-align: center; font-weight: 900; color: #007AFF; font-size: 14px;">${qtd}</td>
+                <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: var(--text-main); font-weight: 800;">${meta}</td>
+            </tr>`;
+        });
+    });
+
+    html += `</tbody></table>`;
+    
+    if (!temResultados) {
+        html = `<div style="text-align:center; padding:60px 20px;"><p style="color:var(--text-muted);font-weight:700;font-size:14px;">Nenhuma matriz corresponde à busca "${filtro}".</p></div>`;
+    }
+
+    body.innerHTML = html;
+}
+
+// Lógica pesada que converte os dados da tela colada em JSON para o Firebase
+async function processarEAtualizarMtz() {
+    if (userRole === 'viewer') return;
+
+    const confirm = await customConfirm("⚠️ ATENÇÃO: Isso irá DELETAR a base de matrizes atual e substituir pelos novos dados colados.\\nTem certeza que deseja prosseguir?", "Sim, Substituir", "Cancelar");
+    if (!confirm) return;
+
+    const textoPuro = document.getElementById('mtzPasteArea').value;
+    const statusEl = document.getElementById('mtzUpdateStatus');
+    
+    if (!textoPuro.trim()) {
+        statusEl.innerHTML = '<span style="color:#ef4444;">Cole os dados do relatório antes de atualizar!</span>';
+        return;
+    }
+
+    statusEl.innerHTML = '<span style="color:#007AFF;">Analisando dados colados... ⏳</span>';
+
+    const linhas = textoPuro.split('\n');
+    const novaBase = {};
+    let countRegistros = 0;
+
+    for (let i = 0; i < linhas.length; i++) {
+        const linha = linhas[i].trim();
+        if (!linha) continue;
+
+        const colunas = linha.split('\t'); 
+        
+        if (colunas.length >= 4) {
+            const modeloRaw = colunas[0].trim();
+            const tamanhoRaw = colunas[1].trim();
+            
+            if (modeloRaw.toUpperCase() === 'MDL_NOME') continue;
+            
+            // --- CORREÇÃO DO ERRO 400 ---
+            // Substitui caracteres proibidos pelo Firebase por sublinhado (_) ou hífen (-)
+            const modeloSanitizado = modeloRaw.replace(/[\.\#\$\/\[\]]/g, '_');
+            const tamanhoSanitizado = tamanhoRaw.replace(/[\.\#\$\/\[\]]/g, '-'); 
+            
+            const quantidade = parseInt(colunas[2].trim(), 10) || 0;
+            const metaHora = colunas[3].trim();
+
+            if (modeloSanitizado && tamanhoSanitizado) {
+                if (!novaBase[modeloSanitizado]) novaBase[modeloSanitizado] = {};
+                
+                novaBase[modeloSanitizado][tamanhoSanitizado] = {
+                    quantidade: quantidade,
+                    metaHora: metaHora,
+                    tamanhoOriginal: tamanhoRaw // Salva o nome com a barra (ex: 39/40) para exibição na tela
+                };
+                countRegistros++;
+            }
+        }
+    }
+
+    if (countRegistros === 0) {
+        statusEl.innerHTML = '<span style="color:#ef4444;">Formato inválido! Certifique-se de colar as 4 colunas separadas.</span>';
+        return;
+    }
+
+    statusEl.innerHTML = `<span style="color:#007AFF;">Substituindo banco e salvando ${countRegistros} matrizes... ☁️</span>`;
+
+    try {
+        const resp = await fetch(`${FIREBASE_URL}/matrizes.json${AUTH}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(novaBase)
+        });
+
+        if (!resp.ok) throw new Error("Erro de comunicação: " + resp.status);
+
+        statusEl.innerHTML = `<span style="color:#10b981;">✅ Base atualizada com sucesso! ${countRegistros} registros salvos.</span>`;
+        
+        setTimeout(() => {
+            toggleConfigMtz(); 
+            carregarDadosAlmoxarifadoMtz();
+        }, 1500);
+
+    } catch (error) {
+        console.error("Erro na atualização:", error);
+        statusEl.innerHTML = `<span style="color:#ef4444;">❌ Erro ao salvar no banco: ${error.message}</span>`;
+    }
+}
 
         function renderMacroPlanta() {
             const grupoFiltro  = document.getElementById('macroFiltroGrupo').value;
