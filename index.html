@@ -9056,15 +9056,26 @@ if (!window._oldDefinirUsuarioAtualBotHook) {
 }
 
         // 3. Cancela o robô caso o usuário faça logout
-        if (!window._oldFazerLogoutBotHook) {
-            window._oldFazerLogoutBotHook = window.fazerLogout;
-            window.fazerLogout = function(porInatividade) {
-                if (_botAvisoInatividadeTimer) clearTimeout(_botAvisoInatividadeTimer);
-                if (_botIntelectoInterval) clearInterval(_botIntelectoInterval);
-                esconderBot();
-                if(window._oldFazerLogoutBotHook) window._oldFazerLogoutBotHook(porInatividade);
-            };
+        // 3. Cancela o robô caso o usuário faça logout
+if (!window._oldFazerLogoutBotHook) {
+    window._oldFazerLogoutBotHook = window.fazerLogout;
+    window.fazerLogout = function(porInatividade) {
+        // Correção: Usa typeof para evitar ReferenceError caso as variáveis não existam
+        if (typeof _botAvisoInatividadeTimer !== 'undefined' && _botAvisoInatividadeTimer) {
+            clearTimeout(_botAvisoInatividadeTimer);
         }
+        if (typeof _botIntelectoInterval !== 'undefined' && _botIntelectoInterval) {
+            clearInterval(_botIntelectoInterval);
+        }
+        
+        esconderBot();
+        
+        // Executa o logout verdadeiro
+        if (window._oldFazerLogoutBotHook) {
+            window._oldFazerLogoutBotHook(porInatividade);
+        }
+    };
+}
 
 // =========================================================================
         // MOTOR DE CHAT: BUSCA, EMOJIS E MÍDIA INLINE
