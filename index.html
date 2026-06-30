@@ -10721,5 +10721,29 @@ setTimeout(_syncChatMobileButtons, 200);
     chatWin.addEventListener('touchend', function() { isDragging = false; }, { passive: true });
 })();
 </script>
+
+<script>
+    // TRAVA ANTI-DUPLICAÇÃO DO CHAT
+    window._bloqueioEnvio = false;
+
+    window.handleChatEnter = function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { 
+            e.preventDefault(); 
+            dispararEnvioUnico();
+        }
+    };
+
+    function dispararEnvioUnico() {
+        if (window._bloqueioEnvio) return; // Se já estiver enviando, ignora
+        window._bloqueioEnvio = true; // Trava
+        
+        window.enviarMensagemHibrida(); // Envia a mensagem
+        
+        // Destrava depois de meio segundo
+        setTimeout(function() {
+            window._bloqueioEnvio = false;
+        }, 500);
+    }
+</script>
 </body>
 </html>
