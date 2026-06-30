@@ -9976,55 +9976,7 @@ if (!window._oldFazerLogoutBotHook) {
         };
 
         // Aplica filtro de Mudo no canal ativo (Foreground)
-        if (window._pollMsgInterval) clearInterval(window._pollMsgInterval);
-      
-    // Liga a escuta no canal atual (Baixa apenas as últimas 20 para carregar rápido)
-    if (window.db) {
-        _chatListenerRef = window.db.ref(`chat/messages/${channel}`);
-        const queryChat = _chatListenerRef.orderByKey().limitToLast(20);
-
-        // 'child_added' dispara UMA VEZ para cada mensagem existente e depois fica esperando novas
-        queryChat.on('child_added', (snapshot) => {
-            if(!document.getElementById('chatWindow').classList.contains('open')) return;
-            
-            const m = snapshot.val();
-            const id = snapshot.key;
-            const isMine = m.sender === myId;
-            const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
-            
-            if (!document.getElementById('msg_' + id)) {
-                if(area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
-                area.insertAdjacentHTML('beforeend', window._buildMsgHtml(id, m, isMine, perfil, _chatAtivo));
-                area.scrollTop = area.scrollHeight;
-                
-                if (typeof _lastMsgId !== 'undefined' && _lastMsgId === null) {
-                    _lastMsgId = id;
-                } else if (typeof _lastMsgId !== 'undefined' && id > _lastMsgId) {
-                    _lastMsgId = id;
-                    if (!isMine && !muted[channel]) {
-                       if (typeof tocarSomChat === 'function') tocarSomChat();
-                    }
-                }
-            }
-        });
-
-        // 'child_changed' dispara instantaneamente se alguém apagar ou editar uma mensagem
-        queryChat.on('child_changed', (snapshot) => {
-            const m = snapshot.val();
-            const id = snapshot.key;
-            const isMine = m.sender === myId;
-            const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
-            
-            const existing = document.getElementById('msg_' + id);
-            if (existing) {
-                existing.outerHTML = window._buildMsgHtml(id, m, isMine, perfil, _chatAtivo);
-            }
-        });
-    }
-};
-        
-        window._iniciarNotificacoesBackground();
-
+       
 
 // =========================================================================
         // CORREÇÃO: LIMPEZA DE NOTIFICAÇÕES FANTASMAS (BADGES)
@@ -10618,13 +10570,6 @@ setTimeout(_syncChatMobileButtons, 200);
             this.style.height = Math.min(this.scrollHeight, max) + 'px';
             if (this.scrollHeight > max) this.style.overflowY = 'auto';
             else this.style.overflowY = 'hidden';
-        });
-        // Enter envia, Shift+Enter quebra linha
-        el.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (typeof window.enviarMensagemChat === 'function') window.enviarMensagemChat();
-            }
         });
     }
     // Tenta agora e depois quando o chat abrir
