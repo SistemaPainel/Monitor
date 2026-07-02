@@ -7794,10 +7794,21 @@ rx="1.5" fill="#f59e0b"/>
                     } else {
                         ind.style.display = 'none';
                     }
-                }
-            } catch(e){}
-            if(userRole === 'editor' && _isPollingUsers) setTimeout(_pollChatUsers, 3000);
-        }
+
+            // Atualiza o cabeçalho ao vivo se for chat privado
+                            if (_chatAtivo !== 'global' && _chatAtivo !== 'geral') {
+                                const presence = _chatOnlineUsers[_chatAtivo] || {};
+                                const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000);
+                                const headerStatus = document.getElementById('chatHeaderStatus');
+                                if (headerStatus && ind.style.display === 'none') {
+                                    headerStatus.innerHTML = isOnline ? '<span style="color:#10b981;">Online</span>' : formatarUltimoVisto(presence.lastSeen);
+                                }
+                            }
+
+                            }
+                        } catch(e){}
+                        if(userRole === 'editor' && _isPollingUsers) setTimeout(_pollChatUsers, 3000);
+                    }
 
         function renderizarContatosChat() {
             const list = document.getElementById('chatContactList');
@@ -7899,14 +7910,17 @@ rx="1.5" fill="#f59e0b"/>
                     <div class="chat-contact-avatar" style="background: linear-gradient(135deg, #10b981, #059669);"><span class="chat-group-icon">🌍</span></div>
                     <div><div class="chat-contact-name" style="font-size:15px;">Talonário Fab-2</div><div class="chat-contact-status" id="chatHeaderStatus">Canal Público</div></div>
                 `;
-            } else {
-                // MENSAGEM DIRETA PRIVADA
-                const perfil = perfilDoUsuario(alvoId.replace(/_/g, '.')) || { nome: alvoId, avatar: 'masculino' };
-                headerInfo.innerHTML = `
-                    <div class="chat-contact-avatar">${htmlAvatarPerfil(perfil)}</div>
-                    <div><div class="chat-contact-name" style="font-size:15px;">${perfil.nome}</div><div class="chat-contact-status" id="chatHeaderStatus">Mensagem Direta</div></div>
-                `;
-            }
+                   } else {
+                        // MENSAGEM DIRETA PRIVADA
+                        const perfil = perfilDoUsuario(alvoId.replace(/_/g, '.')) || { nome: alvoId, avatar: 'masculino' };
+                        const presence = _chatOnlineUsers[alvoId] || {};
+                        const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000);
+                        
+                        headerInfo.innerHTML = `
+                            <div class="chat-contact-avatar">${htmlAvatarPerfil(perfil)}</div>
+                            <div><div class="chat-contact-name" style="font-size:15px;">${perfil.nome}</div><div class="chat-contact-status" id="chatHeaderStatus" style="font-size:11px;">${isOnline ? '<span style="color:#10b981;">Online</span>' : formatarUltimoVisto(presence.lastSeen)}</div></div>
+                        `;
+                    }
             await carregarMensagensChat(alvoId);
         }
 
@@ -9021,6 +9035,17 @@ conteudoImagem = `
             }
         };
 
+            function formatarUltimoVisto(timestamp) {
+                if (!timestamp) return 'Offline';
+                const agora = new Date();
+                const dataTs = new Date(timestamp);
+                const diffDias = Math.floor((agora.setHours(0,0,0,0) - new Date(timestamp).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+                const hora = dataTs.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                if (diffDias === 0) return `Visto hoje às ${hora}`;
+                if (diffDias === 1) return `Visto ontem às ${hora}`;
+                return `Visto em ${dataTs.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})} às ${hora}`;
+            }
         // 3. Sobrescreve a renderização da Sidebar
         window.renderizarContatosChat = function() {
             const list = document.getElementById('chatContactList');
@@ -9089,7 +9114,7 @@ conteudoImagem = `
                         </div>
                         <div class="chat-contact-info">
                             <div class="chat-contact-name">${isBlocked ? '🚫 ' : (isMuted ? '🔕 ' : '')}${perfil.nome}</div>
-                            <div class="chat-contact-status">${isOnline ? '<span style="color:#10b981;">Online</span>' : 'Offline'}</div>
+                            <div class="chat-contact-status">${isOnline ? '<span style="color:#10b981;">Online</span>' : `<span style="font-size:9px; opacity:0.8;">${formatarUltimoVisto(presence.lastSeen)}</span>`}</div>
                         </div>
                         <button class="chat-contact-options-btn" onclick="abrirMenuChatOpts(event, '${c.canalStr}', '${perfil.nome}', '${c.safeUid}')">⋮</button>
                     </div>
