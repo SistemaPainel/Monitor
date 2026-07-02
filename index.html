@@ -3105,16 +3105,19 @@ rx="1.5" fill="#f59e0b"/>
         </div>
 
         <div id="customModalOverlay" class="custom-modal-overlay">
-            <div class="custom-modal-box">
-                <h3 id="customModalMessage">Mensagem</h3>
-                <input type="text" id="customModalInput" class="custom-modal-input" placeholder="Autenticação..." style="display:none;" autocomplete="off">
-                <select id="customModalSelect" class="custom-modal-input" style="display:none;"></select>
-                <div class="custom-modal-actions">
-                    <button id="customModalBtnCancel" class="btn-cancelar">Cancelar</button>
-                    <button id="customModalBtnOk" class="btn-confirmar">Autorizar</button>
-                </div>
-            </div>
+    <div class="custom-modal-box">
+        <h3 id="customModalMessage">Mensagem</h3>
+        <input type="text" id="customModalInput" class="custom-modal-input" placeholder="Autenticação..." style="display:none;" autocomplete="off">
+        <select id="customModalSelect" class="custom-modal-input" style="display:none;"></select>
+        
+        <textarea id="customModalTextarea" class="custom-modal-input" style="display:none; resize:vertical; min-height:120px; font-size:14px; font-family:'Inter', sans-serif; text-align:left; letter-spacing:normal; font-weight:500;" placeholder="Digite o texto..."></textarea>
+        
+        <div class="custom-modal-actions">
+            <button id="customModalBtnCancel" class="btn-cancelar">Cancelar</button>
+            <button id="customModalBtnOk" class="btn-confirmar">Autorizar</button>
         </div>
+    </div>
+</div>
    
         <div id="configModalOverlay" class="custom-modal-overlay">
             <div class="custom-modal-box config-panel">
@@ -4944,6 +4947,35 @@ rx="1.5" fill="#f59e0b"/>
                     input.onkeypress = (e) => { if(e.key === 'Enter') btnOk.click(); };
                 });
             }
+
+function customPromptMultiline(msg, defaultValue = '') {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('customModalOverlay'); 
+        const input = document.getElementById('customModalInput');
+        const select = document.getElementById('customModalSelect');
+        const textarea = document.getElementById('customModalTextarea');
+        
+        document.getElementById('customModalMessage').innerText = msg;
+        if(input) input.style.display = 'none';
+        if(select) select.style.display = 'none';
+        
+        textarea.style.display = 'block'; 
+        textarea.value = defaultValue; 
+        
+        const btnCancel = document.getElementById('customModalBtnCancel'); 
+        const btnOk = document.getElementById('customModalBtnOk');
+        
+        btnCancel.style.display = 'block'; 
+        btnOk.style.display = 'block'; 
+        btnOk.innerText = 'Salvar'; 
+        
+        overlay.style.display = 'flex'; 
+        textarea.focus();
+       
+        btnOk.onclick = () => { overlay.style.display = 'none'; textarea.style.display = 'none'; tocarSomAuth(); resolve(textarea.value); };
+        btnCancel.onclick = () => { overlay.style.display = 'none'; textarea.style.display = 'none'; resolve(null); };
+    });
+}
 
         function customSelectPrompt(msg, options) {
             return new Promise(resolve => {
@@ -8011,7 +8043,7 @@ function formatarTextoWhatsApp(texto) {
             const deletedStyle = m.deleted ? 'opacity:0.6; font-style:italic;' : '';
 
             // --- AQUI RENDERIZA O TEXTO, IMAGEM E RESPOSTAS ---
-            let conteudoTexto = m.deleted ? '🚫 <i>Mensagem apagada</i>' : `<div class="msg-text-content" data-raw="${htmlSafe(m.text || '')}">${htmlSafe(m.text || '').replace(/\n/g, '<br>')}</div>`;
+            let conteudoTexto = m.deleted ? '🚫 <i>Mensagem apagada</i>' : `<div class="msg-text-content" data-raw="${encodeURIComponent(m.text || '')}">${htmlSafe(m.text || '').replace(/\n/g, '<br>')}</div>`;
            
             let conteudoImagem = '';
            
@@ -8125,7 +8157,7 @@ conteudoImagem = `
                             // Atualização Dinâmica (se editado ou apagado)
                             if (existing) {
                                 const textEl = existing.querySelector('.msg-text-content');
-                                if (textEl && textEl.dataset.raw !== m.text) {
+                                if (textEl && decodeURIComponent(textEl.getAttribute('data-raw') || '') !== m.text) {
                                     existing.outerHTML = _buildMsgHtml(id, m, isMine, perfil, _chatAtivo);
                                 }
                             }
@@ -8185,21 +8217,23 @@ conteudoImagem = `
         }
 
         // --- FUNÇÕES DE EDITAR E APAGAR ---
-                   async function editarMensagemChat(msgId, btnEl) {
-                const textEl = btnEl.closest('.chat-bubble').querySelector('.msg-text-content');
-                const textoAtual = textEl.dataset.raw;
-                
-                // Agora chama o modal customizado passando o texto original como 3º parâmetro
-                const novoTexto = await customPrompt('Editar mensagem:', false, textoAtual);
-               
-                if (novoTexto === null || novoTexto.trim() === '' || novoTexto === textoAtual) return;
-               
-                const channel = getChatChannelPath(_chatAtivo);
-                await fetch(`${FIREBASE_URL}/chat/messages/${channel}/${msgId}.json${AUTH}`, {
-                    method: 'PATCH', body: JSON.stringify({ text: novoTexto.trim(), edited: true })
-                });
-                // O listener irá capturar e atualizar a interface automaticamente
-            }
+               async function editarMensagemChat(msgId, btnEl) {
+    const textEl = btnEl.closest('.chat-bubble').querySelector('.msg-text-content');
+    
+    // Recupera o texto exatamente como foi digitado usando decodificação URI
+    const textoAtual = decodeURIComponent(textEl.getAttribute('data-raw') || '');
+    
+    // Chama o novo modal multiline, que preserva as quebras de linha
+    const novoTexto = await customPromptMultiline('Editar mensagem:', textoAtual);
+   
+    if (novoTexto === null || novoTexto.trim() === '' || novoTexto === textoAtual) return;
+   
+    const channel = getChatChannelPath(_chatAtivo);
+    await fetch(`${FIREBASE_URL}/chat/messages/${channel}/${msgId}.json${AUTH}`, {
+        method: 'PATCH', body: JSON.stringify({ text: novoTexto.trim(), edited: true })
+    });
+    // O listener do chat irá atualizar a interface automaticamente
+}
 
         async function deletarMensagemChat(msgId) {
             if (!await customConfirm('Deseja apagar esta mensagem para todos?', 'Apagar', 'Cancelar')) return;
@@ -9281,7 +9315,7 @@ conteudoImagem = `
 
                             if (existing) {
                                 const textEl = existing.querySelector('.msg-text-content');
-                                if (textEl && textEl.dataset.raw !== m.text) {
+                                if (textEl && decodeURIComponent(textEl.getAttribute('data-raw') || '') !== m.text) {
                                     existing.outerHTML = _buildMsgHtml(id, m, isMine, perfil, _chatAtivo);
                                 }
                             }
