@@ -7810,37 +7810,47 @@ function customPromptMultiline(msg, defaultValue = '') {
         }
 
         async function _pollChatUsers() {
-            if (!_isPollingUsers) return;
-            try {
-                const res = await fetch(`${FIREBASE_URL}/chat/users.json${AUTH}`);
-                if(res.ok) _chatOnlineUsers = await res.json() || {};
-               
-                if(_chatAtivo && _chatOnlineUsers) {
-                    const myId = _usuarioAtual.user.replace(/\./g, '_');
-                    const isTyping = Object.entries(_chatOnlineUsers).find(([uid, data]) => uid !== myId && data.typingIn === _chatAtivo && (Date.now() - data.typingTs < 3000));
-                    const ind = document.getElementById('chatTypingIndicator');
-                    if(isTyping) {
-                        const perfil = perfilDoUsuario(isTyping[0].replace(/_/g, '.')) || { nome: isTyping[0] };
-                        document.getElementById('chatTypingName').textContent = perfil.nome;
-                        ind.style.display = 'flex';
-                    } else {
-                        ind.style.display = 'none';
-                    }
+    if (!_isPollingUsers) return;
+    try {
+        const res = await fetch(`${FIREBASE_URL}/chat/users.json${AUTH}`);
+        if(res.ok) _chatOnlineUsers = await res.json() || {};
+       
+        if(_chatAtivo && _chatOnlineUsers) {
+            const myId = _usuarioAtual.user.replace(/\./g, '_');
+            
+            // CORREÇÃO ESTRUTURAL: Lê apenas quem está digitando NESTE canal isolado
+            const currentChannel = getChatChannelPath(_chatAtivo);
+            
+            const isTyping = Object.entries(_chatOnlineUsers).find(([uid, data]) => 
+                uid !== myId && 
+                data.typingIn === currentChannel && 
+                (Date.now() - data.typingTs < 3000)
+            );
+            
+            const ind = document.getElementById('chatTypingIndicator');
+            
+            if(isTyping) {
+                const perfil = perfilDoUsuario(isTyping[0].replace(/_/g, '.')) || { nome: isTyping[0] };
+                document.getElementById('chatTypingName').textContent = perfil.nome;
+                ind.style.display = 'flex';
+            } else {
+                ind.style.display = 'none';
+            }
 
-            // Atualiza o cabeçalho ao vivo se for chat privado
-                            if (_chatAtivo !== 'global' && _chatAtivo !== 'geral') {
-                                const presence = _chatOnlineUsers[_chatAtivo] || {};
-                                const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000);
-                                const headerStatus = document.getElementById('chatHeaderStatus');
-                                if (headerStatus && ind.style.display === 'none') {
-                                    headerStatus.innerHTML = isOnline ? '<span style="color:#10b981;">Online</span>' : formatarUltimoVisto(presence.lastSeen);
-                                }
-                            }
-
-                            }
-                        } catch(e){}
-                        if(userRole === 'editor' && _isPollingUsers) setTimeout(_pollChatUsers, 3000);
-                    }
+            // Atualiza o status online/offline no cabeçalho se for chat privado
+            if (_chatAtivo !== 'global' && _chatAtivo !== 'geral') {
+                const presence = _chatOnlineUsers[_chatAtivo] || {};
+                const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000);
+                const headerStatus = document.getElementById('chatHeaderStatus');
+                if (headerStatus && ind.style.display === 'none') {
+                    headerStatus.innerHTML = isOnline ? '<span style="color:#10b981;">Online</span>' : formatarUltimoVisto(presence.lastSeen);
+                }
+            }
+        }
+    } catch(e) {}
+    
+    if(userRole === 'editor' && _isPollingUsers) setTimeout(_pollChatUsers, 3000);
+}
 
         function renderizarContatosChat() {
             const list = document.getElementById('chatContactList');
@@ -8257,17 +8267,31 @@ conteudoImagem = `
         }
 
         function handleChatTyping() {
-            const input = document.getElementById('chatInputMsg');
-            input.style.height = 'auto'; input.style.height = (input.scrollHeight) + 'px';
-            if(!_usuarioAtual) return;
-            const myId = _usuarioAtual.user.replace(/\./g, '_');
-            fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { method: 'PATCH', body: JSON.stringify({ typingIn: _chatAtivo, typingTs: Date.now() }) });
-           
-            clearTimeout(_chatTypingTimeout);
-            _chatTypingTimeout = setTimeout(() => {
-                fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { method: 'PATCH', body: JSON.stringify({ typingIn: null }) });
-            }, 3000);
-        }
+    const input = document.getElementById('chatInputMsg');
+    input.style.height = 'auto'; 
+    input.style.height = (input.scrollHeight) + 'px';
+    
+    if(!_usuarioAtual) return;
+    
+    const myId = _usuarioAtual.user.replace(/\./g, '_');
+    
+    // CORREÇÃO ESTRUTURAL: Busca a rota real do banco (ex: public, public_geral, private_x_y)
+    const channel = getChatChannelPath(_chatAtivo);
+    
+    // Grava no Firebase o canal exato em que o usuário está digitando
+    fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { 
+        method: 'PATCH', 
+        body: JSON.stringify({ typingIn: channel, typingTs: Date.now() }) 
+    });
+   
+    clearTimeout(_chatTypingTimeout);
+    _chatTypingTimeout = setTimeout(() => {
+        fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { 
+            method: 'PATCH', 
+            body: JSON.stringify({ typingIn: null }) 
+        });
+    }, 3000);
+}
 
         function _recalcularBadgeGlobal() {
             const badge = document.getElementById('chatUnreadBadge');
