@@ -5184,7 +5184,60 @@ function customPromptMultiline(msg, defaultValue = '') {
            
             return { id, nome };
         }
+// --- COLE ISSO AQUI ---
+async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, ordem, pacote, event) {
+    if (event) { event.preventDefault(); event.stopPropagation(); }
 
+    const solicitanteObj = await obterSolicitanteReimpressao();
+    if (!solicitanteObj) { await customAlert('Solicitacao cancelada.'); return; }
+    const solicitanteNome = solicitanteObj.nome;
+    const solicitanteCracha = solicitanteObj.id;
+
+    const listaGerentes = Object.values(credenciaisGerente).map(g => ({ value: g.nome, label: g.nome }));
+    if(listaGerentes.length === 0) {
+        await customAlert('Nenhum Gerente cadastrado no banco de dados para aprovação.');
+        return;
+    }
+
+    const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', listaGerentes);
+    if (!aprovador) { await customAlert('Solicitacao cancelada.'); return; }
+
+    const ordens = [{ cor: cor, ordem: ordem, pacote: pacote }];
+    const numRequisicao = gerarNumeroRequisicao();
+    const dataHora = new Date().toLocaleString('pt-BR');
+    const btn = event ? event.currentTarget : null;
+    const btnHtml = btn ? btn.innerHTML : '';
+
+    try {
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳'; }
+        
+        const payload = {
+            numRequisicao, grupo, estacao, modelo, tamanho, ordens,
+            status: 'pendente',
+            solicitante: solicitanteNome,
+            solicitanteCracha,
+            aprovadorSolicitado: aprovador,
+            dataHora, timestamp: Date.now()
+        };
+
+        const resp = await fetch(`${FIREBASE_URL}/reimpressoes/${numRequisicao}.json${AUTH}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+        const notifReimpData = { tipo: 'reimpressao_solicitada', numRequisicao, solicitante: solicitanteNome, aprovadorSolicitado: aprovador, grupo, estacao, modelo, tamanho, dataHora, timestamp: Date.now() };
+        localStorage.setItem('notifReimpressao', JSON.stringify(notifReimpData));
+        
+        await customAlert(`Solicitação enviada.\nRequisição: ${numRequisicao}\nSolicitante: ${solicitanteNome}`);
+    } catch (e) {
+        await customAlert('Falha ao enviar solicitação de reimpressão.');
+    } finally {
+        if (btn && btn.isConnected) { btn.disabled = false; btn.innerHTML = btnHtml; }
+    }
+}
+// ----------------------
         async function solicitarReimpressaoLote(estacao, modelo, tamanho, backId, event) {
             if (event) { event.preventDefault(); event.stopPropagation(); }
             const checks = document.querySelectorAll('.reimp-check[data-back="' + backId + '"]:checked');
@@ -6403,21 +6456,22 @@ function customPromptMultiline(msg, defaultValue = '') {
                         let chave = mod.toUpperCase() + "|" + tam.toUpperCase().replace(/[.\/]/g, ',');
                         let prod = refData[chave] || { detalhes: [] };
                        
-                        if (prod.detalhes && prod.detalhes.length > 0) {
+                       if (prod.detalhes && prod.detalhes.length > 0) {
                             hasData = true;
                             prod.detalhes.forEach(d => {
-                                wipRawData.push({ modelo: mod, tamanho: tam, cor: (d.cor || '--').toString().trim(), ordem: (d.ordem || '--').toString().trim(), pacote: (d.pacote || '--').toString().trim(), alocacao: estNumFormat });
+                                wipRawData.push({ modelo: mod, tamanho: tam, cor: (d.cor || '--').toString().trim(), ordem: (d.ordem || '--').toString().trim(), pacote: (d.pacote || '--').toString().trim(), alocacao: estNumFormat, grupoRaw: nomeGrupo, estacaoRaw: numeroEstacao });
                             });
                         } else {
                             hasData = true;
-                            wipRawData.push({ modelo: mod, tamanho: tam, cor: '--', ordem: '--', pacote: '--', alocacao: estNumFormat });
+                            wipRawData.push({ modelo: mod, tamanho: tam, cor: '--', ordem: '--', pacote: '--', alocacao: estNumFormat, grupoRaw: nomeGrupo, estacaoRaw: numeroEstacao });
                         }
+ 
                     });
                 });
 
                 if (!hasData) { body.innerHTML = `<p style="text-align:center;color:var(--text-muted);font-weight:700;padding:40px;">Nenhum dado WIP registrado na rede ativa.</p>`; return; }
 
-                body.innerHTML = `<table class="wip-table"><thead><tr><th style="width:22%;">Modelo<br><select id="fw-modelo" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:10%;">Tamanho<br><select id="fw-tamanho" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:20%;">Cor Variante<br><select id="fw-cor" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:20%;">Documento (Ordem)<br><select id="fw-ordem" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:15%;">Lote/Pacote<br><select id="fw-pacote" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:13%;">Alocação<br><select id="fw-aloc" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th></tr></thead><tbody id="wipTableBody"></tbody></table>`;
+               body.innerHTML = `<table class="wip-table"><thead><tr><th style="width:20%;">Modelo<br><select id="fw-modelo" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:10%;">Tamanho<br><select id="fw-tamanho" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Cor Variante<br><select id="fw-cor" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Documento (Ordem)<br><select id="fw-ordem" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:12%;">Lote/Pacote<br><select id="fw-pacote" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:14%;">Alocação<br><select id="fw-aloc" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:8%;text-align:center;">Ação</th></tr></thead><tbody id="wipTableBody"></tbody></table>`;
                 fillWIPSelects(); collapsedModels.clear(); renderTabelaWIP();
             } catch (err) {
                 console.error("Erro no WIP:", err);
@@ -6458,11 +6512,17 @@ function customPromptMultiline(msg, defaultValue = '') {
                     let isFirstModRow = true;
                     tamanhos.forEach(tam => {
                         const detalhes = reportData[mod][tam]; const totalRowsTam = detalhes.length; let isFirstTamRow = true;
-                        detalhes.forEach(det => {
+         detalhes.forEach(det => {
                             html += `<tr class="wip-tr-hover">`;
                             if (isFirstModRow) { html += `<td rowspan="${totalRowsMod}" class="wip-group-cell wip-model-cell"><button class="btn-toggle-row" onclick="toggleWipModel('${mod}')">-</button> ${mod}</td>`; isFirstModRow = false; }
                             if (isFirstTamRow) { html += `<td rowspan="${totalRowsTam}" class="wip-group-cell wip-tam-cell">${tam}</td>`; isFirstTamRow = false; }
-                            html += `<td>${det.cor}</td><td>${det.ordem}</td><td>${det.pacote}</td><td>${det.alocacao}</td></tr>`;
+                            html += `<td>${det.cor}</td><td>${det.ordem}</td><td>${det.pacote}</td><td>${det.alocacao}</td>
+                            <td style="text-align:center;">
+                                <button onclick="solicitarReimpressaoUnica('${det.grupoRaw}', '${det.estacaoRaw}', '${mod}', '${tam}', '${det.cor}', '${det.ordem}', '${det.pacote}', event)" 
+                                        style="background:linear-gradient(135deg,#007AFF,#5E5CE6); color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); transition: 0.2s;" 
+                                        onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
+                                        title="Solicitar Reimpressão Desta Ordem">🖨️ ➔</button>
+                            </td></tr>`;
                         });
                     });
                 }
