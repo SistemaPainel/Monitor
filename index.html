@@ -3369,7 +3369,7 @@ rx="1.5" fill="#f59e0b"/>
 
         // === INICIALIZAÇÃO DO BANCO ===
         firebase.initializeApp({
-            databaseURL: "https://gen-lang-client-0514567939-default-rtdb.firebaseio.com/"
+            databaseURL: "https://gen-lang-client-0514567939-default-rtdb.firebaseio.com"
         });
         window.db = firebase.database();
 
@@ -3380,7 +3380,7 @@ rx="1.5" fill="#f59e0b"/>
     // cola a URL do banco aqui — sem barra no final
     // a secret fica vazia se o banco for público
     // =====================================================================
-    const FIREBASE_URL = "https://gen-lang-client-0514567939-default-rtdb.firebaseio.com/";
+    const FIREBASE_URL = "https://gen-lang-client-0514567939-default-rtdb.firebaseio.com";
     const FIREBASE_SECRET = "";
     const AUTH = FIREBASE_SECRET && !/^https?:\/\//i.test(FIREBASE_SECRET) ? `?auth=${encodeURIComponent(FIREBASE_SECRET)}` : "";
     // =====================================================================
