@@ -4576,17 +4576,15 @@ rx="1.5" fill="#f59e0b"/>
             const list = document.getElementById('notifList');
             list.innerHTML = '<div class="notif-empty" style="padding:30px 20px;">⏳ Carregando...</div>';
             try {
-                // Busca sem orderBy (evita exigência de índice no Firebase)
-                const resp = await fetch(`${FIREBASE_URL}/logs.json${AUTH}`);
-                const data = await resp.json();
-
                 let entries = [];
-                // Valida que a resposta é um objeto real com entradas (não um erro do Firebase)
-                if (data && typeof data === 'object' && !data.error) {
+                // Usa o SDK do Firebase para puxar EXATAMENTE os últimos 20 itens direto do servidor (economia gigante)
+                const snap = await db.ref('/logs').orderByKey().limitToLast(20).once('value');
+                const data = snap.val();
+
+                if (data && typeof data === 'object') {
                     entries = Object.values(data)
                         .filter(e => e && typeof e === 'object' && e.grupo && e.dataHora)
-                        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-                        .slice(0, 20);
+                        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 }
 
                 if (entries.length > 0) {
@@ -5958,7 +5956,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         // busca os dados do Firebase e renderiza todos os cards de estação
         // é a função mais importante do sistema — roda a cada 30s
         // =====================================================================
-                async function carregarPainel() {
+                async function carregarPainel(snapAlocData = null) {
             const grupoAtual = document.getElementById('filtroGrupo').value;
             const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
            
@@ -5976,10 +5974,17 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 const scrollYAntes = window.scrollY;
 
                 // Junta a Alocacao e a Referencia pelo Client
-                 const alocSnap = await db.ref(`/alocacao/${grupoAtual}`).once('value');
-                const alocData = alocSnap.val() || {};
-                const refSnap = await db.ref(`/referencia`).once('value');
-                const refData = refSnap.val() || {};
+                let alocData = snapAlocData;
+                if (!alocData) {
+                    const alocSnap = await db.ref(`/alocacao/${grupoAtual}`).once('value');
+                    alocData = alocSnap.val() || {};
+                }
+                // Verifica se já baixou a referência antes nesta sessão
+                    if (!window._cacheReferencia) {
+                        const refSnap = await db.ref(`/referencia`).once('value');
+                        window._cacheReferencia = refSnap.val() || {};
+                    }
+                    const refData = window._cacheReferencia;
 
                 const estacoesReais = {};
                 for (let i = 1; i <= numEstacoes; i++) {
@@ -6403,14 +6408,18 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             const body = document.getElementById('wipBody');
             body.innerHTML = `<div style="text-align:center; padding:80px 20px;"><div style="font-size: 45px; margin-bottom: 20px;">📡</div><p style="color:var(--text-main);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:1px;">Sincronizando Malha Global...</p></div>`;
            
-            try {
+           try {
                 const gruposStr = ["Grupo 1", "Grupo 2", "Grupo 3", "Grupo 4", "Grupo 5", "Grupo 6", "Grupo 7", "Grupo 8"];
-                const promessas = gruposStr.map(g => fetch(`${FIREBASE_URL}/alocacao/${g}.json${AUTH}`).then(r => r.json()));
+                // Puxa do Firebase via SDK (usa a compactação e o cache interno)
+                const promessas = gruposStr.map(g => db.ref(`/alocacao/${g}`).once('value').then(snap => snap.val()));
                 const resultadosAloc = await Promise.all(promessas);
                
-                const respRef = await fetch(`${FIREBASE_URL}/referencia.json${AUTH}`);
-                const refData = await respRef.json() || {};
-               
+                // Reaproveita o cache de referência em vez de baixar tudo de novo
+                if (!window._cacheReferencia) {
+                    const refSnap = await db.ref(`/referencia`).once('value');
+                    window._cacheReferencia = refSnap.val() || {};
+                }
+                const refData = window._cacheReferencia;
                 wipRawData = []; let hasData = false;
 
                 resultadosAloc.forEach((dadosGrupo, index) => {
@@ -6740,7 +6749,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
             // 2. Cria o Tubo Direto (WebSockets) com o Firebase
             window._refAloc = db.ref(`/alocacao/${grupo}`);
-            window._refAloc.on('value', () => { carregarPainel(); });
+            window._refAloc.on('value', (snapshot) => { carregarPainel(snapshot.val()); });
 
             window._refInv = db.ref(`/inversoes/${grupo}`);
             window._refInv.on('value', () => { _carregarInversoes(); });
@@ -6790,21 +6799,21 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 });
             }
 
-            // B - ALOCAÇÃO BACKGROUND
+            // B - ALOCAÇÃO BACKGROUND (OTIMIZADO)
             if(!window._refAlocBg) {
-                window._refAlocBg = db.ref('/alocacao');
-                window._refAlocBg.on('child_changed', (snap) => {
-                    const grupoAlterado = snap.key;
+                // Em vez de baixar o grupo inteiro, escuta apenas a última notificação leve do nó de logs
+                window._refAlocBg = db.ref('/logs').orderByKey().limitToLast(1);
+                window._refAlocBg.on('child_added', (snap) => {
+                    const logData = snap.val();
+                    if (!logData || !logData.grupo) return;
+                    
+                    const grupoAlterado = logData.grupo;
                     if (grupoAlterado === document.getElementById('filtroGrupo').value) return; 
                     
-                    const lista = Object.values(snap.val() || {});
-                    const infoData = lista.find(d => d && typeof d === 'object' && d.dataHora);
-                    if (infoData) {
-                        const chave = (infoData.dataHora || "") + (infoData.cracha || "");
-                        if (chave !== "" && historicoGrupos[grupoAlterado] !== chave) {
-                            historicoGrupos[grupoAlterado] = chave;
-                            exibirNotificacao(infoData.cracha, infoData.dataHora, grupoAlterado);
-                        }
+                    const chave = (logData.dataHora || "") + (logData.cracha || logData.operador || "");
+                    if (chave !== "" && historicoGrupos[grupoAlterado] !== chave) {
+                        historicoGrupos[grupoAlterado] = chave;
+                        exibirNotificacao(logData.cracha || logData.operador, logData.dataHora, grupoAlterado);
                     }
                 });
             }
@@ -7927,49 +7936,62 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             }
         }
 
-        function _pollChatUsers() {
-    if (!_isPollingUsers) return;
+        function _atualizarInterfaceUsuariosChat() {
+            if(_chatAtivo && _usuarioAtual && _chatOnlineUsers) {
+                const myId = _usuarioAtual.user.replace(/\./g, '_');
+                const currentChannel = typeof getChatChannelPath === 'function' ? getChatChannelPath(_chatAtivo) : _chatAtivo;
 
-    // Desliga qualquer ouvinte pendente
-    if (window._usersRef) window._usersRef.off();
-    window._usersRef = db.ref('/chat/users');
+                const isTyping = Object.entries(_chatOnlineUsers).find(([uid, data]) => 
+                    uid !== myId && 
+                    data.typingIn === currentChannel && 
+                    (Date.now() - data.typingTs < 3000)
+                );
+                
+                const ind = document.getElementById('chatTypingIndicator');
+                
+                if(isTyping) {
+                    const perfil = (typeof perfilDoUsuario === 'function' ? perfilDoUsuario(isTyping[0].replace(/_/g, '.')) : null) || { nome: isTyping[0] };
+                    const nameEl = document.getElementById('chatTypingName');
+                    if(nameEl) nameEl.textContent = perfil.nome;
+                    if(ind) ind.style.display = 'flex';
+                } else {
+                    if(ind) ind.style.display = 'none';
+                }
 
-    // Mantém a conexão aberta e avisa se alguém ficar online/offline ou digitar
-    window._usersRef.on('value', (snapshot) => {
-        _chatOnlineUsers = snapshot.val() || {};
-        
-        if(_chatAtivo && _usuarioAtual && _chatOnlineUsers) {
-            const myId = _usuarioAtual.user.replace(/\./g, '_');
-            const currentChannel = typeof getChatChannelPath === 'function' ? getChatChannelPath(_chatAtivo) : _chatAtivo;
-
-            const isTyping = Object.entries(_chatOnlineUsers).find(([uid, data]) => 
-                uid !== myId && 
-                data.typingIn === currentChannel && 
-                (Date.now() - data.typingTs < 3000)
-            );
-            
-            const ind = document.getElementById('chatTypingIndicator');
-            
-            if(isTyping) {
-                const perfil = (typeof perfilDoUsuario === 'function' ? perfilDoUsuario(isTyping[0].replace(/_/g, '.')) : null) || { nome: isTyping[0] };
-                const nameEl = document.getElementById('chatTypingName');
-                if(nameEl) nameEl.textContent = perfil.nome;
-                if(ind) ind.style.display = 'flex';
-            } else {
-                if(ind) ind.style.display = 'none';
-            }
-
-            if (_chatAtivo !== 'global' && _chatAtivo !== 'geral') {
-                const presence = _chatOnlineUsers[_chatAtivo] || {};
-                const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000);
-                const headerStatus = document.getElementById('chatHeaderStatus');
-                if (headerStatus && ind && ind.style.display === 'none') {
-                    headerStatus.innerHTML = isOnline ? '<span style="color:#10b981;">Online</span>' : (typeof formatarUltimoVisto === 'function' ? formatarUltimoVisto(presence.lastSeen) : 'Offline');
+                if (_chatAtivo !== 'global' && _chatAtivo !== 'geral') {
+                    const presence = _chatOnlineUsers[_chatAtivo] || {};
+                    const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000);
+                    const headerStatus = document.getElementById('chatHeaderStatus');
+                    if (headerStatus && ind && ind.style.display === 'none') {
+                        headerStatus.innerHTML = isOnline ? '<span style="color:#10b981;">Online</span>' : (typeof formatarUltimoVisto === 'function' ? formatarUltimoVisto(presence.lastSeen) : 'Offline');
+                    }
                 }
             }
         }
-    });
-}
+
+        function _pollChatUsers() {
+            if (!_isPollingUsers) return;
+
+            if (window._usersRef) window._usersRef.off();
+            window._usersRef = db.ref('/chat/users');
+
+            // Baixa a lista inteira só UMA VEZ ao inicializar
+            window._usersRef.once('value', (snapshot) => {
+                _chatOnlineUsers = snapshot.val() || {};
+                _atualizarInterfaceUsuariosChat();
+                
+                // A partir daqui, escuta APENAS o usuário específico que mudou
+                window._usersRef.on('child_changed', (childSnap) => {
+                    _chatOnlineUsers[childSnap.key] = childSnap.val();
+                    _atualizarInterfaceUsuariosChat();
+                });
+                
+                window._usersRef.on('child_added', (childSnap) => {
+                    _chatOnlineUsers[childSnap.key] = childSnap.val();
+                    _atualizarInterfaceUsuariosChat();
+                });
+            });
+        }
  
         function renderizarContatosChat() {
             const list = document.getElementById('chatContactList');
@@ -8339,19 +8361,23 @@ conteudoImagem = `
             }
         }
 
-        function handleChatTyping() {
+        let _typingDebounceTimer = null;
+function handleChatTyping() {
     const input = document.getElementById('chatInputMsg');
     input.style.height = 'auto'; 
     input.style.height = (input.scrollHeight) + 'px';
     
     if(!_usuarioAtual) return;
     
+    // Trava de Spam: Só atualiza o Firebase a cada 1.5 segundos
+    if (_typingDebounceTimer) return;
+    _typingDebounceTimer = setTimeout(() => {
+        _typingDebounceTimer = null;
+    }, 1500);
+
     const myId = _usuarioAtual.user.replace(/\./g, '_');
-    
-    // CORREÇÃO ESTRUTURAL: Busca a rota real do banco (ex: public, public_geral, private_x_y)
     const channel = getChatChannelPath(_chatAtivo);
     
-    // Grava no Firebase o canal exato em que o usuário está digitando
     fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { 
         method: 'PATCH', 
         body: JSON.stringify({ typingIn: channel, typingTs: Date.now() }) 
