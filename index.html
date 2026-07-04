@@ -4419,28 +4419,7 @@ rx="1.5" fill="#f59e0b"/>
 
         let _gerentePollingInterval = null;
 
-        function abrirSistemaGerente() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
-            mostrarAreaGerente();
-            carregarReimpressoesGerente();
-            // Auto-atualizar painel do gerente a cada 12 segundos
-            if (_gerentePollingInterval) clearInterval(_gerentePollingInterval);
-            _gerentePollingInterval = setInterval(async () => {
-                const prevPendentes = document.getElementById('gerenteCountPendentes').textContent;
-                await carregarReimpressoesGerente();
-                const novoPendentes = document.getElementById('gerenteCountPendentes').textContent;
-                if (parseInt(novoPendentes) > parseInt(prevPendentes || 0)) {
-                    tocarSomNotificacao();
-                    const toast = document.getElementById('toastAlocacao');
-                    toast.innerHTML = '<strong>🖨 Nova Reimpressão Pendente</strong><br><span style="color:#f59e0b;">Há ' + novoPendentes + ' solicitações aguardando aprovação</span>';
-                    clearTimeout(toastTimeout1); clearTimeout(toastTimeout2); clearTimeout(toastTimeout3);
-                    toast.style.display = 'block';
-                    toastTimeout1 = setTimeout(() => requestAnimationFrame(() => toast.style.opacity = '1'), 10);
-                    toastTimeout2 = setTimeout(() => { toast.style.opacity = '0'; toastTimeout3 = setTimeout(() => toast.style.display = 'none', 500); }, 10000);
-                }
-            }, 12000);
-        }
+       
 
 
         // =====================================================================
@@ -5016,7 +4995,7 @@ function customPromptMultiline(msg, defaultValue = '') {
             });
         }
        
-        function trocarGrupo() { _filtroStatusAtivo = null; ['wrapRodando','wrapParada','wrapTroca'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('ativo','inativo');} }); var grupo = document.getElementById('filtroGrupo').value; localStorage.setItem('ultimoGrupoSelecionado', grupo); carregarPainel(); _carregarInversoes(); _carregarNotas(); }
+        
 
         // Filtro de status ativo (null = todos)
         let _filtroStatusAtivo = null;
@@ -5378,9 +5357,8 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
         async function carregarReimpressoes(renderModal = true) {
             try {
-                const resp = await fetch(`${FIREBASE_URL}/reimpressoes.json${AUTH}`);
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json() || {};
+                const snap = await db.ref('/reimpressoes').once('value');
+                const data = snap.val() || {};
                 _reprintData = Object.keys(data).map(id => normalizarRequisicaoReimpressao(id, data[id])).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 if (renderModal) renderReimpressoes();
                 return true;
@@ -5998,14 +5976,10 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 const scrollYAntes = window.scrollY;
 
                 // Junta a Alocacao e a Referencia pelo Client
-                const respAloc = await fetch(`${FIREBASE_URL}/alocacao/${grupoAtual}.json${AUTH}`);
-                if (!respAloc.ok) throw new Error('Alocacao HTTP ' + respAloc.status);
-                const alocData = await respAloc.json() || {};
-                if (alocData && alocData.error) throw new Error(alocData.error);
-                const respRef = await fetch(`${FIREBASE_URL}/referencia.json${AUTH}`);
-                if (!respRef.ok) throw new Error('Referencia HTTP ' + respRef.status);
-                const refData = await respRef.json() || {};
-                if (refData && refData.error) throw new Error(refData.error);
+                 const alocSnap = await db.ref(`/alocacao/${grupoAtual}`).once('value');
+                const alocData = alocSnap.val() || {};
+                const refSnap = await db.ref(`/referencia`).once('value');
+                const refData = refSnap.val() || {};
 
                 const estacoesReais = {};
                 for (let i = 1; i <= numEstacoes; i++) {
@@ -6753,17 +6727,101 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         // painel e começa todos os pollings em background
         // =====================================================================
         function iniciarSistema() {
+            // 1. Limpa conexões antigas caso o usuário troque de grupo
+            if(window._refAloc) window._refAloc.off();
+            if(window._refInv) window._refInv.off();
+            if(window._refNotas) window._refNotas.off();
+
             carregarPainel();
             _carregarInversoes();
             _carregarNotas();
-            sysIntervals.push(setInterval(carregarPainel, 30000));
-            sysIntervals.push(setInterval(checarProximoGrupoBackground, 15000));
-            sysIntervals.push(setInterval(_carregarInversoes, 40000));
-            sysIntervals.push(setInterval(_carregarNotas, 20000));
-            // Polling de novas reimpressões (notificação em tempo real)
-            _pollarNovasReimpressoes(); // inicializa o timestamp
-            sysIntervals.push(setInterval(_pollarNovasReimpressoes, 15000));
+            
+            const grupo = document.getElementById('filtroGrupo').value;
+
+            // 2. Cria o Tubo Direto (WebSockets) com o Firebase
+            window._refAloc = db.ref(`/alocacao/${grupo}`);
+            window._refAloc.on('value', () => { carregarPainel(); });
+
+            window._refInv = db.ref(`/inversoes/${grupo}`);
+            window._refInv.on('value', () => { _carregarInversoes(); });
+
+            window._refNotas = db.ref(`/notas/${grupo}`);
+            window._refNotas.on('value', () => { _carregarNotas(); });
+
+            // 3. Inicia ouvintes globais de background
+            _iniciarOuvintesBackgroundGlobais();
         }
+
+        function abrirSistemaGerente() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            mostrarAreaGerente();
+            carregarReimpressoesGerente();
+            
+            // Liga apenas os ouvintes necessários para o Gerente
+            _iniciarOuvintesBackgroundGlobais();
+        }
+
+        function _iniciarOuvintesBackgroundGlobais() {
+            // A - REIMPRESSÕES
+            if(!window._refReimp) {
+                window._refReimp = db.ref('/reimpressoes');
+                
+                window._refReimp.on('child_added', (snap) => {
+                    const r = snap.val();
+                    if(r && r.timestamp && _ultimoTimestampReimpressao > 0 && r.timestamp > _ultimoTimestampReimpressao) {
+                        if(r.status === 'pendente') {
+                            exibirToastReimpressao('solicitar', r.solicitante || 'Usuário', r.modelo, r.tamanho, r.estacao, r.aprovadorSolicitado);
+                            if(userRole === 'gerente') carregarReimpressoesGerente();
+                        }
+                        _ultimoTimestampReimpressao = r.timestamp;
+                    } else if (r && r.timestamp && _ultimoTimestampReimpressao === 0) {
+                        if(r.timestamp > _ultimoTimestampReimpressao) _ultimoTimestampReimpressao = r.timestamp;
+                    }
+                });
+
+                window._refReimp.on('child_changed', (snap) => {
+                    const r = snap.val();
+                    if(r && r.status === 'aprovado' && r.timestamp > _ultimoTimestampReimpressao) {
+                        exibirToastReimpressao('aprovar', r.aprovador || '--', '', '', '', '');
+                    }
+                    if(document.getElementById('reprintModalOverlay')?.classList.contains('open')) carregarReimpressoes(true);
+                    if(userRole === 'gerente') carregarReimpressoesGerente();
+                });
+            }
+
+            // B - ALOCAÇÃO BACKGROUND
+            if(!window._refAlocBg) {
+                window._refAlocBg = db.ref('/alocacao');
+                window._refAlocBg.on('child_changed', (snap) => {
+                    const grupoAlterado = snap.key;
+                    if (grupoAlterado === document.getElementById('filtroGrupo').value) return; 
+                    
+                    const lista = Object.values(snap.val() || {});
+                    const infoData = lista.find(d => d && typeof d === 'object' && d.dataHora);
+                    if (infoData) {
+                        const chave = (infoData.dataHora || "") + (infoData.cracha || "");
+                        if (chave !== "" && historicoGrupos[grupoAlterado] !== chave) {
+                            historicoGrupos[grupoAlterado] = chave;
+                            exibirNotificacao(infoData.cracha, infoData.dataHora, grupoAlterado);
+                        }
+                    }
+                });
+            }
+        }
+        
+        function trocarGrupo() { 
+            _filtroStatusAtivo = null; 
+            ['wrapRodando','wrapParada','wrapTroca'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('ativo','inativo');} }); 
+            var grupo = document.getElementById('filtroGrupo').value; 
+            localStorage.setItem('ultimoGrupoSelecionado', grupo); 
+            
+            // Aqui é a mágica: em vez de só carregar a tela, reinicia o "tubo" para o grupo novo
+            iniciarSistema(); 
+        }
+
+        // ... apague também a função abrirSistemaGerente() inteira ...
+        // ... apague também a função trocarGrupo() inteira ...
 
         // ═══════════════════════════════════════════════════════
         //  NOTAS POR ESTAÇÃO
@@ -6781,8 +6839,8 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         async function _carregarNotas() {
             const grupo = document.getElementById('filtroGrupo').value;
             try {
-                const resp = await fetch(FIREBASE_URL+'/notas/'+encodeURIComponent(grupo)+'.json'+AUTH);
-                const data = await resp.json();
+                const snap = await db.ref(`/notas/${grupo}`).once('value');
+                const data = snap.val();
                 _notasCache = (data && typeof data === 'object') ? data : {};
             } catch(e) { _notasCache = {}; }
             _renderizarNotasNosCards();
@@ -6970,8 +7028,8 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         async function _carregarInversoes() {
             const grupo = document.getElementById('filtroGrupo').value;
             try {
-                const resp = await fetch(FIREBASE_URL+'/inversoes/'+encodeURIComponent(grupo)+'.json'+AUTH);
-                const data = await resp.json();
+                const snap = await db.ref(`/inversoes/${grupo}`).once('value');
+                const data = snap.val();
                 _inversoesPares = Array.isArray(data) ? data : [];
             } catch(e) { _inversoesPares = []; }
             _redesenharTodasSetas();
