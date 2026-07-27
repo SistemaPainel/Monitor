@@ -5861,9 +5861,12 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
                     document.getElementById('status-update').innerText = "Sincronizando com Banco Global...";
                     try {
-                        await fetch(`${FIREBASE_URL}/alocacao/${grupo}/${estacao}.json${AUTH}`, {
-                            method: 'PATCH', body: JSON.stringify({ prManual: novoPr, prTime: novoTime })
+                        // CORREÇÃO: Utilizando o SDK do Firebase para evitar problemas de cache/sincronia
+                        await db.ref(`/alocacao/${grupo}/${estacao}`).update({ 
+                            prManual: novoPr, 
+                            prTime: novoTime 
                         });
+                        
                         localStorage.setItem('alocacaoGlobalSalva', JSON.stringify({ grupo: grupo, cracha: crachaDigitado, dataHora: new Date().toLocaleString('pt-BR') }));
                         carregarPainel();
                     } catch (e) { await customAlert("Falha na comunicação com o banco."); }
