@@ -9,9 +9,6 @@
     <style>
 
 
-
-
-
         /* === VARIÁVEIS DE TEMA - VISION OS / SPATIAL UI === */
         :root {
             --bg-color-1: #e2e8f0;
@@ -2397,6 +2394,81 @@ body.is-resizing * { transition: none !important; animation: none !important; }
     .gerente-feed-filters select { width: 100%; font-size: 12px; }
 }
 
+
+
+/* ===== RETRABALHO / TALÃO FECHADO ===== */
+.ret-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.ret-row input {
+    margin-top: 0 !important;
+}
+.btn-ret-del {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    width: 36px;
+    height: 38px;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: 0.2s;
+}
+.btn-ret-del:hover {
+    background: #ef4444;
+    color: #fff;
+}
+.btn-ret-add {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+    border: 1px dashed #f97316;
+    border-radius: 10px;
+    width: 100%;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: 0.2s;
+}
+.btn-ret-add:hover {
+    background: rgba(249, 115, 22, 0.28);
+}
+
+/* Badge Piscante para Talão Fechado */
+.badge-talao-pisca {
+    background: linear-gradient(135deg, #f97316, #dc2626);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    animation: piscaAlertaRet 1.2s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.6);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+@keyframes piscaAlertaRet {
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px rgba(249, 115, 22, 0.8); }
+    50% { opacity: 0.35; transform: scale(0.96); box-shadow: 0 0 2px rgba(249, 115, 22, 0.2); }
+}
+.badge-talao-pisca.estatico {
+    animation: none !important;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2) !important;
+    opacity: 0.7;
+}
+
     </style>
 </head>
 <body>
@@ -3163,6 +3235,8 @@ rx="1.5" fill="#f59e0b"/>
                 </div>
                 <div class="actions-tail">
                 <button class="btn-sync" id="btnSyncRef" onclick="sincronizarProducao()"> ERP</button>
+                <button id="btnRetrabalho" class="btn-sync" onclick="abrirModalRet()" style="display:none; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 6px 20px rgba(99,102,241,0.35);">📝</button>
+
                 <div class="btn-visao-wrap" id="btnVisaoWrap">
                     <button class="btn-visao-trigger" onclick="toggleMenuVisao(event)">✦ Visão ▾</button>
                     <div class="btn-visao-menu" id="menuVisao">
@@ -3516,6 +3590,28 @@ rx="1.5" fill="#f59e0b"/>
             </div>
             <div class="historico-modal-body" id="historicoModalBody">
                 <p style="text-align:center; padding: 30px; font-weight: 700; color: var(--text-muted);">Carregando histórico...</p>
+            </div>
+        </div>
+
+    </div>
+
+<!-- MODAL DE RETRABALHO (TALÃO FECHADO) -->
+    <div id="retModalOverlay" class="custom-modal-overlay" onclick="if(event.target===this) fecharModalRet()">
+        <div class="custom-modal-box" style="text-align: left; width: 460px; max-width: 95vw;">
+            <h3 style="margin-top: 0; font-size: 1.2rem; color: #f97316; margin-bottom: 12px; font-weight: 900; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:20px;">📦</span> Retrabalho - Talão Fechado
+            </h3>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">Insira as Ordens (8 dígitos) e Pacotes do talão fechado.</p>
+            
+            <div id="retRowsContainer" style="max-height: 280px; overflow-y: auto; padding-right: 4px; margin-bottom: 8px;">
+                <!-- As linhas de Ordem + Pacote serão inseridas aqui dinamicamente pelo JS -->
+            </div>
+
+            <button type="button" class="btn-ret-add" onclick="adicionarLinhaRet()">➕ Adicionar Outra Ordem / Pacote</button>
+            
+            <div class="custom-modal-actions">
+                <button type="button" onclick="fecharModalRet()" class="btn-cancelar">Cancelar</button>
+                <button type="button" onclick="solicitarRet()" class="btn-confirmar" style="background: linear-gradient(135deg, #f97316, #b45309); box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);">Solicitar</button>
             </div>
         </div>
     </div>
@@ -4658,9 +4754,18 @@ rx="1.5" fill="#f59e0b"/>
             document.getElementById('btnSyncRef').style.display = '';
             document.getElementById('btnClearManual').style.display = '';
             document.getElementById('btnConfig').style.display = '';
+            
             const btnPerfil = document.getElementById('btnPerfil');
             if (btnPerfil) btnPerfil.style.display = userRole === 'viewer' ? 'none' : 'inline-flex';
+            
+            // Exibe botão de Reimpressões apenas para o Editor
             document.getElementById('btnReprints').style.display = userRole === 'editor' ? '' : 'none';
+            
+            // EXCLUSIVO DO TOTEM: Botão RET aparece SOMENTE para a Visualização Borracha (viewer)
+            const btnRet = document.getElementById('btnRetrabalho');
+            if (btnRet) btnRet.style.display = userRole === 'viewer' ? '' : 'none';
+
+            // Oculta os botões de controle para o Viewer
             if (userRole === 'viewer') {
                 document.getElementById('statusGlobal').disabled = true;
                 document.getElementById('btnGlobal').style.display = 'none';
@@ -4668,6 +4773,7 @@ rx="1.5" fill="#f59e0b"/>
                 document.getElementById('btnClearManual').style.display = 'none';
                 document.getElementById('btnConfig').style.display = 'none';
                 if (btnPerfil) btnPerfil.style.display = 'none';
+                // (O btnRetrabalho continua visível porque a regra dele foi processada acima)
             }
             atualizarChipsPerfil();
         }
@@ -4988,10 +5094,16 @@ rx="1.5" fill="#f59e0b"/>
             }
             if(e.key === 'customUsuarios') { usuariosAutorizados = JSON.parse(e.newValue); }
             // Notificação de Reimpressão solicitada
+            // Notificação de Reimpressão solicitada
+            // Notificação de Reimpressão solicitada
             if(e.key === 'notifReimpressao' && e.newValue) {
                 try {
                     const d = JSON.parse(e.newValue);
-                    exibirToastReimpressao('solicitar', d.solicitante, d.modelo, d.tamanho, d.estacao, d.aprovadorSolicitado);
+                    if (d.tipo === 'solicitar_talao_fechado') {
+                        exibirToastReimpressao('solicitar_talao_fechado', d.solicitante, d.ordem, d.pacote, '', d.aprovadorSolicitado);
+                    } else {
+                        exibirToastReimpressao('solicitar', d.solicitante, d.modelo, d.tamanho, d.estacao, d.aprovadorSolicitado);
+                    }
                 } catch(err) {}
             }
             // Notificação de Aprovação do Gerente
@@ -5003,14 +5115,19 @@ rx="1.5" fill="#f59e0b"/>
             }
         });
 
-        function exibirToastReimpressao(tipo, nome, modelo, tamanho, estacao, aprovador) {
+        function exibirToastReimpressao(tipo, nome, p1, p2, p3, aprovador) {
             tocarSomNotificacao();
             const toast = document.getElementById('toastAlocacao');
             let msg = '';
             if (tipo === 'solicitar') {
                 msg = '<strong>🖨 Nova Solicitação de Reimpressão</strong><br>' +
                     '<span style="color:#f59e0b;">👤 ' + (nome || 'Usuário') + ' solicitou reimpressão</span><br>' +
-                    (modelo ? 'Modelo: ' + modelo + (tamanho ? ' / ' + tamanho : '') + ' - EST ' + String(estacao).padStart(2,'0') : '') +
+                    (p1 ? 'Modelo: ' + p1 + (p2 ? ' / ' + p2 : '') + ' - EST ' + String(p3).padStart(2,'0') : '') +
+                    (aprovador ? '<br>Aguardando: ' + aprovador : '');
+            } else if (tipo === 'solicitar_talao_fechado') {
+                msg = '<strong>📦 Reimpressão Talão Finalizado</strong><br>' +
+                    '<span style="color:#f97316;">👤 ' + (nome || 'Usuário') + ' solicitou retrabalho</span><br>' +
+                    'Ordem: ' + p1 + ' | Pacote: ' + p2 + 
                     (aprovador ? '<br>Aguardando: ' + aprovador : '');
             } else {
                 msg = '<strong>✅ Reimpressão Autorizada</strong><br>' +
@@ -5793,9 +5910,15 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                              '<span class="req-status feito">Feito por ' + htmlSafe(nomeFeito) + ' às ' + htmlSafe(horaFeito) + '</span>';
             }
 
+           // Se não for mais pendente (aprovado, reprovado ou feito), adiciona a classe "estatico" para parar de piscar
+            const classePisca = statusFinal === 'pendente' ? 'badge-talao-pisca' : 'badge-talao-pisca estatico';
+            
+            const tituloVisual = req.tipoReimpressao === 'talao_fechado'
+                ? '<div style="margin-top:6px;"><span class="' + classePisca + '">⚠️ REIMPRESSÃO TALÃO FINALIZADO</span></div>'
+                : '<div class="req-meta">' + htmlSafe(req.grupo || '--') + ' - EST ' + String(req.estacao || '--').padStart(2, '0') + ' - ' + htmlSafe(req.modelo || '--') + ' / ' + htmlSafe(req.tamanho || '--') + '</div>';
             return '<div class="req-card" id="reqCard_' + htmlSafe(req.id) + '">' +
                 '<div class="req-card-header"><div><div class="req-num">' + htmlSafe(req.numRequisicao) + '</div>' +
-                '<div class="req-meta">' + htmlSafe(req.grupo || '--') + ' - EST ' + String(req.estacao || '--').padStart(2, '0') + ' - ' + htmlSafe(req.modelo || '--') + ' / ' + htmlSafe(req.tamanho || '--') + '</div></div>' +
+                tituloVisual + '</div>' +
                 '<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start;">' + badgesHtml + '</div></div>' +
                 '<div class="req-meta">Solicitado por: ' + htmlSafe(req.solicitante || '--') + ' - ' + htmlSafe(req.dataHora || '--') + '</div>' +
                 '<div class="req-order-list">' + ordensHtml + '</div>' +
@@ -9775,6 +9898,160 @@ function handleChatTyping() {
 
         // Remove sujeiras ao iniciar a tela
         setTimeout(window._recalcularBadgeGlobal, 1000);
+
+
+
+
+
+
+
+// =====================================================================
+        // RETRABALHO - TALÃO FECHADO
+        // =====================================================================
+        // RETRABALHO - TALÃO FECHADO (MÚLTIPLAS ORDENS & PACOTES)
+        // =====================================================================
+        function abrirModalRet() {
+            const container = document.getElementById('retRowsContainer');
+            container.innerHTML = '';
+            adicionarLinhaRet(); // Cria a primeira linha limpa
+            document.getElementById('retModalOverlay').style.display = 'flex';
+        }
+
+        function fecharModalRet() {
+            document.getElementById('retModalOverlay').style.display = 'none';
+        }
+
+        function adicionarLinhaRet() {
+            const container = document.getElementById('retRowsContainer');
+            const index = container.children.length;
+            
+            const row = document.createElement('div');
+            row.className = 'ret-row';
+            row.innerHTML = `
+                <div style="flex:1;">
+                    ${index === 0 ? '<label style="font-size:9px; font-weight:900; color:var(--text-muted); text-transform:uppercase;">Ordem (8 dígitos)</label>' : ''}
+                    <input type="text" class="profile-input ret-ordem-inp" placeholder="Ex: 15872253" maxlength="8" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" oninput="this.value = this.value.replace(/[^0-9]/g, '');" autocomplete="off">
+                </div>
+                <div style="flex:1;">
+                    ${index === 0 ? '<label style="font-size:9px; font-weight:900; color:var(--text-muted); text-transform:uppercase;">Pacotes</label>' : ''}
+                    <input type="text" class="profile-input ret-pacote-inp" placeholder="Ex: 1 ou 1/2/3" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" autocomplete="off">
+                </div>
+                <button type="button" class="btn-ret-del" onclick="removerLinhaRet(this)" title="Remover ordem" style="${index === 0 ? 'margin-top:14px;' : ''}">-</button>
+            `;
+            container.appendChild(row);
+            
+            // Foco na ordem recém-adicionada
+            const newInp = row.querySelector('.ret-ordem-inp');
+            if (newInp) setTimeout(() => newInp.focus(), 50);
+        }
+
+        function removerLinhaRet(btn) {
+            const container = document.getElementById('retRowsContainer');
+            if (container.children.length <= 1) {
+                customAlert('É necessário informar ao menos uma Ordem e Pacote.');
+                return;
+            }
+            btn.closest('.ret-row').remove();
+        }
+
+        async function solicitarRet() {
+            const rows = document.querySelectorAll('#retRowsContainer .ret-row');
+            const ordens = [];
+            let erroValida = false;
+
+            rows.forEach((row, i) => {
+                const oInp = row.querySelector('.ret-ordem-inp');
+                const pInp = row.querySelector('.ret-pacote-inp');
+                const ordemVal = oInp ? oInp.value.trim() : '';
+                const pacoteVal = pInp ? pInp.value.trim() : '';
+
+                if (!ordemVal || !pacoteVal) {
+                    erroValida = `Preencha a Ordem e o Pacote na linha ${i + 1}.`;
+                    return;
+                }
+                if (ordemVal.length !== 8) {
+                    erroValida = `A Ordem da linha ${i + 1} precisa ter exatamente 8 dígitos (digitado: ${ordemVal.length}).`;
+                    return;
+                }
+                ordens.push({ cor: 'Múltiplas / Fechado', ordem: ordemVal, pacote: pacoteVal });
+            });
+
+            if (erroValida) {
+                await customAlert(erroValida);
+                return;
+            }
+
+            // OCORRIA O PROBLEMA DO POPUP FICAR ATRÁS:
+            // Escondemos o modal de Retrabalho antes de chamar os prompts do Crachá e Gerente
+            fecharModalRet();
+
+            // Exige crachá do coordenador
+            const solicitanteObj = await obterSolicitanteReimpressao();
+            if (!solicitanteObj) { 
+                await customAlert('Solicitação cancelada.'); 
+                document.getElementById('retModalOverlay').style.display = 'flex'; // Reabre se cancelar
+                return; 
+            }
+            const solicitanteNome = solicitanteObj.nome;
+            const solicitanteCracha = solicitanteObj.id;
+
+            // Busca gerentes cadastrados
+            const listaGerentes = Object.values(credenciaisGerente).map(g => ({ value: g.nome, label: g.nome }));
+            if (listaGerentes.length === 0) {
+                await customAlert('Nenhum Gerente cadastrado no banco para aprovação.');
+                return;
+            }
+
+            const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', listaGerentes);
+            if (!aprovador) { 
+                await customAlert('Solicitação cancelada.'); 
+                document.getElementById('retModalOverlay').style.display = 'flex'; // Reabre se cancelar
+                return; 
+            }
+
+            const numRequisicao = gerarNumeroRequisicao();
+            const payload = {
+                numRequisicao,
+                grupo: document.getElementById('filtroGrupo')?.value || '--',
+                estacao: '--',
+                modelo: 'Talão Fechado',
+                tamanho: '--',
+                ordens: ordens,
+                status: 'pendente',
+                solicitante: solicitanteNome,
+                solicitanteCracha,
+                aprovadorSolicitado: aprovador,
+                tipoReimpressao: 'talao_fechado',
+                dataHora: new Date().toLocaleString('pt-BR'),
+                timestamp: Date.now()
+            };
+
+            try {
+                const resp = await fetch(`${FIREBASE_URL}/reimpressoes/${numRequisicao}.json${AUTH}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+                const notifReimpData = { 
+                    tipo: 'solicitar_talao_fechado', 
+                    numRequisicao, 
+                    solicitante: solicitanteNome, 
+                    aprovadorSolicitado: aprovador, 
+                    ordem: ordens.map(o => o.ordem).join(', '), 
+                    pacote: ordens.map(o => o.pacote).join(', '), 
+                    dataHora: payload.dataHora, 
+                    timestamp: payload.timestamp 
+                };
+                localStorage.setItem('notifReimpressao', JSON.stringify(notifReimpData));
+
+                await customAlert('✅ Solicitação de Talão Fechado enviada!\nRequisição: ' + numRequisicao);
+            } catch (e) {
+                await customAlert('Falha ao enviar solicitação.');
+                document.getElementById('retModalOverlay').style.display = 'flex';
+            }
+        }
     </script>
 <!-- ========================================================================= -->
     <!-- DESTAQUE DE MARCAÇÕES (@NOME)                                             -->
@@ -10270,7 +10547,6 @@ function handleChatTyping() {
         </div>
     </div>
 
-    
 
 <div id="toastGlobal"></div>
 </body>
