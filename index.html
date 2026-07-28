@@ -8,6 +8,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
 
+
+
+
+
         /* === VARIÁVEIS DE TEMA - VISION OS / SPATIAL UI === */
         :root {
             --bg-color-1: #e2e8f0;
@@ -553,7 +557,7 @@
         }
         .req-status.pendente { background:rgba(245,158,11,0.14); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); }
         .req-status.aprovado { background:rgba(16,185,129,0.14); color:#10b981; border:1px solid rgba(16,185,129,0.3); }
-        .req-status.feito    { background:rgba(16,185,129,0.22); color:#059669; border:1px solid rgba(16,185,129,0.45); font-weight:900; }
+        .req-status.feito    { background:rgba(0,122,255,0.12); color:#007AFF; border:1px solid rgba(0,122,255,0.3); font-weight:900; }
         .req-card { background:var(--stat-box); border:1px solid var(--glass-border); border-left:4px solid #007AFF;
             border-radius:16px; padding:16px; margin-bottom:14px; box-shadow:var(--glass-shadow);
         }
@@ -2288,6 +2292,111 @@ body.is-resizing * { transition: none !important; animation: none !important; }
     .btn-theme-floating, .chat-fab { bottom: calc(20px + env(safe-area-inset-bottom)) !important; }
 }
 
+/* === BOTÃO DE HISTÓRICO NA ESTAÇÃO === */
+        .hist-btn { 
+            position: absolute; bottom: 7px; right: 34px;
+            width: 22px; height: 22px; border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted); font-size: 11px; cursor: pointer; display: flex; 
+            align-items: center; justify-content: center; transition: all 0.2s; z-index: 6; padding: 0; line-height: 1; 
+        }
+        .hist-btn:hover { background: rgba(0, 122, 255, 0.2); border-color: #007AFF; color: #007AFF; transform: scale(1.1); }
+
+        /* === MODAL DE HISTÓRICO (NOVO LAYOUT) === */
+        .historico-modal-overlay { 
+            position: fixed; inset: 0; z-index: 100000; display: none; align-items: center;
+            justify-content: center; padding: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); 
+        }
+        .historico-modal-overlay.open { display: flex; animation: fadeIn 0.3s; }
+        .historico-modal { 
+            background: var(--glass-bg); backdrop-filter: blur(40px); border: 1px solid var(--glass-border);
+            border-radius: 24px; padding: 0; width: 100%; max-width: 560px; max-height: 80vh;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5); display: flex; flex-direction: column; overflow: hidden;
+        }
+        .historico-modal-header { 
+            padding: 20px 24px; border-bottom: 1px solid var(--glass-border); background: var(--stat-box);
+            display: flex; align-items: center; justify-content: space-between; 
+        }
+        .historico-modal-title { font-size: 14px; font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        
+        .historico-modal-body { 
+            padding: 20px 24px; overflow-y: auto; flex: 1; background: var(--input-bg); 
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        
+        /* Estilo dos Cards de Linha do Tempo */
+        .hist-item { 
+            position: relative; padding: 18px; border-radius: 18px;
+            background: var(--stat-box); border: 1px solid var(--glass-border);
+            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+        .hist-item:hover { 
+            transform: translateY(-3px) scale(1.01); 
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08); 
+            border-color: rgba(0,122,255,0.3); 
+        }
+        
+        .hist-item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;}
+        .hist-modelo { font-size: 14px; font-weight: 900; color: var(--text-main); letter-spacing: -0.3px; display: flex; align-items: center; gap: 10px; }
+        .hist-tamanho { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 900; color: #007AFF; background: rgba(0,122,255,0.1); border: 1px solid rgba(0,122,255,0.2); padding: 4px 8px; border-radius: 8px; }
+        .hist-data { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); font-weight: 800; background: var(--input-bg); padding: 5px 10px; border-radius: 8px; border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 6px; }
+        
+        .hist-ordens-title { font-size: 9px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; display: block; }
+        
+        .hist-ordens-container { display: flex; flex-wrap: wrap; gap: 8px; }
+        
+        .hist-ordem-tag { 
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--input-bg); border: 1px solid var(--glass-border); 
+            border-radius: 10px; padding: 6px 12px; font-weight: 700; color: var(--text-main); 
+            font-family: 'JetBrains Mono', monospace; font-size: 11px;
+            transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .hist-ordem-tag:hover { border-color: #007AFF; background: rgba(0,122,255,0.05); }
+        .hist-ordem-num { color: #007AFF; font-weight: 900; }
+        .hist-pct-num { color: var(--text-muted); font-weight: 600; font-size: 10px;}
+/* ===== FEED DE SOLICITAÇÕES DO GERENTE (CHAT STYLE) ===== */
+.gerente-feed-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 12px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    align-items: center;
+}
+
+.gerente-feed-filters select {
+    flex: 1;
+    min-width: 140px;
+    background: var(--input-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: var(--text-main);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    cursor: pointer;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.3s ease;
+}
+
+.gerente-feed-filters select:focus {
+    border-color: #e11d48;
+    box-shadow: 0 0 0 3px rgba(225,29,72,0.15);
+}
+
+@media (max-width: 600px) {
+    .gerente-feed-filters { flex-direction: column; padding: 12px; }
+    .gerente-feed-filters select { width: 100%; font-size: 12px; }
+}
+
     </style>
 </head>
 <body>
@@ -2809,6 +2918,23 @@ rx="1.5" fill="#f59e0b"/>
         </div>
     </div>
 
+
+
+
+<div id="customModalOverlay" class="custom-modal-overlay">
+    <div class="custom-modal-box">
+        <h3 id="customModalMessage">Mensagem</h3>
+        <input type="text" id="customModalInput" class="custom-modal-input" placeholder="Autenticação..." style="display:none;" autocomplete="off">
+        <select id="customModalSelect" class="custom-modal-input" style="display:none;"></select>
+        
+        <textarea id="customModalTextarea" class="custom-modal-input" style="display:none; resize:vertical; min-height:120px; font-size:14px; font-family:'Inter', sans-serif; text-align:left; letter-spacing:normal; font-weight:500;" placeholder="Digite o texto..."></textarea>
+        
+        <div class="custom-modal-actions">
+            <button id="customModalBtnCancel" class="btn-cancelar">Cancelar</button>
+            <button id="customModalBtnOk" class="btn-confirmar">Autorizar</button>
+        </div>
+    </div>
+</div>
     <div id="mainApp" class="app-wrapper" style="display: none;">
         <div id="toastAlocacao" class="toast-alerta"></div>
 
@@ -2932,7 +3058,32 @@ rx="1.5" fill="#f59e0b"/>
                 <div class="kpi-big-card c-green"><span class="kpi-emoji">✓</span><span class="kpi-num" id="gerenteCountAprovadas">0</span><span class="kpi-lbl">Aprovadas</span></div>
             </div>
             <div class="gerente-secao">
-                <h3 class="gerente-secao-title">Solicitacoes pendentes</h3>
+                <h3 class="gerente-secao-title">Feed de Solicitações</h3>
+                
+                <!-- Barra de Filtros do Feed/Chat -->
+                <div class="gerente-feed-filters">
+                    <select id="feedFiltroStatus" onchange="renderGerenteReimpressoes()">
+                        <option value="todos" selected>📋 Mostrar Tudo (Feed Completo)</option>
+                        <option value="pendente">⏳ Apenas Pendentes</option>
+                        <option value="aprovado">✅ Aprovadas</option>
+                        <option value="feito">🏁 Feitas (Impressas)</option>
+                        <option value="reprovado">❌ Reprovadas</option>
+                    </select>
+                    
+                    <select id="feedFiltroCoord" onchange="renderGerenteReimpressoes()">
+                        <option value="todos">👤 Todos os Coordenadores</option>
+                    </select>
+                    
+                    <select id="feedFiltroTempo" onchange="renderGerenteReimpressoes()">
+                        <option value="todos" selected>📅 Todo o Período</option>
+                        <option value="hoje">🕐 Apenas Hoje</option>
+                    </select>
+                    
+                    <select id="feedFiltroModelo" onchange="renderGerenteReimpressoes()">
+                        <option value="todos" selected>👟 Todos os Modelos</option>
+                    </select>
+                </div>
+
                 <div id="gerentePendentesBody"></div>
             </div>
             <!-- Histórico oculto do gerente: aprovadas somem após autorização -->
@@ -3104,20 +3255,7 @@ rx="1.5" fill="#f59e0b"/>
             </div>
         </div>
 
-        <div id="customModalOverlay" class="custom-modal-overlay">
-    <div class="custom-modal-box">
-        <h3 id="customModalMessage">Mensagem</h3>
-        <input type="text" id="customModalInput" class="custom-modal-input" placeholder="Autenticação..." style="display:none;" autocomplete="off">
-        <select id="customModalSelect" class="custom-modal-input" style="display:none;"></select>
         
-        <textarea id="customModalTextarea" class="custom-modal-input" style="display:none; resize:vertical; min-height:120px; font-size:14px; font-family:'Inter', sans-serif; text-align:left; letter-spacing:normal; font-weight:500;" placeholder="Digite o texto..."></textarea>
-        
-        <div class="custom-modal-actions">
-            <button id="customModalBtnCancel" class="btn-cancelar">Cancelar</button>
-            <button id="customModalBtnOk" class="btn-confirmar">Autorizar</button>
-        </div>
-    </div>
-</div>
    
         <div id="configModalOverlay" class="custom-modal-overlay">
             <div class="custom-modal-box config-panel">
@@ -3198,6 +3336,24 @@ rx="1.5" fill="#f59e0b"/>
                         <button class="kpi-close-btn" style="margin-left:10px;" onclick="fecharPainelReimpressoes()">✕</button>
                     </div>
                 </div>
+                
+                <!-- Barra de Filtros do Editor -->
+                <div class="gerente-feed-filters" style="margin: 0; border-radius: 0; border-left: none; border-right: none; border-top: none;">
+                    <select id="editorFiltroGrupo" onchange="renderReimpressoes()">
+                        <option value="todos" selected>📦 Todos os Grupos</option>
+                    </select>
+                    <select id="editorFiltroCoord" onchange="renderReimpressoes()">
+                        <option value="todos" selected>👤 Todos os Coordenadores</option>
+                    </select>
+                    <select id="editorFiltroTempo" onchange="renderReimpressoes()">
+                        <option value="todos" selected>📅 Todo o Período</option>
+                        <option value="hoje">🕐 Apenas Hoje</option>
+                    </select>
+                    <select id="editorFiltroModelo" onchange="renderReimpressoes()">
+                        <option value="todos" selected>👟 Todos os Modelos</option>
+                    </select>
+                </div>
+
                 <div class="wip-body" id="reprintBody">
                     <p style="text-align:center;color:var(--text-muted);font-weight:700;">Carregando solicitacoes...</p>
                 </div>
@@ -3350,6 +3506,19 @@ rx="1.5" fill="#f59e0b"/>
         </div>
     </div>
    
+
+<!-- Modal de Histórico de Alocação -->
+    <div id="historicoModalOverlay" class="historico-modal-overlay" onclick="if(event.target===this) fecharHistoricoModal()">
+        <div class="historico-modal">
+            <div class="historico-modal-header">
+                <span class="historico-modal-title">🕒 <span id="historicoModalTitulo">Histórico — EST 00</span></span>
+                <button class="nota-modal-close" onclick="fecharHistoricoModal()" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+            </div>
+            <div class="historico-modal-body" id="historicoModalBody">
+                <p style="text-align:center; padding: 30px; font-weight: 700; color: var(--text-muted);">Carregando histórico...</p>
+            </div>
+        </div>
+    </div>
 
    
  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -4190,7 +4359,7 @@ rx="1.5" fill="#f59e0b"/>
             Object.entries(credenciaisEditor).forEach(([user, cred]) => {
                 const senha = (cred && typeof cred === 'object') ? cred.senha : cred;
                 const nome  = (cred && cred.nome) ? cred.nome : (defaultUsuarios[user] || user);
-                const row = _devItemRow(user, nome, `🔑 ${senha}`,
+                const row = _devItemRow(user, nome, `🔑 *****`,
                     `devDelEditor('${user.replace(/'/g,"\\'")}')`, '#007AFF', user);
                 lista.appendChild(row);
             });
@@ -4315,9 +4484,8 @@ rx="1.5" fill="#f59e0b"/>
                 <table style="${tableStyle}">
                     <tr><th style="${thStyle}">Usuário</th><th style="${thStyle}">Senha</th><th style="${thStyle}">Nome Exibido</th><th style="${thStyle}">O que autentica</th></tr>`;
             for (const [user, cred] of Object.entries(credenciaisEditor)) {
-                const senha = (cred && typeof cred === 'object') ? cred.senha : cred;
                 const nome  = (cred && cred.nome) ? cred.nome : (defaultUsuarios[user] || user);
-                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">${senha}</td><td style="${tdDescStyle}">${nome}</td><td style="${tdDescStyle}">Acesso Editor – alterar status, PR manual, sincronizar dados</td></tr>`;
+                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">*****</td><td style="${tdDescStyle}">${nome}</td><td style="${tdDescStyle}">Acesso Editor – alterar status, PR manual, sincronizar dados</td></tr>`;
             }
             html += `</table></div>`;
 
@@ -4328,7 +4496,7 @@ rx="1.5" fill="#f59e0b"/>
                 <table style="${tableStyle}">
                     <tr><th style="${thStyle}">Usuário</th><th style="${thStyle}">Senha</th><th style="${thStyle}">Nome Exibido</th><th style="${thStyle}">O que autentica</th></tr>`;
             for (const [user, cred] of Object.entries(credenciaisGerente)) {
-                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">${cred.senha}</td><td style="${tdDescStyle}">${cred.nome}</td><td style="${tdDescStyle}">Painel Gerente – aprovação de reimpressões</td></tr>`;
+                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">*****</td><td style="${tdDescStyle}">${cred.nome}</td><td style="${tdDescStyle}">Painel Gerente – aprovação de reimpressões</td></tr>`;
             }
             html += `</table></div>`;
 
@@ -4338,7 +4506,7 @@ rx="1.5" fill="#f59e0b"/>
                 <table style="${tableStyle}">
                     <tr><th style="${thStyle}">Usuário</th><th style="${thStyle}">Senha</th><th style="${thStyle}">O que autentica</th></tr>`;
             for (const [user, cred] of Object.entries(credenciaisDev)) {
-                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">${cred.senha}</td><td style="${tdDescStyle}">Painel Desenvolvedor – acesso total a todas as credenciais do sistema</td></tr>`;
+                html += `<tr><td style="${tdStyle}">${user}</td><td style="${tdStyle}">*****</td><td style="${tdDescStyle}">Painel Desenvolvedor – acesso total a todas as credenciais do sistema</td></tr>`;
             }
             html += `</table></div>`;
 
@@ -4371,7 +4539,7 @@ rx="1.5" fill="#f59e0b"/>
                 <table style="${tableStyle}">
                     <tr><th style="${thStyle}">Parâmetro</th><th style="${thStyle}">Valor</th></tr>
                     <tr><td style="${tdStyle}">URL</td><td style="${tdDescStyle}">${FIREBASE_URL}</td></tr>
-                    <tr><td style="${tdStyle}">SECRET</td><td style="${tdDescStyle}">${FIREBASE_SECRET || '(não configurado)'}</td></tr>
+                    <tr><td style="${tdStyle}">SECRET</td><td style="${tdDescStyle}">*****</td></tr>
                 </table></div>`;
 
             body.innerHTML = html;
@@ -5386,14 +5554,74 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             document.getElementById('reprintModalOverlay').classList.remove('open');
         }
 
+       // Função para preencher automaticamente as opções dos selects com base no que está no banco
+        function _popularFiltrosEditor() {
+            const grupos = [...new Set(_reprintData.map(r => r.grupo).filter(Boolean))].sort();
+            const grupoSelect = document.getElementById('editorFiltroGrupo');
+            if (grupoSelect) {
+                const val = grupoSelect.value || 'todos';
+                grupoSelect.innerHTML = '<option value="todos">📦 Todos os Grupos</option>' + 
+                    grupos.map(g => `<option value="${htmlSafe(g)}" ${val === g ? 'selected' : ''}>📦 ${htmlSafe(g)}</option>`).join('');
+            }
+
+            const coords = [...new Set(_reprintData.map(r => r.solicitante).filter(Boolean))].sort();
+            const coordSelect = document.getElementById('editorFiltroCoord');
+            if (coordSelect) {
+                const val = coordSelect.value || 'todos';
+                coordSelect.innerHTML = '<option value="todos">👤 Todos os Coordenadores</option>' + 
+                    coords.map(c => `<option value="${htmlSafe(c)}" ${val === c ? 'selected' : ''}>👤 ${htmlSafe(c)}</option>`).join('');
+            }
+
+            const modelos = [...new Set(_reprintData.map(r => r.modelo).filter(Boolean))].sort();
+            const modeloSelect = document.getElementById('editorFiltroModelo');
+            if (modeloSelect) {
+                const val = modeloSelect.value || 'todos';
+                modeloSelect.innerHTML = '<option value="todos">👟 Todos os Modelos</option>' + 
+                    modelos.map(m => `<option value="${htmlSafe(m)}" ${val === m ? 'selected' : ''}>👟 ${htmlSafe(m)}</option>`).join('');
+            }
+        }
+
+        // Função de renderização com a aplicação dos filtros
         function renderReimpressoes() {
             const body = document.getElementById('reprintBody');
             if (!_reprintData.length) {
                 body.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-weight:800;padding:40px 0;">Nenhuma solicitacao de reimpressao registrada.</p>';
                 return;
             }
+
+            // Atualiza os dropdowns
+            _popularFiltrosEditor();
+
+            // Pega os valores selecionados
+            const grupoFiltro = document.getElementById('editorFiltroGrupo') ? document.getElementById('editorFiltroGrupo').value : 'todos';
+            const coordFiltro = document.getElementById('editorFiltroCoord') ? document.getElementById('editorFiltroCoord').value : 'todos';
+            const tempoFiltro = document.getElementById('editorFiltroTempo') ? document.getElementById('editorFiltroTempo').value : 'todos';
+            const modeloFiltro = document.getElementById('editorFiltroModelo') ? document.getElementById('editorFiltroModelo').value : 'todos';
+            const agora = new Date();
+
+            // Filtra os dados
+            const filtrado = _reprintData.filter(r => {
+                if (grupoFiltro !== 'todos' && r.grupo !== grupoFiltro) return false;
+                if (coordFiltro !== 'todos' && r.solicitante !== coordFiltro) return false;
+                if (modeloFiltro !== 'todos' && r.modelo !== modeloFiltro) return false;
+                if (tempoFiltro === 'hoje') {
+                    const ts = r.timestamp;
+                    if (!ts) return false;
+                    const d = new Date(ts);
+                    if (d.toDateString() !== agora.toDateString()) return false;
+                }
+                return true;
+            });
+
+            // Se a busca não encontrar nada
+            if (!filtrado.length) {
+                body.innerHTML = '<div class="req-card" style="text-align:center;color:var(--text-muted);font-weight:800;padding:24px;">📭 Nenhuma solicitação encontrada para os filtros atuais.</div>';
+                return;
+            }
+
+            // Monta os cards filtrados na tela
             const mapaVias = obterMapaViasReimpressao();
-            body.innerHTML = _reprintData.map(req => templateRequisicao(req, false, mapaVias)).join('');
+            body.innerHTML = filtrado.map(req => templateRequisicao(req, false, mapaVias)).join('');
         }
 
         async function autenticarDevReimpressao(titulo) {
@@ -5468,16 +5696,16 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
         function templateRequisicao(req, modoGerente, mapaVias) {
             const grupos = agruparOrdensRequisicao(req.ordens);
-            const status = req.status === 'aprovado' ? 'aprovado' : req.status === 'reprovado' ? 'reprovado' : 'pendente';
-            const isDone = req.status === 'feito';
-            const statusFinal = isDone ? 'feito' : status;
+            // Define o status real de forma correta
+            const statusFinal = req.status === 'feito' ? 'feito' : req.status === 'aprovado' ? 'aprovado' : req.status === 'reprovado' ? 'reprovado' : 'pendente';
             const mapaViasReq = mapaVias || obterMapaViasReimpressao();
 
             const ordensHtml = grupos.map(g =>
                 '<div class="req-order-row"><strong>' + htmlSafe(g.ordem) + '</strong>' + renderPacoteComVias(g.ordem, g.pacote, mapaViasReq) + '<span>' + htmlSafe(g.cor) + '</span></div>'
             ).join('');
 
-            const acaoGerente = modoGerente && status === 'pendente'
+            // Garante que os botões só apareçam se o statusFinal for EXATAMENTE 'pendente'
+            const acaoGerente = modoGerente && statusFinal === 'pendente'
                 ? '<div class="gerente-acoes-wrap">' +
                   '<button class="btn-aprovar-req" onclick="gerenteAprovarReimpressao(\'' + jsSafe(req.id) + '\')">✅ Autorizar</button>' +
                   '<button class="btn-reprovar-req" onclick="gerenteReprovarReimpressao(\'' + jsSafe(req.id) + '\')">❌ Reprovar</button>' +
@@ -5516,12 +5744,59 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 }
             }
 
-            const statusLabel = statusFinal === 'feito' ? 'Feito' : statusFinal === 'aprovado' ? 'Aprovado' : statusFinal === 'reprovado' ? 'Reprovado' : 'Pendente';
+            // Lógica de dois balões: Um para aprovação e outro para execução (impressão)
+            let badgesHtml = '';
+            if (statusFinal === 'pendente') {
+                badgesHtml = '<span class="req-status pendente">Aprovação Pendente</span>';
+            } else if (statusFinal === 'reprovado') {
+                badgesHtml = '<span class="req-status reprovado">Reprovado</span>';
+            } else if (statusFinal === 'aprovado') {
+                badgesHtml = '<span class="req-status aprovado">Aprovado</span>' +
+                             '<span class="req-status pendente" title="Aguardando Editor imprimir">Impressão Pendente</span>';
+            } else if (statusFinal === 'feito') {
+                // Extrai apenas a hora da string dataHoraFeito (ex: "28/07/2026, 01:10:22")
+                let horaFeito = '--';
+                if (req.dataHoraFeito) {
+                    const match = req.dataHoraFeito.match(/\d{2}:\d{2}:\d{2}|\d{2}:\d{2}/);
+                    if (match) horaFeito = match[0];
+                    else horaFeito = req.dataHoraFeito; // fallback
+                }
+                
+                // 1. Define o que procurar (prioriza o campo do crachá, faz fallback pro feitoPor)
+                let identificador = req.feitoCracha || req.feitoPor || '--';
+                
+                // 2. Cria uma Mega Lista com absolutamente todos os usuários do sistema
+                let megaLista = Object.assign({}, 
+                    defaultUsuarios, 
+                    coordenadoresAutorizados, 
+                    JSON.parse(localStorage.getItem('customUsuarios') || '{}')
+                );
+                
+                // Inclui também os editores caso o crachá seja a própria chave de login deles
+                if (typeof credenciaisEditor === 'object') {
+                    Object.keys(credenciaisEditor).forEach(k => {
+                        megaLista[k] = credenciaisEditor[k].nome || k;
+                    });
+                }
+
+                // 3. Tenta traduzir pelo identificador principal
+                let nomeReal = megaLista[identificador] || identificador;
+                
+                // 4. Se ainda for número, tenta traduzir pelo outro campo (feitoPor) como última tentativa
+                if (nomeReal === identificador && megaLista[req.feitoPor]) {
+                    nomeReal = megaLista[req.feitoPor];
+                }
+                
+                let nomeFeito = nomeReal.split(' ')[0]; // Pega só o primeiro nome
+                
+                badgesHtml = '<span class="req-status aprovado">Aprovado</span>' +
+                             '<span class="req-status feito">Feito por ' + htmlSafe(nomeFeito) + ' às ' + htmlSafe(horaFeito) + '</span>';
+            }
 
             return '<div class="req-card" id="reqCard_' + htmlSafe(req.id) + '">' +
                 '<div class="req-card-header"><div><div class="req-num">' + htmlSafe(req.numRequisicao) + '</div>' +
                 '<div class="req-meta">' + htmlSafe(req.grupo || '--') + ' - EST ' + String(req.estacao || '--').padStart(2, '0') + ' - ' + htmlSafe(req.modelo || '--') + ' / ' + htmlSafe(req.tamanho || '--') + '</div></div>' +
-                '<span class="req-status ' + statusFinal + '">' + statusLabel + '</span></div>' +
+                '<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start;">' + badgesHtml + '</div></div>' +
                 '<div class="req-meta">Solicitado por: ' + htmlSafe(req.solicitante || '--') + ' - ' + htmlSafe(req.dataHora || '--') + '</div>' +
                 '<div class="req-order-list">' + ordensHtml + '</div>' +
                 aprovadoPor +
@@ -5734,17 +6009,37 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         }
 
         function _popularFiltrosGerente() {
-            // Coordenadores únicos
+            // Popula filtros do painel Analytics
             const coords = [...new Set(_reprintData.map(r => r.solicitante).filter(Boolean))];
             const selectCoord = document.getElementById('gerenteFiltroCoord');
-            selectCoord.innerHTML = '<option value="todos">Todos os Coordenadores</option>' +
+            if(selectCoord) {
+                selectCoord.innerHTML = '<option value="todos">Todos os Coordenadores</option>' +
                 coords.map(c => '<option value="' + htmlSafe(c) + '">' + htmlSafe(c) + '</option>').join('');
+            }
 
-            // Gerentes únicos
             const gerentes = [...new Set(_reprintData.map(r => r.aprovador).filter(Boolean))];
             const selectGer = document.getElementById('gerenteFiltroGerente');
-            selectGer.innerHTML = '<option value="todos">Todos os Gerentes</option>' +
+            if(selectGer) {
+                selectGer.innerHTML = '<option value="todos">Todos os Gerentes</option>' +
                 gerentes.map(g => '<option value="' + htmlSafe(g) + '">' + htmlSafe(g) + '</option>').join('');
+            }
+
+            // Popula o filtro de coordenadores do Feed/Chat
+            const feedCoord = document.getElementById('feedFiltroCoord');
+            if(feedCoord) {
+                const valorAtual = feedCoord.value || 'todos';
+                feedCoord.innerHTML = '<option value="todos">👤 Todos os Coordenadores</option>' +
+                coords.map(c => `<option value="${htmlSafe(c)}" ${valorAtual === c ? 'selected' : ''}>👤 ${htmlSafe(c)}</option>`).join('');
+            }
+
+            // Popula o NOVO filtro de modelos do Feed/Chat
+            const modelos = [...new Set(_reprintData.map(r => r.modelo).filter(Boolean))].sort();
+            const feedModelo = document.getElementById('feedFiltroModelo');
+            if(feedModelo) {
+                const valorAtualMod = feedModelo.value || 'todos';
+                feedModelo.innerHTML = '<option value="todos">👟 Todos os Modelos</option>' +
+                modelos.map(m => `<option value="${htmlSafe(m)}" ${valorAtualMod === m ? 'selected' : ''}>👟 ${htmlSafe(m)}</option>`).join('');
+            }
         }
 
         async function carregarReimpressoesGerente() {
@@ -5753,22 +6048,59 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         }
 
         function renderGerenteReimpressoes() {
-            // Somente pendentes aparecem — aprovadas somem do painel do gerente
-            const pendentes = _reprintData.filter(r => r.status !== 'aprovado' && r.status !== 'feito');
+            // 1. Captura os valores dos filtros do Feed
+            const statusFiltro = document.getElementById('feedFiltroStatus') ? document.getElementById('feedFiltroStatus').value : 'todos';
+            const coordFiltro = document.getElementById('feedFiltroCoord') ? document.getElementById('feedFiltroCoord').value : 'todos';
+            const tempoFiltro = document.getElementById('feedFiltroTempo') ? document.getElementById('feedFiltroTempo').value : 'todos';
+            const modeloFiltro = document.getElementById('feedFiltroModelo') ? document.getElementById('feedFiltroModelo').value : 'todos';
+            const agora = new Date();
+
+            // 2. Filtra os dados de acordo com a seleção
+            const feedFiltrado = _reprintData.filter(r => {
+                // Normaliza o status
+                let s = r.status;
+                if (s !== 'aprovado' && s !== 'reprovado' && s !== 'feito') { s = 'pendente'; }
+                
+                // Filtro de Status
+                if (statusFiltro !== 'todos' && s !== statusFiltro) return false;
+
+                // Filtro de Coordenador
+                if (coordFiltro !== 'todos' && r.solicitante !== coordFiltro) return false;
+
+                // Filtro de Modelo
+                if (modeloFiltro !== 'todos' && r.modelo !== modeloFiltro) return false;
+
+                // Filtro de Tempo (Hoje)
+                if (tempoFiltro === 'hoje') {
+                    const ts = r.timestamp;
+                    if (!ts) return false;
+                    const d = new Date(ts);
+                    if (d.toDateString() !== agora.toDateString()) return false;
+                }
+
+                return true;
+            });
+
+            // 3. Atualiza os KPIs fixos do topo (Sempre mostram os totais reais independentes do filtro do feed)
+            const totalPendentes = _reprintData.filter(r => r.status !== 'aprovado' && r.status !== 'feito' && r.status !== 'reprovado').length;
             const totalAprovadas = _reprintData.filter(r => r.status === 'aprovado' || r.status === 'feito').length;
-            document.getElementById('gerenteCountPendentes').textContent = pendentes.length;
+            
+            document.getElementById('gerenteCountPendentes').textContent = totalPendentes;
             document.getElementById('gerenteCountAprovadas').textContent = totalAprovadas;
+
+            // 4. Renderiza os cards filtrados
             const mapaVias = obterMapaViasReimpressao();
-            document.getElementById('gerentePendentesBody').innerHTML = pendentes.length
-                ? pendentes.map(req => templateRequisicao(req, true, mapaVias)).join('')
-                : '<div class="req-card" style="text-align:center;color:var(--text-muted);font-weight:800;padding:24px;">✅ Nenhuma solicitacao pendente no momento.</div>';
-            // Historico oculto para o gerente — aprovadas somem após autorização
-            document.getElementById('gerenteHistoricoBody').innerHTML = '';
-            // Atualiza análises
+            document.getElementById('gerentePendentesBody').innerHTML = feedFiltrado.length
+                ? feedFiltrado.map(req => templateRequisicao(req, true, mapaVias)).join('')
+                : '<div class="req-card" style="text-align:center;color:var(--text-muted);font-weight:800;padding:24px;">📭 Nenhuma solicitação encontrada para os filtros atuais.</div>';
+            
+            // Oculta o histórico auxiliar que não é mais necessário
+            const histAux = document.getElementById('gerenteHistoricoBody');
+            if(histAux) histAux.innerHTML = '';
+            
             _popularFiltrosGerente();
             atualizarAnalisesGerente();
         }
-
         async function gerenteAprovarReimpressao(id) {
             try {
                 const dataHoraAprovacao = new Date().toLocaleString('pt-BR');
@@ -6048,9 +6380,13 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
                 let cRodando = 0, cParada = 0, cTroca = 0;
                 for (let i = 1; i <= numEstacoes; i++) {
-                    let item = estacoesReais[i];
-                    let status = (item && item.status) ? item.status : 'parada';
-                    if(status === 'rodando') cRodando++; else if(status === 'TROCA') cTroca++; else cParada++;
+                let item = estacoesReais[i];
+                                    // Injeta no histórico se houver mudança
+                if (item && item.modelo) {
+                        registrarHistoricoSeMudou(grupoAtual, i, item);
+                    }
+                let status = (item && item.status) ? item.status : 'parada';
+                if(status === 'rodando') cRodando++; else if(status === 'TROCA') cTroca++; else cParada++;
                 }
                 document.getElementById('countRodando').innerText = cRodando; document.getElementById('countParada').innerText = cParada; document.getElementById('countTroca').innerText = cTroca;
 
@@ -6181,6 +6517,14 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                     notaBtn.textContent = '📝';
                     notaBtn.addEventListener('click', (e) => { e.stopPropagation(); abrirNotaModal(grupoAtual, i, e); });
                     front.appendChild(notaBtn);
+
+// --- BOTÃO DE HISTÓRICO ---
+                    const histBtn = document.createElement('button');
+                    histBtn.className = 'hist-btn';
+                    histBtn.title = 'Histórico de Alocação';
+                    histBtn.textContent = '🕒';
+                    histBtn.addEventListener('click', (e) => { e.stopPropagation(); abrirHistoricoEstacao(grupoAtual, i); });
+                    front.appendChild(histBtn);
 
                     const back = document.createElement('div'); back.className = 'flip-card-back';
                     back.innerHTML = gerarBackContent(detalhes, i, modeloBanco, tamanhoBanco, reprovNum > 0);
@@ -9788,6 +10132,135 @@ function handleChatTyping() {
                 inputMsg.focus();
             }
         };
+
+
+
+
+
+// =====================================================================
+        // GRAVAÇÃO AUTOMÁTICA DE HISTÓRICO NO FIREBASE
+        // =====================================================================
+        window._ultimoHistoricoSalvo = window._ultimoHistoricoSalvo || {};
+
+        function registrarHistoricoSeMudou(grupo, estacao, item) {
+            // Ignora se estiver vazia ou não alocada
+            if (!item || !item.modelo || item.modelo === 'Não Alocado' || item.modelo === 'VAZIO') return;
+            
+            const chaveCache = `${grupo}_EST_${estacao}`;
+            const hashAtual = `${item.modelo}_${item.tamanho}_${item.dataHora}`;
+
+            // Só checa o Firebase se a informação local indicar que mudou
+            if (window._ultimoHistoricoSalvo[chaveCache] !== hashAtual) {
+                window._ultimoHistoricoSalvo[chaveCache] = hashAtual;
+                
+                const refHistorico = db.ref(`/historico_alocacao/${grupo}/EST_${estacao}`);
+                
+                // Puxa só o último registro para evitar duplicidade de vários monitores abertos
+                refHistorico.orderByKey().limitToLast(1).once('value').then(snap => {
+                    const ultimoDado = snap.val();
+                    let jaExiste = false;
+                    
+                    if (ultimoDado) {
+                        const keys = Object.keys(ultimoDado);
+                        const ultimo = ultimoDado[keys[0]];
+                        // Se o modelo, tamanho e hora forem idênticos, alguém já salvou
+                        if (ultimo.modelo === item.modelo && ultimo.tamanho === item.tamanho && ultimo.dataHora === item.dataHora) {
+                            jaExiste = true;
+                        }
+                    }
+                    
+                    if (!jaExiste) {
+                        // Grava no Firebase o novo histórico!
+                        refHistorico.push({
+                            modelo: item.modelo,
+                            tamanho: item.tamanho,
+                            dataHora: item.dataHora || new Date().toLocaleString('pt-BR'),
+                            detalhes: item.detalhes || []
+                        });
+                    }
+                });
+            }
+        }
+
+// =====================================================================
+        // HISTÓRICO DE ALOCAÇÃO NA ESTAÇÃO
+        // =====================================================================
+        async function abrirHistoricoEstacao(grupo, estacao) {
+            const overlay = document.getElementById('historicoModalOverlay');
+            const titulo = document.getElementById('historicoModalTitulo');
+            const body = document.getElementById('historicoModalBody');
+            
+            titulo.textContent = `Histórico — ${grupo} - EST ${String(estacao).padStart(2, '0')}`;
+            body.innerHTML = `<p style="text-align:center; padding: 40px; font-weight: 700; color: var(--text-muted);">⏳ Buscando histórico no banco...</p>`;
+            overlay.classList.add('open');
+
+            try {
+                const snap = await db.ref(`/historico_alocacao/${grupo}/EST_${estacao}`).orderByKey().limitToLast(10).once('value');
+                const data = snap.val();
+
+                if (!data) {
+                    body.innerHTML = `<p style="text-align:center; padding: 40px; font-weight: 700; color: var(--text-muted);">Nenhum histórico registrado para esta estação.</p>`;
+                    return;
+                }
+
+                const historico = Object.values(data).reverse();
+                
+                let html = '';
+                historico.forEach(item => {
+                    const dataFormatada = item.dataHora ? item.dataHora : '--/--/---- --:--';
+                    
+                    let ordensHtml = '';
+                    if (item.detalhes && Array.isArray(item.detalhes)) {
+                        const pacotesUnicos = new Set();
+                        item.detalhes.forEach(d => {
+                            const o = d.ordem || '--';
+                            const p = d.pacote || '--';
+                            // Formatação nova da tag (Ordem azul, pct cinza)
+                            pacotesUnicos.add(
+                                `<span class="hist-ordem-num">${htmlSafe(o)}</span> 
+                                 <span style="opacity:0.2;">|</span> 
+                                 <span class="hist-pct-num">PCT ${htmlSafe(p)}</span>`
+                            );
+                        });
+                        
+                        ordensHtml = Array.from(pacotesUnicos)
+                            .map(tag => `<div class="hist-ordem-tag">${tag}</div>`)
+                            .join('');
+                    } else {
+                        ordensHtml = '<div style="font-size: 11px; font-style: italic; color: var(--text-muted);">Sem detalhes de ordens salvos.</div>';
+                    }
+
+                    html += `
+                        <div class="hist-item">
+                            <div class="hist-item-head">
+                                <div class="hist-modelo">
+                                    ${htmlSafe(item.modelo || 'Não Alocado')} 
+                                    <span class="hist-tamanho">${htmlSafe(item.tamanho || '--')}</span>
+                                </div>
+                                <div class="hist-data">⏱️ ${htmlSafe(dataFormatada)}</div>
+                            </div>
+                            <div>
+                                <span class="hist-ordens-title">Ordens e Pacotes Alocados</span>
+                                <div class="hist-ordens-container">
+                                    ${ordensHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                body.innerHTML = html;
+
+            } catch (e) {
+                body.innerHTML = `<p style="text-align:center; padding: 40px; font-weight: 700; color: #ef4444;">❌ Falha ao carregar histórico: ${e.message}</p>`;
+            }
+        }
+
+        function fecharHistoricoModal() {
+            document.getElementById('historicoModalOverlay').classList.remove('open');
+        }
+
+
     </script>
 <div id="chatImageModalOverlay" onclick="fecharImagemModal(event)">
         <div id="chatImageModalContent" onclick="event.stopPropagation()">
