@@ -6432,6 +6432,144 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         // busca os dados do Firebase e renderiza todos os cards de estação
         // é a função mais importante do sistema — roda a cada 30s
         // =====================================================================
+
+
+// =====================================================================
+// SISTEMA DE HISTÓRICO DE ESTAÇÕES COM DETALHES (ATUALIZAÇÃO DINÂMICA)
+// =====================================================================
+window._ultimoModeloEstacao = window._ultimoModeloEstacao || {};
+window._ultimoHashOrdens = window._ultimoHashOrdens || {}; // Memória para as ordens
+
+async function registrarHistoricoSeMudou(grupo, estacao, item) {
+    if (!item || !item.modelo || item.modelo === 'Não Alocado' || item.modelo === 'VAZIO') return;
+    
+    const chaveEstacao = `${grupo}_${estacao}`;
+    const modeloAtual = item.modelo.trim();
+    const tamanhoAtual = String(item.tamanho || '').trim();
+    const modeloHash = `${modeloAtual}_${tamanhoAtual}`;
+
+    // 1. Extrair Ordens, Pacotes e Cores da estação atual
+    const detalhes = item.detalhes || [];
+    const ordensUnicas = [];
+    const assinaturas = new Set();
+    
+    detalhes.forEach(d => {
+        const o = String(d.ordem || '--').trim();
+        const p = String(d.pacote || '--').trim();
+        const c = String(d.cor || '--').trim();
+        const sig = `${o}_${p}_${c}`;
+        
+        if (!assinaturas.has(sig)) {
+            assinaturas.add(sig);
+            ordensUnicas.push({ ordem: o, pacote: p, cor: c });
+        }
+    });
+
+    // Cria um "carimbo" das ordens para saber se elas mudaram
+    const ordensHash = ordensUnicas.map(o => `${o.ordem}_${o.pacote}`).join('|');
+
+    // Se nem o modelo nem as ordens mudaram, não faz nada
+    if (window._ultimoModeloEstacao[chaveEstacao] === modeloHash && window._ultimoHashOrdens[chaveEstacao] === ordensHash) {
+        return;
+    }
+
+    const refHist = db.ref(`/historico_estacoes/${grupo}/estacao_${estacao}`);
+    
+    refHist.orderByKey().limitToLast(1).once('value', snapshot => {
+        let ultimoSalvo = null;
+        let ultimaChave = null;
+        snapshot.forEach(child => { 
+            ultimoSalvo = child.val(); 
+            ultimaChave = child.key;
+        });
+        
+        if (!ultimoSalvo || ultimoSalvo.modelo !== modeloAtual || ultimoSalvo.tamanho !== tamanhoAtual) {
+            // CRIAR NOVO: O modelo/matriz mudou!
+            refHist.push({
+                modelo: modeloAtual,
+                tamanho: tamanhoAtual,
+                ordens: ordensUnicas,
+                dataHoraEntrada: new Date().toLocaleString('pt-BR'),
+                timestamp: Date.now()
+            });
+        } else if (ultimaChave && ultimoSalvo.modelo === modeloAtual) {
+            // ATUALIZAR: É a mesma matriz, mas entraram pacotes/ordens novos!
+            refHist.child(ultimaChave).update({
+                ordens: ordensUnicas
+            });
+        }
+        
+        // Atualiza a memória para o próximo ciclo
+        window._ultimoModeloEstacao[chaveEstacao] = modeloHash;
+        window._ultimoHashOrdens[chaveEstacao] = ordensHash;
+    });
+}
+
+function abrirHistoricoEstacao(grupo, estacao) {
+    document.getElementById('historicoModalTitulo').innerText = `EST ${String(estacao).padStart(2, '0')} (${grupo})`;
+    const body = document.getElementById('historicoModalBody');
+    body.innerHTML = '<p style="text-align:center; padding: 30px; font-weight: 700; color: var(--text-muted);">Carregando histórico...</p>';
+    
+    document.getElementById('historicoModalOverlay').classList.add('open');
+    
+    // Traz os ÚLTIMOS 5 registros
+    db.ref(`/historico_estacoes/${grupo}/estacao_${estacao}`).orderByChild('timestamp').limitToLast(5).once('value', snapshot => {
+        const dados = [];
+        snapshot.forEach(child => {
+            dados.push({ key: child.key, ...child.val() });
+        });
+        
+        if (dados.length === 0) {
+            body.innerHTML = '<p style="text-align:center; padding: 30px; font-weight: 700; color: var(--text-muted);">Nenhum histórico registrado para esta estação.</p>';
+            return;
+        }
+        
+        dados.reverse(); 
+        
+        let html = '';
+        dados.forEach((d, index) => {
+            const dataFmt = d.dataHoraEntrada || new Date(d.timestamp).toLocaleString('pt-BR');
+            const isAtual = index === 0 ? '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 900; margin-left: 8px;">ATUAL</span>' : '';
+            
+            let ordensHtml = '';
+            if (d.ordens && d.ordens.length > 0) {
+                ordensHtml += '<span class="hist-ordens-title" style="margin-top: 14px;">Lotes desta Matriz:</span>';
+                ordensHtml += '<div class="hist-ordens-container">';
+                
+                d.ordens.forEach(o => {
+                    ordensHtml += `
+                    <div class="hist-ordem-tag" title="Cor: ${htmlSafe(o.cor)}">
+                        <span class="hist-ordem-num">${htmlSafe(o.ordem)}</span>
+                        <span style="opacity: 0.5; margin: 0 -2px;">|</span>
+                        <span>${htmlSafe(o.pacote)}</span>
+                        <span style="font-size:9px; opacity:0.7;">(${htmlSafe(o.cor)})</span>
+                    </div>`;
+                });
+                ordensHtml += '</div>';
+            } else {
+                ordensHtml += '<span class="hist-ordens-title" style="margin-top: 14px; opacity: 0.5;">AGUARDANDO ORDENS...</span>';
+            }
+
+            html += `
+            <div class="hist-item" style="margin-bottom: 12px;">
+                <div class="hist-item-head">
+                    <div class="hist-modelo">${htmlSafe(d.modelo)} <span class="hist-tamanho">${htmlSafe(d.tamanho)}</span> ${isAtual}</div>
+                    <div class="hist-data">🕒 Entrou em: ${dataFmt}</div>
+                </div>
+                ${ordensHtml}
+            </div>`;
+        });
+        
+        body.innerHTML = html;
+    });
+}
+
+function fecharHistoricoModal() {
+    document.getElementById('historicoModalOverlay').classList.remove('open');
+}
+// =====================================================================
+// =====================================================================
+                
                 async function carregarPainel(snapAlocData = null) {
             const grupoAtual = document.getElementById('filtroGrupo').value;
             const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
@@ -10432,128 +10570,7 @@ function handleChatTyping() {
 
 
 
-// =====================================================================
-        // GRAVAÇÃO AUTOMÁTICA DE HISTÓRICO NO FIREBASE
-        // =====================================================================
-        window._ultimoHistoricoSalvo = window._ultimoHistoricoSalvo || {};
 
-        function registrarHistoricoSeMudou(grupo, estacao, item) {
-            // Ignora se estiver vazia ou não alocada
-            if (!item || !item.modelo || item.modelo === 'Não Alocado' || item.modelo === 'VAZIO') return;
-            
-            const chaveCache = `${grupo}_EST_${estacao}`;
-            const hashAtual = `${item.modelo}_${item.tamanho}_${item.dataHora}`;
-
-            // Só checa o Firebase se a informação local indicar que mudou
-            if (window._ultimoHistoricoSalvo[chaveCache] !== hashAtual) {
-                window._ultimoHistoricoSalvo[chaveCache] = hashAtual;
-                
-                const refHistorico = db.ref(`/historico_alocacao/${grupo}/EST_${estacao}`);
-                
-                // Puxa só o último registro para evitar duplicidade de vários monitores abertos
-                refHistorico.orderByKey().limitToLast(1).once('value').then(snap => {
-                    const ultimoDado = snap.val();
-                    let jaExiste = false;
-                    
-                    if (ultimoDado) {
-                        const keys = Object.keys(ultimoDado);
-                        const ultimo = ultimoDado[keys[0]];
-                        // Se o modelo, tamanho e hora forem idênticos, alguém já salvou
-                        if (ultimo.modelo === item.modelo && ultimo.tamanho === item.tamanho && ultimo.dataHora === item.dataHora) {
-                            jaExiste = true;
-                        }
-                    }
-                    
-                    if (!jaExiste) {
-                        // Grava no Firebase o novo histórico!
-                        refHistorico.push({
-                            modelo: item.modelo,
-                            tamanho: item.tamanho,
-                            dataHora: item.dataHora || new Date().toLocaleString('pt-BR'),
-                            detalhes: item.detalhes || []
-                        });
-                    }
-                });
-            }
-        }
-
-// =====================================================================
-        // HISTÓRICO DE ALOCAÇÃO NA ESTAÇÃO
-        // =====================================================================
-        async function abrirHistoricoEstacao(grupo, estacao) {
-            const overlay = document.getElementById('historicoModalOverlay');
-            const titulo = document.getElementById('historicoModalTitulo');
-            const body = document.getElementById('historicoModalBody');
-            
-            titulo.textContent = `Histórico — ${grupo} - EST ${String(estacao).padStart(2, '0')}`;
-            body.innerHTML = `<p style="text-align:center; padding: 40px; font-weight: 700; color: var(--text-muted);">⏳ Buscando histórico no banco...</p>`;
-            overlay.classList.add('open');
-
-            try {
-                const snap = await db.ref(`/historico_alocacao/${grupo}/EST_${estacao}`).orderByKey().limitToLast(10).once('value');
-                const data = snap.val();
-
-                if (!data) {
-                    body.innerHTML = `<p style="text-align:center; padding: 40px; font-weight: 700; color: var(--text-muted);">Nenhum histórico registrado para esta estação.</p>`;
-                    return;
-                }
-
-                const historico = Object.values(data).reverse();
-                
-                let html = '';
-                historico.forEach(item => {
-                    const dataFormatada = item.dataHora ? item.dataHora : '--/--/---- --:--';
-                    
-                    let ordensHtml = '';
-                    if (item.detalhes && Array.isArray(item.detalhes)) {
-                        const pacotesUnicos = new Set();
-                        item.detalhes.forEach(d => {
-                            const o = d.ordem || '--';
-                            const p = d.pacote || '--';
-                            // Formatação nova da tag (Ordem azul, pct cinza)
-                            pacotesUnicos.add(
-                                `<span class="hist-ordem-num">${htmlSafe(o)}</span> 
-                                 <span style="opacity:0.2;">|</span> 
-                                 <span class="hist-pct-num">PCT ${htmlSafe(p)}</span>`
-                            );
-                        });
-                        
-                        ordensHtml = Array.from(pacotesUnicos)
-                            .map(tag => `<div class="hist-ordem-tag">${tag}</div>`)
-                            .join('');
-                    } else {
-                        ordensHtml = '<div style="font-size: 11px; font-style: italic; color: var(--text-muted);">Sem detalhes de ordens salvos.</div>';
-                    }
-
-                    html += `
-                        <div class="hist-item">
-                            <div class="hist-item-head">
-                                <div class="hist-modelo">
-                                    ${htmlSafe(item.modelo || 'Não Alocado')} 
-                                    <span class="hist-tamanho">${htmlSafe(item.tamanho || '--')}</span>
-                                </div>
-                                <div class="hist-data">⏱️ ${htmlSafe(dataFormatada)}</div>
-                            </div>
-                            <div>
-                                <span class="hist-ordens-title">Ordens e Pacotes Alocados</span>
-                                <div class="hist-ordens-container">
-                                    ${ordensHtml}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                body.innerHTML = html;
-
-            } catch (e) {
-                body.innerHTML = `<p style="text-align:center; padding: 40px; font-weight: 700; color: #ef4444;">❌ Falha ao carregar histórico: ${e.message}</p>`;
-            }
-        }
-
-        function fecharHistoricoModal() {
-            document.getElementById('historicoModalOverlay').classList.remove('open');
-        }
 
 
     </script>
