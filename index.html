@@ -3412,21 +3412,30 @@ rx="1.5" fill="#f59e0b"/>
                 </div>
                 
                 <!-- Barra de Filtros do Editor -->
-                <div class="gerente-feed-filters" style="margin: 0; border-radius: 0; border-left: none; border-right: none; border-top: none;">
-                    <select id="editorFiltroGrupo" onchange="renderReimpressoes()">
-                        <option value="todos" selected>📦 Todos os Grupos</option>
-                    </select>
-                    <select id="editorFiltroCoord" onchange="renderReimpressoes()">
-                        <option value="todos" selected>👤 Todos os Coordenadores</option>
-                    </select>
-                    <select id="editorFiltroTempo" onchange="renderReimpressoes()">
-                        <option value="todos" selected>📅 Todo o Período</option>
-                        <option value="hoje">🕐 Apenas Hoje</option>
-                    </select>
-                    <select id="editorFiltroModelo" onchange="renderReimpressoes()">
-                        <option value="todos" selected>👟 Todos os Modelos</option>
-                    </select>
-                </div>
+            <div class="gerente-feed-filters" style="margin: 0; border-radius: 0; border-left: none; border-right: none; border-top: none;">
+
+                <select id="editorFiltroStatus" onchange="renderReimpressoes()">
+                    <option value="todos" selected>📋 Todos os Status</option>
+                    <option value="pendente">⏳ Pendentes</option>
+                    <option value="reprovado">❌ Reprovados</option>
+                    <option value="aprovado">✅ Aprovados</option>
+                    <option value="feito">🏁 Feitos</option>
+                </select>
+
+                <select id="editorFiltroGrupo" onchange="renderReimpressoes()">
+                    <option value="todos" selected>📦 Todos os Grupos</option>
+                </select>
+                <select id="editorFiltroCoord" onchange="renderReimpressoes()">
+                    <option value="todos" selected>👤 Todos os Coordenadores</option>
+                </select>
+                <select id="editorFiltroTempo" onchange="renderReimpressoes()">
+                    <option value="todos" selected>📅 Todo o Período</option>
+                    <option value="hoje">🕐 Apenas Hoje</option>
+                </select>
+                <select id="editorFiltroModelo" onchange="renderReimpressoes()">
+                    <option value="todos" selected>👟 Todos os Modelos</option>
+                </select>
+            </div>
 
                 <div class="wip-body" id="reprintBody">
                     <p style="text-align:center;color:var(--text-muted);font-weight:700;">Carregando solicitacoes...</p>
@@ -5699,47 +5708,56 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         }
 
         // Função de renderização com a aplicação dos filtros
-        function renderReimpressoes() {
-            const body = document.getElementById('reprintBody');
-            if (!_reprintData.length) {
-                body.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-weight:800;padding:40px 0;">Nenhuma solicitacao de reimpressao registrada.</p>';
-                return;
-            }
-
-            // Atualiza os dropdowns
-            _popularFiltrosEditor();
-
-            // Pega os valores selecionados
-            const grupoFiltro = document.getElementById('editorFiltroGrupo') ? document.getElementById('editorFiltroGrupo').value : 'todos';
-            const coordFiltro = document.getElementById('editorFiltroCoord') ? document.getElementById('editorFiltroCoord').value : 'todos';
-            const tempoFiltro = document.getElementById('editorFiltroTempo') ? document.getElementById('editorFiltroTempo').value : 'todos';
-            const modeloFiltro = document.getElementById('editorFiltroModelo') ? document.getElementById('editorFiltroModelo').value : 'todos';
-            const agora = new Date();
-
-            // Filtra os dados
-            const filtrado = _reprintData.filter(r => {
-                if (grupoFiltro !== 'todos' && r.grupo !== grupoFiltro) return false;
-                if (coordFiltro !== 'todos' && r.solicitante !== coordFiltro) return false;
-                if (modeloFiltro !== 'todos' && r.modelo !== modeloFiltro) return false;
-                if (tempoFiltro === 'hoje') {
-                    const ts = r.timestamp;
-                    if (!ts) return false;
-                    const d = new Date(ts);
-                    if (d.toDateString() !== agora.toDateString()) return false;
-                }
-                return true;
-            });
-
-            // Se a busca não encontrar nada
-            if (!filtrado.length) {
-                body.innerHTML = '<div class="req-card" style="text-align:center;color:var(--text-muted);font-weight:800;padding:24px;">📭 Nenhuma solicitação encontrada para os filtros atuais.</div>';
-                return;
-            }
-
-            // Monta os cards filtrados na tela
-            const mapaVias = obterMapaViasReimpressao();
-            body.innerHTML = filtrado.map(req => templateRequisicao(req, false, mapaVias)).join('');
+    function renderReimpressoes() {
+        const body = document.getElementById('reprintBody');
+        if (!_reprintData.length) {
+            body.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-weight:800;padding:40px 0;">Nenhuma solicitacao de reimpressao registrada.</p>';
+            return;
         }
+
+        // Atualiza os dropdowns
+        _popularFiltrosEditor();
+
+        // Pega os valores selecionados (agora incluindo o status)
+        const statusFiltro = document.getElementById('editorFiltroStatus') ? document.getElementById('editorFiltroStatus').value : 'todos';
+        const grupoFiltro = document.getElementById('editorFiltroGrupo') ? document.getElementById('editorFiltroGrupo').value : 'todos';
+        const coordFiltro = document.getElementById('editorFiltroCoord') ? document.getElementById('editorFiltroCoord').value : 'todos';
+        const tempoFiltro = document.getElementById('editorFiltroTempo') ? document.getElementById('editorFiltroTempo').value : 'todos';
+        const modeloFiltro = document.getElementById('editorFiltroModelo') ? document.getElementById('editorFiltroModelo').value : 'todos';
+        const agora = new Date();
+
+        // Filtra os dados
+        const filtrado = _reprintData.filter(r => {
+            // Normaliza o status
+            let s = r.status;
+            if (s !== 'aprovado' && s !== 'reprovado' && s !== 'feito') { s = 'pendente'; }
+
+            // Aplica o Filtro de Status
+            if (statusFiltro !== 'todos' && s !== statusFiltro) return false;
+
+            if (grupoFiltro !== 'todos' && r.grupo !== grupoFiltro) return false;
+            if (coordFiltro !== 'todos' && r.solicitante !== coordFiltro) return false;
+            if (modeloFiltro !== 'todos' && r.modelo !== modeloFiltro) return false;
+
+            if (tempoFiltro === 'hoje') {
+                const ts = r.timestamp;
+                if (!ts) return false;
+                const d = new Date(ts);
+                if (d.toDateString() !== agora.toDateString()) return false;
+            }
+            return true;
+        });
+
+        // Se a busca não encontrar nada
+        if (!filtrado.length) {
+            body.innerHTML = '<div class="req-card" style="text-align:center;color:var(--text-muted);font-weight:800;padding:24px;">📭 Nenhuma solicitação encontrada para os filtros atuais.</div>';
+            return;
+        }
+
+        // Monta os cards filtrados na tela
+        const mapaVias = obterMapaViasReimpressao();
+        body.innerHTML = filtrado.map(req => templateRequisicao(req, false, mapaVias)).join('');
+    }
 
         async function autenticarDevReimpressao(titulo) {
             const user = await customPrompt(titulo + '\n\nDigite o usuario do desenvolvedor:', false);
