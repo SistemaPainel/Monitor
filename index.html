@@ -4309,9 +4309,11 @@ rx="1.5" fill="#f59e0b"/>
 
         function sairDev() {
             fazerLogout();
+            
         }
 
-        // =========================================================================
+                
+                // =========================================================================
         // GERENCIAMENTO DE USUÁRIOS — PAINEL DESENVOLVEDOR
         // =========================================================================
 
@@ -4699,12 +4701,21 @@ rx="1.5" fill="#f59e0b"/>
         // LOGOUT
         // limpa a sessão, para todos os intervalos e volta pra tela de login
         // =====================================================================
+        // =====================================================================
+        // LOGOUT
+        // limpa a sessão, para todos os intervalos e volta pra tela de login
+        // =====================================================================
+
         function fazerLogout(porInatividade = false) {
             sessionStorage.removeItem('nexusSession');
             userRole = 'viewer';
             _usuarioAtual = null;
             _gerenteAprovadorAtual = '';
             pararControleInatividade();
+            
+            // DESLIGA O OUVINTE EM TEMPO REAL
+            db.ref('/reimpressoes').off('value');
+
             sysIntervals.forEach(clearInterval); sysIntervals = []; if(_gerentePollingInterval){ clearInterval(_gerentePollingInterval); _gerentePollingInterval = null; }
             document.getElementById('mainApp').style.display = 'none';
             const devPainel = document.getElementById('devPainel');
@@ -5661,6 +5672,24 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         }
 
 
+        // OUVINTE EM TEMPO REAL ROBUSTO (Lida com quedas de conexão)
+    db.ref('/reimpressoes').on('value', (snap) => {
+        if (snap.val() === null && navigator.onLine === false) return; 
+
+        const data = snap.val() || {};
+        
+        _reprintData = Object.keys(data)
+            .map(id => normalizarRequisicaoReimpressao(id, data[id]))
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+        if (userRole === 'gerente') {
+            renderGerenteReimpressoes();
+        } else if (userRole === 'editor' && document.getElementById('reprintModalOverlay').classList.contains('open')) {
+            renderReimpressoes();
+        }
+    });
+
+
         // =====================================================================
         // SISTEMA DE REIMPRESSÕES
         // solicitação, aprovação e log de reimpressão de etiquetas
@@ -5922,7 +5951,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                     nomeReal = megaLista[req.feitoPor];
                 }
                 
-                let nomeFeito = nomeReal.split(' ')[0]; // Pega só o primeiro nome
+                let nomeFeito = String(nomeReal).split(' ')[0]; // Pega só o primeiro nome
                 
                 badgesHtml = '<span class="req-status aprovado">Aprovado</span>' +
                              '<span class="req-status feito">Feito por ' + htmlSafe(nomeFeito) + ' às ' + htmlSafe(horaFeito) + '</span>';
