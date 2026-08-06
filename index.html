@@ -1623,7 +1623,36 @@
             cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
         }
         .btn-marcar-feito:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16,185,129,0.4); }
-        .btn-marcar-feito:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-marcar-feito:disabled { opacity: 0.5; cursor: not-allowed; transform: none; 
+         .btn-cancelar-reimp {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08));
+    color: #ef4444; 
+    border: 1.5px solid rgba(239,68,68,0.4);
+    border-radius: 10px; 
+    padding: 8px 18px; 
+    font-size: 11px; 
+    font-weight: 900;
+    text-transform: uppercase; 
+    letter-spacing: 0.8px;
+    cursor: pointer; 
+    transition: 0.2s; 
+    display: flex; 
+    align-items: center; 
+    gap: 6px;
+}
+
+.btn-cancelar-reimp:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff; 
+    transform: translateY(-1px); 
+    box-shadow: 0 6px 18px rgba(239,68,68,0.4);
+}
+
+.btn-cancelar-reimp:disabled { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+    transform: none; 
+}}
         .req-done-badge {
             display: inline-flex; align-items: center; gap: 6px;
             background: rgba(16,185,129,0.12); color: #10b981;
@@ -2557,6 +2586,37 @@ body.is-resizing * { transition: none !important; animation: none !important; }
         margin-top: auto !important;
         letter-spacing: 0.5px !important;
     }
+}
+
+
+.btn-cancelar-reimp {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08));
+    color: #ef4444; 
+    border: 1.5px solid rgba(239,68,68,0.4);
+    border-radius: 10px; 
+    padding: 8px 18px; 
+    font-size: 11px; 
+    font-weight: 900;
+    text-transform: uppercase; 
+    letter-spacing: 0.8px;
+    cursor: pointer; 
+    transition: 0.2s; 
+    display: flex; 
+    align-items: center; 
+    gap: 6px;
+}
+
+.btn-cancelar-reimp:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff; 
+    transform: translateY(-1px); 
+    box-shadow: 0 6px 18px rgba(239,68,68,0.4);
+}
+
+.btn-cancelar-reimp:disabled { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+    transform: none; 
 }
 
     </style>
@@ -5980,18 +6040,21 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 if (statusFinal === 'feito') {
                     doneSection = '<div class="req-done-section">' +
                         '<span class="req-done-badge">✔ Reimpressão Executada por ' + htmlSafe(req.feitoPor || '--') + ' em ' + htmlSafe(req.dataHoraFeito || '--') + '</span>' +
+                        '<button class="btn-cancelar-reimp" id="btnCancelar_' + htmlSafe(req.id) + '" onclick="cancelarReimpressaoEditor(\'' + jsSafe(req.id) + '\')">❌ Cancelar</button>' +
                         '<button class="req-log-toggle" onclick="toggleLogReq(\'' + jsSafe(req.id) + '\')">📋 Ver Log</button>' +
                         '</div>' +
                         _renderLogPanel(req);
                 } else if (statusFinal === 'aprovado') {
                     doneSection = '<div class="req-done-section">' +
                         '<button class="btn-marcar-feito" id="btnFeito_' + htmlSafe(req.id) + '" onclick="marcarReimpressaoFeita(\'' + jsSafe(req.id) + '\')">✔ Marcar como Feito</button>' +
+                        '<button class="btn-cancelar-reimp" id="btnCancelar_' + htmlSafe(req.id) + '" onclick="cancelarReimpressaoEditor(\'' + jsSafe(req.id) + '\')">❌ Cancelar</button>' +
                         '<button class="req-log-toggle" onclick="toggleLogReq(\'' + jsSafe(req.id) + '\')">📋 Ver Log</button>' +
                         '</div>' +
                         _renderLogPanel(req);
                 } else {
                     // pendente — só log
                     doneSection = '<div class="req-done-section">' +
+                        '<button class="btn-cancelar-reimp" id="btnCancelar_' + htmlSafe(req.id) + '" onclick="cancelarReimpressaoEditor(\'' + jsSafe(req.id) + '\')">❌ Cancelar</button>' +
                         '<button class="req-log-toggle" onclick="toggleLogReq(\'' + jsSafe(req.id) + '\')">📋 Ver Log</button>' +
                         '</div>' +
                         _renderLogPanel(req);
@@ -6146,6 +6209,69 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = '✔ Marcar como Feito'; }
             }
         }
+
+async function cancelarReimpressaoEditor(id) {
+    const req = _reprintData.find(r => r.id === id);
+    if (!req) return;
+
+    // 1. Pede APENAS o motivo do cancelamento
+    const motivo = await customPrompt('Motivo do cancelamento da reimpressão:', false);
+    if (motivo === null || !motivo.trim()) {
+        await customAlert('Cancelamento abortado. É necessário informar um motivo.');
+        return;
+    }
+
+    // 2. Pega o nome do Editor que já está logado no sistema automaticamente
+    const nomeEditor = _usuarioAtual ? _usuarioAtual.nome : 'Editor Desconhecido';
+    const dataHoraCancelamento = new Date().toLocaleString('pt-BR');
+
+    // 3. Monta o histórico (log) da requisição
+    const logAtual = Array.isArray(req.log) ? req.log : [];
+    if (!logAtual.length) {
+        if (req.dataHora) logAtual.push({ tipo:'create', texto: 'Solicitação criada por ' + (req.solicitante||'--'), hora: req.dataHora });
+        if (req.dataHoraAprovacao) logAtual.push({ tipo:'aprove', texto: 'Aprovada por ' + (req.aprovador||'--'), hora: req.dataHoraAprovacao });
+    }
+    
+    // Adiciona ao log quem cancelou e o motivo
+    logAtual.push({ 
+        tipo:'reprove', 
+        texto: 'Cancelada pelo Editor ' + nomeEditor + ' — Motivo: ' + motivo.trim(), 
+        hora: dataHoraCancelamento 
+    });
+
+    const btn = document.getElementById('btnCancelar_' + id);
+    if (btn) { btn.disabled = true; btn.textContent = 'Cancelando...'; }
+
+    try {
+        // 4. Salva no Firebase
+        const updateData = {
+            status: 'reprovado', // Mantemos 'reprovado' para sair das filas de pendentes
+            reprovador: nomeEditor + ' (Editor)', // Vai aparecer no topo do Card
+            dataHoraReprovacao: dataHoraCancelamento,
+            motivoReprovacao: 'Cancelamento: ' + motivo.trim(), // Vai aparecer logo abaixo do nome
+            log: logAtual
+        };
+
+        const resp = await fetch(`${FIREBASE_URL}/reimpressoes/${id}.json${AUTH}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+        tocarSomErro(); // Feedback sonoro
+        await customAlert('❌ Reimpressão cancelada com sucesso!\n\nResponsável: ' + nomeEditor);
+        await carregarReimpressoes(true);
+        
+    } catch(e) {
+        await customAlert('Falha ao cancelar a reimpressão. Verifique a conexão com a rede.');
+        if (btn && btn.isConnected) { 
+            btn.disabled = false; 
+            btn.innerHTML = '❌ Cancelar'; 
+        }
+    }
+}
 
         // ===== ANÁLISES DO GERENTE =====
 
