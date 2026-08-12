@@ -6040,7 +6040,6 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 if (statusFinal === 'feito') {
                     doneSection = '<div class="req-done-section">' +
                         '<span class="req-done-badge">✔ Reimpressão Executada por ' + htmlSafe(req.feitoPor || '--') + ' em ' + htmlSafe(req.dataHoraFeito || '--') + '</span>' +
-                        '<button class="btn-cancelar-reimp" id="btnCancelar_' + htmlSafe(req.id) + '" onclick="cancelarReimpressaoEditor(\'' + jsSafe(req.id) + '\')">❌ Cancelar</button>' +
                         '<button class="req-log-toggle" onclick="toggleLogReq(\'' + jsSafe(req.id) + '\')">📋 Ver Log</button>' +
                         '</div>' +
                         _renderLogPanel(req);
