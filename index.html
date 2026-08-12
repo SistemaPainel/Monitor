@@ -6427,79 +6427,105 @@ async function cancelarReimpressaoEditor(id) {
             }
         }
 
-       async function carregarReimpressoesGerente() {
-    // 1. Injeta o Loader visualmente na tela antes de buscar os dados
-    const body = document.getElementById('gerentePendentesBody');
-    if (body) {
-        body.innerHTML = `
-            <div class="gerente-loader-container">
-                <div class="gerente-loader-spinner"></div>
-                <div class="gerente-loader-text">Buscando requisições...</div>
-            </div>
-        `;
-    }
-    
-    // 2. Aguarda os dados do servidor
-    await carregarReimpressoes(false);
-    
-    // 3. Substitui o loader pelos cards renderizados
-    renderGerenteReimpressoes();
-}
+        async function carregarReimpressoesGerente() {
+            // 1. Injeta o Loader visualmente na tela antes de buscar os dados
+            const body = document.getElementById('gerentePendentesBody');
+            if (body) {
+                body.innerHTML = `
+                    <div class="gerente-loader-container">
+                        <div class="gerente-loader-spinner"></div>
+                        <div class="gerente-loader-text">Buscando requisições...</div>
+                    </div>
+                `;
+            }
+            
+            // 2. Aguarda os dados do servidor
+            await carregarReimpressoes(false);
+            
+            // 3. Substitui o loader pelos cards renderizados
+            renderGerenteReimpressoes();
+        }
 
-        function renderGerenteReimpressoes() {
-            // 1. Captura os valores dos filtros do Feed
+        function renderGerenteReimpressoes(loadAll = false) {
+            // 1. Controle de exibição (se o usuário quer ver tudo ou apenas as 150)
+            if (loadAll) {
+                window._mostrarTodasReimpressoesFeed = true;
+            } else if (arguments.length === 0 || loadAll instanceof Event) {
+                window._mostrarTodasReimpressoesFeed = false;
+            }
+
+            // 2. Captura os valores dos filtros do Feed
             const statusFiltro = document.getElementById('feedFiltroStatus') ? document.getElementById('feedFiltroStatus').value : 'todos';
             const coordFiltro = document.getElementById('feedFiltroCoord') ? document.getElementById('feedFiltroCoord').value : 'todos';
             const tempoFiltro = document.getElementById('feedFiltroTempo') ? document.getElementById('feedFiltroTempo').value : 'todos';
             const modeloFiltro = document.getElementById('feedFiltroModelo') ? document.getElementById('feedFiltroModelo').value : 'todos';
             const agora = new Date();
 
-            // 2. Filtra os dados de acordo com a seleção
+            // 3. Filtra os dados na memória (mantém a base completa para os KPIs)
             const feedFiltrado = _reprintData.filter(r => {
-                // Normaliza o status
                 let s = r.status;
                 if (s !== 'aprovado' && s !== 'reprovado' && s !== 'feito') { s = 'pendente'; }
                 
-                // Filtro de Status
                 if (statusFiltro !== 'todos' && s !== statusFiltro) return false;
-
-                // Filtro de Coordenador
                 if (coordFiltro !== 'todos' && r.solicitante !== coordFiltro) return false;
-
-                // Filtro de Modelo
                 if (modeloFiltro !== 'todos' && r.modelo !== modeloFiltro) return false;
 
-                // Filtro de Tempo (Hoje)
                 if (tempoFiltro === 'hoje') {
                     const ts = r.timestamp;
                     if (!ts) return false;
                     const d = new Date(ts);
                     if (d.toDateString() !== agora.toDateString()) return false;
                 }
-
                 return true;
             });
 
-            // 3. Atualiza os KPIs fixos do topo (Sempre mostram os totais reais independentes do filtro do feed)
+            // 4. Atualiza os KPIs fixos do topo SEMPRE COM TODOS OS DADOS DA BASE
             const totalPendentes = _reprintData.filter(r => r.status !== 'aprovado' && r.status !== 'feito' && r.status !== 'reprovado').length;
             const totalAprovadas = _reprintData.filter(r => r.status === 'aprovado' || r.status === 'feito').length;
             
             document.getElementById('gerenteCountPendentes').textContent = totalPendentes;
             document.getElementById('gerenteCountAprovadas').textContent = totalAprovadas;
 
-            // 4. Renderiza os cards filtrados
+            // 5. SEPARAÇÃO PARA CELULAR (DOM Virtual para não travar)
+            let dadosParaRenderizar = feedFiltrado;
+            let isMobile = window.innerWidth <= 768; 
+            let mostrarBotao = false;
+
+            // Corta para 150 itens se for celular e não tiver clicado no botão
+            if (isMobile && !window._mostrarTodasReimpressoesFeed && feedFiltrado.length > 150) {
+                dadosParaRenderizar = feedFiltrado.slice(0, 150);
+                mostrarBotao = true;
+            }
+
             const mapaVias = obterMapaViasReimpressao();
-            document.getElementById('gerentePendentesBody').innerHTML = feedFiltrado.length
-                ? feedFiltrado.map(req => templateRequisicao(req, true, mapaVias)).join('')
-                : '<div class="req-card" style="text-align:center;color:var(--text-muted);font-weight:800;padding:24px;">📭 Nenhuma solicitação encontrada para os filtros atuais.</div>';
             
-            // Oculta o histórico auxiliar que não é mais necessário
+            // 6. Gera o HTML apenas dos itens limitados
+            let htmlCards = dadosParaRenderizar.length
+                ? dadosParaRenderizar.map(req => templateRequisicao(req, true, mapaVias)).join('')
+                : '<div class="req-card" style="text-align:center;color:var(--text-muted);font-weight:800;padding:24px;">📭 Nenhuma solicitação encontrada para os filtros atuais.</div>';
+
+            // 7. Adiciona o botão "Carregar mais" no final se cortou a lista
+            if (mostrarBotao) {
+                const restante = feedFiltrado.length - 150;
+                htmlCards += `
+                    <button onclick="renderGerenteReimpressoes(true)" 
+                            style="width: 100%; padding: 14px; margin-top: 14px; margin-bottom: 24px; background: var(--stat-box); border: 2px dashed var(--glass-border); border-radius: 14px; color: var(--text-main); font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; box-shadow: var(--glass-shadow);">
+                        ⬇️ Carregar o restante do histórico (${restante} requisições)
+                    </button>
+                `;
+            }
+
+            // Injeta os cards na tela
+            document.getElementById('gerentePendentesBody').innerHTML = htmlCards;
+            
             const histAux = document.getElementById('gerenteHistoricoBody');
             if(histAux) histAux.innerHTML = '';
             
+            // 8. Atualiza as ANÁLISES
             _popularFiltrosGerente();
             atualizarAnalisesGerente();
         }
+
         async function gerenteAprovarReimpressao(id) {
             try {
                 const dataHoraAprovacao = new Date().toLocaleString('pt-BR');
