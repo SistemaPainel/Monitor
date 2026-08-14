@@ -9339,6 +9339,9 @@ function handleChatTyping() {
         }
 
         
+
+
+
     </script>
 
 
@@ -10361,24 +10364,33 @@ function handleChatTyping() {
             document.getElementById('retModalOverlay').style.display = 'none';
         }
 
-        function adicionarLinhaRet() {
-            const container = document.getElementById('retRowsContainer');
-            const index = container.children.length;
-            
-            const row = document.createElement('div');
-            row.className = 'ret-row';
-            row.innerHTML = `
-                <div style="flex:1;">
-                    ${index === 0 ? '<label style="font-size:9px; font-weight:900; color:var(--text-muted); text-transform:uppercase;">Ordem (8 dígitos)</label>' : ''}
-                    <input type="text" class="profile-input ret-ordem-inp" placeholder="Ex: 15872253" maxlength="8" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" oninput="this.value = this.value.replace(/[^0-9]/g, '');" autocomplete="off">
-                </div>
-                <div style="flex:1;">
-                    ${index === 0 ? '<label style="font-size:9px; font-weight:900; color:var(--text-muted); text-transform:uppercase;">Pacotes</label>' : ''}
-                    <input type="text" class="profile-input ret-pacote-inp" placeholder="Ex: 1 ou 1/2/3" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" autocomplete="off">
-                </div>
-                <button type="button" class="btn-ret-del" onclick="removerLinhaRet(this)" title="Remover ordem" style="${index === 0 ? 'margin-top:14px;' : ''}">-</button>
-            `;
-            container.appendChild(row);
+        // Função para adicionar linha de Retrabalho com limite de 8 dígitos
+function adicionarLinhaRet() {
+    const container = document.getElementById('retRowsContainer');
+    const div = document.createElement('div');
+    div.className = 'ret-row'; 
+    
+    // Adicionamos o maxlength e oninput para travar em 8 dígitos
+    div.innerHTML = `
+        <input type="number" 
+               class="login-inp" 
+               placeholder="Ordem..." 
+               oninput="if(this.value.length > 8) this.value = this.value.slice(0, 8);"
+               style="flex: 1; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #007AFF;">
+               
+        <input type="text" 
+               class="login-inp" 
+               placeholder="Pacote (Ex: 1/2/3)" 
+               style="flex: 1; font-weight: 600;">
+               
+        <button type="button" 
+                class="btn-ret-del" 
+                onclick="this.parentElement.remove()" 
+                title="Remover linha">✕</button>
+    `;
+    
+    container.appendChild(div);
+}
             
             // Foco na ordem recém-adicionada
             const newInp = row.querySelector('.ret-ordem-inp');
@@ -10852,7 +10864,251 @@ function handleChatTyping() {
 
 
 
+// =========================================================================
+// LÓGICA DE RETRABALHO / TALÃO FECHADO COM BUSCA INTELIGENTE DE MODELO
+// =========================================================================
 
+// 1. Variável e função para carregar todos os modelos ativos do banco de dados
+let modelosDisponiveisDB = new Set();
+
+async function carregarModelosDisponiveis() {
+    try {
+        const snap = await db.ref('/alocacao').once('value');
+        const data = snap.val();
+        if(data) {
+            for(let grupo in data) {
+                const estacoes = Object.keys(data[grupo]);
+                for(let est of estacoes) {
+                    const info = data[grupo][est];
+                    if(info && info.modelo && info.modelo !== "VAZIO" && info.modelo !== "--") {
+                        modelosDisponiveisDB.add(info.modelo);
+                    }
+                }
+            }
+        }
+    } catch(e) {
+        console.error("Erro ao carregar modelos para o select:", e);
+    }
+}
+setTimeout(carregarModelosDisponiveis, 2000);
+
+// 2. Função para abrir o modal
+function abrirModalRet() {
+    const container = document.getElementById('retRowsContainer');
+    container.innerHTML = ''; 
+    adicionarLinhaRet();      
+    document.getElementById('retModalOverlay').style.display = 'flex';
+}
+
+function fecharModalRet() {
+    document.getElementById('retModalOverlay').style.display = 'none';
+}
+
+// 3. Função para adicionar uma nova linha
+function adicionarLinhaRet() {
+    const container = document.getElementById('retRowsContainer');
+    const row = document.createElement('div');
+    row.className = 'ret-row';
+    row.style.cssText = 'flex-wrap: wrap; padding: 12px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 12px; position: relative;';
+    
+    // O evento 'onblur' aciona a busca assim que você termina de digitar a ordem e clica fora
+    row.innerHTML = `
+        <div style="display: flex; gap: 8px; width: 100%;">
+            <input type="number" class="config-input ordem-input" placeholder="Ordem (Ex: 15872253)" style="flex: 1; margin: 0; padding: 10px; font-family: 'JetBrains Mono', monospace;" onblur="buscarModeloNaLinha(this)">
+            <input type="text" class="config-input pacote-input" placeholder="Pacote (Ex: 1/2/3)" style="flex: 1; margin: 0; padding: 10px;">
+            <button type="button" class="btn-ret-del" onclick="this.closest('.ret-row').remove()" title="Remover linha">✕</button>
+        </div>
+        <div class="modelo-container" style="width: 100%; margin-top: 8px; display: flex; align-items: center; gap: 8px; min-height: 30px;">
+            <span class="modelo-feedback" style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Aguardando Ordem...</span>
+            <select class="config-input modelo-select" style="display: none; flex: 1; margin: 0; padding: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                <option value="">Selecione o Modelo manualmente...</option>
+            </select>
+            <input type="hidden" class="modelo-final" value="">
+        </div>
+    `;
+    
+    const select = row.querySelector('.modelo-select');
+    Array.from(modelosDisponiveisDB).sort().forEach(modelo => {
+        const opt = document.createElement('option');
+        opt.value = modelo;
+        opt.textContent = modelo;
+        select.appendChild(opt);
+    });
+
+    container.appendChild(row);
+}
+
+// 4. Função inteligente que busca a ordem no Firebase filtrando lixos antigos
+async function buscarModeloNaLinha(inputOrdem) {
+    const ordem = inputOrdem.value.trim();
+    const row = inputOrdem.closest('.ret-row');
+    const feedback = row.querySelector('.modelo-feedback');
+    const select = row.querySelector('.modelo-select');
+    const hiddenModelo = row.querySelector('.modelo-final');
+
+    if (ordem.length < 5) {
+        feedback.textContent = "Aguardando Ordem...";
+        feedback.style.color = "var(--text-muted)";
+        select.style.display = "none";
+        hiddenModelo.value = "";
+        return;
+    }
+
+    feedback.textContent = "Buscando modelo no Firebase ⏳...";
+    feedback.style.color = "#007AFF";
+    select.style.display = "none";
+
+    try {
+        let modeloEncontrado = null;
+        // Filtro robusto para ignorar lixos salvos antigamente no banco
+        const modelosIgnorados = ["Múltiplas / Fechado", "Vários", "VAZIO", "--", "", "Múltiplas", "Fechado"];
+        
+        // Busca os últimos 1000 registros para garantir a varredura
+        const snap = await db.ref('/reimpressoes').orderByChild('timestamp').limitToLast(1000).once('value');
+        const data = snap.val();
+        
+        if (data) {
+            const requisicoes = Object.values(data);
+            for (let i = requisicoes.length - 1; i >= 0; i--) {
+                const req = requisicoes[i];
+                if (req.ordens && Array.isArray(req.ordens)) {
+                    for (let o of req.ordens) {
+                        // Só aceita se achar a ordem E o modelo não for um dos textos ignorados
+                        if (o.ordem === ordem && req.modelo && !modelosIgnorados.includes(req.modelo)) {
+                            modeloEncontrado = req.modelo;
+                            break;
+                        }
+                    }
+                }
+                if (modeloEncontrado) break;
+            }
+        }
+
+        if (modeloEncontrado) {
+            feedback.innerHTML = `✅ Modelo: <span style="color:#10b981;">${modeloEncontrado}</span>`;
+            feedback.style.color = "var(--text-main)";
+            hiddenModelo.value = modeloEncontrado;
+            select.style.display = "none";
+        } else {
+            feedback.textContent = "⚠️ Não Fechado. Selecione o Modelo:";
+            feedback.style.color = "#f59e0b";
+            hiddenModelo.value = "";
+            select.style.display = "block"; // ABRE O SELECT!
+        }
+    } catch(e) {
+        feedback.textContent = "❌ Erro na busca. Selecione:";
+        feedback.style.color = "#ef4444";
+        select.style.display = "block";
+    }
+}
+
+// 5. Função final de Solicitar (Exige os modelos preenchidos e SÓ DEPOIS pede o Crachá)
+async function solicitarRet() {
+    const rows = document.querySelectorAll('#retRowsContainer .ret-row');
+    if(rows.length === 0) {
+        await customAlert("Adicione pelo menos uma ordem e pacote.");
+        return;
+    }
+
+    const ordensAgrupadas = [];
+    let todosValidos = true;
+
+    // Validação visual e captura de dados antes de pedir qualquer senha
+    for (let row of rows) {
+        const ordem = row.querySelector('.ordem-input').value.trim();
+        const pacote = row.querySelector('.pacote-input').value.trim();
+        const select = row.querySelector('.modelo-select');
+        let modelo = row.querySelector('.modelo-final').value;
+
+        if(!ordem || !pacote) {
+            await customAlert("Preencha todos os campos de Ordem e Pacote.");
+            todosValidos = false;
+            break;
+        }
+
+        // Se não achou automático e a lista suspensa está visível, pega o valor do select
+        if (!modelo && select.style.display !== "none") {
+            modelo = select.value;
+        }
+
+        if (!modelo) {
+            await customAlert(`Você precisa aguardar a busca ou selecionar um modelo para a Ordem ${ordem}.`);
+            todosValidos = false;
+            break;
+        }
+
+        // Salva com o modelo que foi encontrado/escolhido
+        ordensAgrupadas.push({ ordem: ordem, pacote: pacote, cor: modelo, modeloVinculado: modelo });
+    }
+
+    if (!todosValidos) return;
+
+    // ==============================================================
+    // TUDO VALIDADO! AGORA SIM ELE PEDE O CRACHÁ E O APROVADOR
+    // ==============================================================
+    const solicitanteObj = await obterSolicitanteReimpressao();
+    if (!solicitanteObj) { await customAlert('Solicitação cancelada.'); return; }
+    
+    const listaGerentes = Object.values(credenciaisGerente).map(g => ({ value: g.nome, label: g.nome }));
+    if(listaGerentes.length === 0) {
+        await customAlert('Nenhum Gerente cadastrado para aprovação.');
+        return;
+    }
+
+    const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', listaGerentes);
+    if (!aprovador) { await customAlert('Solicitação cancelada.'); return; }
+
+    const numRequisicao = gerarNumeroRequisicao();
+    const dataHora = new Date().toLocaleString('pt-BR');
+    
+    try {
+        const btnSubmit = document.querySelector('#retModalOverlay .btn-confirmar');
+        const btnHtml = btnSubmit.innerHTML;
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = 'Enviando...';
+
+        // O modelo principal do Talão Fechado será o da primeira ordem para aparecer no título do CARD
+        const modeloPrincipal = ordensAgrupadas[0].modeloVinculado;
+
+        const payload = {
+            numRequisicao: numRequisicao,
+            tipoReimpressao: 'talao_fechado',
+            grupo: '--', 
+            estacao: '--',
+            modelo: modeloPrincipal, 
+            tamanho: '--',
+            ordens: ordensAgrupadas,
+            status: 'pendente',
+            solicitante: solicitanteObj.nome,
+            solicitanteCracha: solicitanteObj.id,
+            aprovadorSolicitado: aprovador,
+            dataHora: dataHora,
+            timestamp: Date.now()
+        };
+
+        const resp = await fetch(`${FIREBASE_URL}/reimpressoes/${numRequisicao}.json${AUTH}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) throw new Error('Falha HTTP');
+
+        // Dispara a notificação local para aparecer o popup de sucesso em verde na tela
+        const notifData = { tipo: 'solicitar_talao_fechado', numRequisicao, solicitante: solicitanteObj.nome, ordem: ordensAgrupadas[0].ordem, pacote: ordensAgrupadas[0].pacote, aprovadorSolicitado: aprovador };
+        localStorage.setItem('notifReimpressao', JSON.stringify(notifData));
+
+        await customAlert('Solicitação de Retrabalho enviada com sucesso!\nRequisição: ' + numRequisicao);
+        fecharModalRet();
+        
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = btnHtml;
+
+    } catch(e) {
+        await customAlert('Falha ao enviar retrabalho. Verifique a conexão.');
+        console.error(e);
+    }
+}
 
 
 
