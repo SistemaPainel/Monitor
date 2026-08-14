@@ -1623,35 +1623,35 @@
             cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
         }
         .btn-marcar-feito:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16,185,129,0.4); }
-        .btn-marcar-feito:disabled { opacity: 0.5; cursor: not-allowed; transform: none; 
+        .btn-marcar-feito:disabled { opacity: 0.5; cursor: not-allowed; transform: none;
          .btn-cancelar-reimp {
     background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08));
-    color: #ef4444; 
+    color: #ef4444;
     border: 1.5px solid rgba(239,68,68,0.4);
-    border-radius: 10px; 
-    padding: 8px 18px; 
-    font-size: 11px; 
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-size: 11px;
     font-weight: 900;
-    text-transform: uppercase; 
+    text-transform: uppercase;
     letter-spacing: 0.8px;
-    cursor: pointer; 
-    transition: 0.2s; 
-    display: flex; 
-    align-items: center; 
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
     gap: 6px;
 }
 
 .btn-cancelar-reimp:hover {
     background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff; 
-    transform: translateY(-1px); 
+    color: #fff;
+    transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(239,68,68,0.4);
 }
 
-.btn-cancelar-reimp:disabled { 
-    opacity: 0.5; 
-    cursor: not-allowed; 
-    transform: none; 
+.btn-cancelar-reimp:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }}
         .req-done-badge {
             display: inline-flex; align-items: center; gap: 6px;
@@ -2218,16 +2218,16 @@
             to { opacity: 1; transform: translateY(0); }
         }
 /* --- WHATSAPP STYLE BUBBLES --- */
-.chat-msg-wrap.mine .chat-bubble { 
+.chat-msg-wrap.mine .chat-bubble {
     background: #005c4b; /* Verde WhatsApp Dark */
-    color: #e9edef; 
+    color: #e9edef;
     border-radius: 12px 0px 12px 12px; /* Cauda na direita */
     box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
 }
-.chat-msg-wrap.theirs .chat-bubble { 
+.chat-msg-wrap.theirs .chat-bubble {
     background: #202c33; /* Cinza WhatsApp Dark */
     border: none;
-    color: #e9edef; 
+    color: #e9edef;
     border-radius: 0px 12px 12px 12px; /* Cauda na esquerda */
     box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
 }
@@ -2245,10 +2245,10 @@
     float: right;
     clear: both;
 }
-.chat-msg-time { 
-    font-size: 11px; 
-    font-family: 'Inter', sans-serif; 
-    color: rgba(255,255,255,0.6); 
+.chat-msg-time {
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    color: rgba(255,255,255,0.6);
     margin-top: 0;
 }
 .chat-read-ticks {
@@ -2267,7 +2267,7 @@
 /* --- MODAL DE IMAGEM ESTILO WHATSAPP --- */
 #chatImageModalOverlay {
     position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92); z-index: 9999999;
-    display: none; align-items: center; justify-content: center; 
+    display: none; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1); backdrop-filter: blur(10px);
 }
 #chatImageModalOverlay.show { display: flex; opacity: 1; }
@@ -2275,7 +2275,7 @@
 #chatImageModalImg { max-width: 100%; max-height: 90vh; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); object-fit: contain; transition: filter 0.3s; }
 .chat-image-close {
     position: absolute; top: -50px; right: -20px; color: #fff; font-size: 28px; cursor: pointer;
-    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); width: 44px; height: 44px; 
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); width: 44px; height: 44px;
     border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s;
 }
 .chat-image-close:hover { background: #ef4444; border-color: #ef4444; transform: scale(1.1); }
@@ -2319,62 +2319,62 @@ body.is-resizing * { transition: none !important; animation: none !important; }
 }
 
 /* === BOTÃO DE HISTÓRICO NA ESTAÇÃO === */
-        .hist-btn { 
+        .hist-btn {
             position: absolute; bottom: 7px; right: 34px;
             width: 22px; height: 22px; border-radius: 6px;
             background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);
-            color: var(--text-muted); font-size: 11px; cursor: pointer; display: flex; 
-            align-items: center; justify-content: center; transition: all 0.2s; z-index: 6; padding: 0; line-height: 1; 
+            color: var(--text-muted); font-size: 11px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s; z-index: 6; padding: 0; line-height: 1;
         }
         .hist-btn:hover { background: rgba(0, 122, 255, 0.2); border-color: #007AFF; color: #007AFF; transform: scale(1.1); }
 
         /* === MODAL DE HISTÓRICO (NOVO LAYOUT) === */
-        .historico-modal-overlay { 
+        .historico-modal-overlay {
             position: fixed; inset: 0; z-index: 100000; display: none; align-items: center;
-            justify-content: center; padding: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); 
+            justify-content: center; padding: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
         }
         .historico-modal-overlay.open { display: flex; animation: fadeIn 0.3s; }
-        .historico-modal { 
+        .historico-modal {
             background: var(--glass-bg); backdrop-filter: blur(40px); border: 1px solid var(--glass-border);
             border-radius: 24px; padding: 0; width: 100%; max-width: 560px; max-height: 80vh;
             box-shadow: 0 30px 80px rgba(0,0,0,0.5); display: flex; flex-direction: column; overflow: hidden;
         }
-        .historico-modal-header { 
+        .historico-modal-header {
             padding: 20px 24px; border-bottom: 1px solid var(--glass-border); background: var(--stat-box);
-            display: flex; align-items: center; justify-content: space-between; 
+            display: flex; align-items: center; justify-content: space-between;
         }
         .historico-modal-title { font-size: 14px; font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-        
-        .historico-modal-body { 
-            padding: 20px 24px; overflow-y: auto; flex: 1; background: var(--input-bg); 
+       
+        .historico-modal-body {
+            padding: 20px 24px; overflow-y: auto; flex: 1; background: var(--input-bg);
             display: flex; flex-direction: column; gap: 16px;
         }
-        
+       
         /* Estilo dos Cards de Linha do Tempo */
-        .hist-item { 
+        .hist-item {
             position: relative; padding: 18px; border-radius: 18px;
             background: var(--stat-box); border: 1px solid var(--glass-border);
             transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         }
-        .hist-item:hover { 
-            transform: translateY(-3px) scale(1.01); 
-            box-shadow: 0 12px 30px rgba(0,0,0,0.08); 
-            border-color: rgba(0,122,255,0.3); 
+        .hist-item:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            border-color: rgba(0,122,255,0.3);
         }
-        
+       
         .hist-item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;}
         .hist-modelo { font-size: 14px; font-weight: 900; color: var(--text-main); letter-spacing: -0.3px; display: flex; align-items: center; gap: 10px; }
         .hist-tamanho { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 900; color: #007AFF; background: rgba(0,122,255,0.1); border: 1px solid rgba(0,122,255,0.2); padding: 4px 8px; border-radius: 8px; }
         .hist-data { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); font-weight: 800; background: var(--input-bg); padding: 5px 10px; border-radius: 8px; border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 6px; }
-        
+       
         .hist-ordens-title { font-size: 9px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; display: block; }
-        
+       
         .hist-ordens-container { display: flex; flex-wrap: wrap; gap: 8px; }
-        
-        .hist-ordem-tag { 
+       
+        .hist-ordem-tag {
             display: inline-flex; align-items: center; gap: 6px;
-            background: var(--input-bg); border: 1px solid var(--glass-border); 
-            border-radius: 10px; padding: 6px 12px; font-weight: 700; color: var(--text-main); 
+            background: var(--input-bg); border: 1px solid var(--glass-border);
+            border-radius: 10px; padding: 6px 12px; font-weight: 700; color: var(--text-main);
             font-family: 'JetBrains Mono', monospace; font-size: 11px;
             transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
@@ -2542,7 +2542,7 @@ body.is-resizing * { transition: none !important; animation: none !important; }
         padding: 0 10px;
         width: 100%;
     }
-    
+   
     .sel-card {
         width: 100% !important;
         padding: 16px 10px 14px !important;
@@ -2551,35 +2551,35 @@ body.is-resizing * { transition: none !important; animation: none !important; }
         flex-direction: column;
         justify-content: space-between;
     }
-    
+   
     .sel-card-icon-wrap {
         width: 50px !important;
         height: 50px !important;
         margin: 0 auto 10px !important;
     }
-    
+   
     .sel-card-icon-inner {
         width: 32px !important;
         height: 32px !important;
     }
-    
+   
     .sel-card-icon-inner svg {
         width: 16px !important;
         height: 16px !important;
     }
-    
+   
     .sel-card-title {
         font-size: 0.8rem !important;
         line-height: 1.2;
         margin-bottom: 4px !important;
     }
-    
+   
     .sel-card-desc {
         font-size: 9px !important;
         line-height: 1.3 !important;
         margin-bottom: 8px !important;
     }
-    
+   
     .sel-card-badge {
         font-size: 7.5px !important;
         padding: 4px 6px !important;
@@ -2591,32 +2591,32 @@ body.is-resizing * { transition: none !important; animation: none !important; }
 
 .btn-cancelar-reimp {
     background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08));
-    color: #ef4444; 
+    color: #ef4444;
     border: 1.5px solid rgba(239,68,68,0.4);
-    border-radius: 10px; 
-    padding: 8px 18px; 
-    font-size: 11px; 
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-size: 11px;
     font-weight: 900;
-    text-transform: uppercase; 
+    text-transform: uppercase;
     letter-spacing: 0.8px;
-    cursor: pointer; 
-    transition: 0.2s; 
-    display: flex; 
-    align-items: center; 
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
     gap: 6px;
 }
 
 .btn-cancelar-reimp:hover {
     background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff; 
-    transform: translateY(-1px); 
+    color: #fff;
+    transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(239,68,68,0.4);
 }
 
-.btn-cancelar-reimp:disabled { 
-    opacity: 0.5; 
-    cursor: not-allowed; 
-    transform: none; 
+.btn-cancelar-reimp:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
     </style>
@@ -3148,9 +3148,9 @@ rx="1.5" fill="#f59e0b"/>
         <h3 id="customModalMessage">Mensagem</h3>
         <input type="text" id="customModalInput" class="custom-modal-input" placeholder="Autenticação..." style="display:none;" autocomplete="off">
         <select id="customModalSelect" class="custom-modal-input" style="display:none;"></select>
-        
+       
         <textarea id="customModalTextarea" class="custom-modal-input" style="display:none; resize:vertical; min-height:120px; font-size:14px; font-family:'Inter', sans-serif; text-align:left; letter-spacing:normal; font-weight:500;" placeholder="Digite o texto..."></textarea>
-        
+       
         <div class="custom-modal-actions">
             <button id="customModalBtnCancel" class="btn-cancelar">Cancelar</button>
             <button id="customModalBtnOk" class="btn-confirmar">Autorizar</button>
@@ -3281,7 +3281,7 @@ rx="1.5" fill="#f59e0b"/>
             </div>
             <div class="gerente-secao">
                 <h3 class="gerente-secao-title">Feed de Solicitações</h3>
-                
+               
                 <!-- Barra de Filtros do Feed/Chat -->
                 <div class="gerente-feed-filters">
                     <select id="feedFiltroStatus" onchange="renderGerenteReimpressoes()">
@@ -3291,16 +3291,16 @@ rx="1.5" fill="#f59e0b"/>
                         <option value="feito">🏁 Feitas (Impressas)</option>
                         <option value="reprovado">❌ Reprovadas</option>
                     </select>
-                    
+                   
                     <select id="feedFiltroCoord" onchange="renderGerenteReimpressoes()">
                         <option value="todos">👤 Todos os Coordenadores</option>
                     </select>
-                    
+                   
                     <select id="feedFiltroTempo" onchange="renderGerenteReimpressoes()">
                         <option value="todos" selected>📅 Todo o Período</option>
                         <option value="hoje">🕐 Apenas Hoje</option>
                     </select>
-                    
+                   
                     <select id="feedFiltroModelo" onchange="renderGerenteReimpressoes()">
                         <option value="todos" selected>👟 Todos os Modelos</option>
                     </select>
@@ -3479,7 +3479,7 @@ rx="1.5" fill="#f59e0b"/>
             </div>
         </div>
 
-        
+       
    
         <div id="configModalOverlay" class="custom-modal-overlay">
             <div class="custom-modal-box config-panel">
@@ -3560,7 +3560,7 @@ rx="1.5" fill="#f59e0b"/>
                         <button class="kpi-close-btn" style="margin-left:10px;" onclick="fecharPainelReimpressoes()">✕</button>
                     </div>
                 </div>
-                
+               
                 <!-- Barra de Filtros do Editor -->
             <div class="gerente-feed-filters" style="margin: 0; border-radius: 0; border-left: none; border-right: none; border-top: none;">
 
@@ -3761,13 +3761,13 @@ rx="1.5" fill="#f59e0b"/>
                 <span style="font-size:20px;">📦</span> Retrabalho - Talão Fechado
             </h3>
             <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">Insira as Ordens (8 dígitos) e Pacotes do talão fechado.</p>
-            
+           
             <div id="retRowsContainer" style="max-height: 280px; overflow-y: auto; padding-right: 4px; margin-bottom: 8px;">
                 <!-- As linhas de Ordem + Pacote serão inseridas aqui dinamicamente pelo JS -->
             </div>
 
             <button type="button" class="btn-ret-add" onclick="adicionarLinhaRet()">➕ Adicionar Outra Ordem / Pacote</button>
-            
+           
             <div class="custom-modal-actions">
                 <button type="button" onclick="fecharModalRet()" class="btn-cancelar">Cancelar</button>
                 <button type="button" onclick="solicitarRet()" class="btn-confirmar" style="background: linear-gradient(135deg, #f97316, #b45309); box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);">Solicitar</button>
@@ -3808,7 +3808,7 @@ rx="1.5" fill="#f59e0b"/>
     const FIREBASE_SECRET = "";
     const AUTH = FIREBASE_SECRET && !/^https?:\/\//i.test(FIREBASE_SECRET) ? `?auth=${encodeURIComponent(FIREBASE_SECRET)}` : "";
     // =====================================================================
-    
+   
     // =====================================================================
     // VARIÁVEIS GLOBAIS DE ESTADO
     // ...
@@ -4459,10 +4459,10 @@ rx="1.5" fill="#f59e0b"/>
 
         function sairDev() {
             fazerLogout();
-            
+           
         }
 
-                
+               
                 // =========================================================================
         // GERENCIAMENTO DE USUÁRIOS — PAINEL DESENVOLVEDOR
         // =========================================================================
@@ -4862,7 +4862,7 @@ rx="1.5" fill="#f59e0b"/>
             _usuarioAtual = null;
             _gerenteAprovadorAtual = '';
             pararControleInatividade();
-            
+           
             // DESLIGA O OUVINTE EM TEMPO REAL
             db.ref('/reimpressoes').off('value');
 
@@ -4924,13 +4924,13 @@ rx="1.5" fill="#f59e0b"/>
             document.getElementById('btnSyncRef').style.display = '';
             document.getElementById('btnClearManual').style.display = '';
             document.getElementById('btnConfig').style.display = '';
-            
+           
             const btnPerfil = document.getElementById('btnPerfil');
             if (btnPerfil) btnPerfil.style.display = userRole === 'viewer' ? 'none' : 'inline-flex';
-            
+           
             // Exibe botão de Reimpressões apenas para o Editor
             document.getElementById('btnReprints').style.display = userRole === 'editor' ? '' : 'none';
-            
+           
             // EXCLUSIVO DO TOTEM: Botão RET aparece SOMENTE para a Visualização Borracha (viewer)
             const btnRet = document.getElementById('btnRetrabalho');
             if (btnRet) btnRet.style.display = userRole === 'viewer' ? '' : 'none';
@@ -5297,7 +5297,7 @@ rx="1.5" fill="#f59e0b"/>
             } else if (tipo === 'solicitar_talao_fechado') {
                 msg = '<strong>📦 Reimpressão Talão Finalizado</strong><br>' +
                     '<span style="color:#f97316;">👤 ' + (nome || 'Usuário') + ' solicitou retrabalho</span><br>' +
-                    'Ordem: ' + p1 + ' | Pacote: ' + p2 + 
+                    'Ordem: ' + p1 + ' | Pacote: ' + p2 +
                     (aprovador ? '<br>Aguardando: ' + aprovador : '');
             } else {
                 msg = '<strong>✅ Reimpressão Autorizada</strong><br>' +
@@ -5354,24 +5354,24 @@ rx="1.5" fill="#f59e0b"/>
                    
                    function customPrompt(msg, isPassword = false, defaultValue = '') {
                 return new Promise(resolve => {
-                    const overlay = document.getElementById('customModalOverlay'); 
+                    const overlay = document.getElementById('customModalOverlay');
                     const input = document.getElementById('customModalInput');
-                    
+                   
                     document.getElementById('customModalMessage').innerText = msg;
                     document.getElementById('customModalSelect').style.display = 'none';
-                    
-                    input.style.display = 'block'; 
-                    input.type = isPassword ? 'password' : 'text'; 
+                   
+                    input.style.display = 'block';
+                    input.type = isPassword ? 'password' : 'text';
                     input.value = defaultValue; // Adicionamos o preenchimento inicial aqui
-                    
-                    const btnCancel = document.getElementById('customModalBtnCancel'); 
+                   
+                    const btnCancel = document.getElementById('customModalBtnCancel');
                     const btnOk = document.getElementById('customModalBtnOk');
-                    
-                    btnCancel.style.display = 'block'; 
-                    btnOk.style.display = 'block'; 
+                   
+                    btnCancel.style.display = 'block';
+                    btnOk.style.display = 'block';
                     btnOk.innerText = 'Confirmar'; // Simplifiquei o botão para caber melhor no contexto
-                    
-                    overlay.style.display = 'flex'; 
+                   
+                    overlay.style.display = 'flex';
                     input.focus();
                    
                     btnOk.onclick = () => { overlay.style.display = 'none'; if(input.value) tocarSomAuth(); resolve(input.value); };
@@ -5382,26 +5382,26 @@ rx="1.5" fill="#f59e0b"/>
 
 function customPromptMultiline(msg, defaultValue = '') {
     return new Promise(resolve => {
-        const overlay = document.getElementById('customModalOverlay'); 
+        const overlay = document.getElementById('customModalOverlay');
         const input = document.getElementById('customModalInput');
         const select = document.getElementById('customModalSelect');
         const textarea = document.getElementById('customModalTextarea');
-        
+       
         document.getElementById('customModalMessage').innerText = msg;
         if(input) input.style.display = 'none';
         if(select) select.style.display = 'none';
-        
-        textarea.style.display = 'block'; 
-        textarea.value = defaultValue; 
-        
-        const btnCancel = document.getElementById('customModalBtnCancel'); 
+       
+        textarea.style.display = 'block';
+        textarea.value = defaultValue;
+       
+        const btnCancel = document.getElementById('customModalBtnCancel');
         const btnOk = document.getElementById('customModalBtnOk');
-        
-        btnCancel.style.display = 'block'; 
-        btnOk.style.display = 'block'; 
-        btnOk.innerText = 'Salvar'; 
-        
-        overlay.style.display = 'flex'; 
+       
+        btnCancel.style.display = 'block';
+        btnOk.style.display = 'block';
+        btnOk.innerText = 'Salvar';
+       
+        overlay.style.display = 'flex';
         textarea.focus();
        
         btnOk.onclick = () => { overlay.style.display = 'none'; textarea.style.display = 'none'; tocarSomAuth(); resolve(textarea.value); };
@@ -5448,7 +5448,7 @@ function customPromptMultiline(msg, defaultValue = '') {
             });
         }
        
-        
+       
 
         // Filtro de status ativo (null = todos)
         let _filtroStatusAtivo = null;
@@ -5642,7 +5642,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
     try {
         if (btn) { btn.disabled = true; btn.innerHTML = '⏳'; }
-        
+       
         const payload = {
             numRequisicao, grupo, estacao, modelo, tamanho, ordens,
             status: 'pendente',
@@ -5661,7 +5661,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
         const notifReimpData = { tipo: 'reimpressao_solicitada', numRequisicao, solicitante: solicitanteNome, aprovadorSolicitado: aprovador, grupo, estacao, modelo, tamanho, dataHora, timestamp: Date.now() };
         localStorage.setItem('notifReimpressao', JSON.stringify(notifReimpData));
-        
+       
         await customAlert(`Solicitação enviada.\nRequisição: ${numRequisicao}\nSolicitante: ${solicitanteNome}`);
     } catch (e) {
         await customAlert('Falha ao enviar solicitação de reimpressão.');
@@ -5824,14 +5824,14 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
         // OUVINTE EM TEMPO REAL ROBUSTO (Lida com quedas de conexão)
     db.ref('/reimpressoes').on('value', (snap) => {
-        if (snap.val() === null && navigator.onLine === false) return; 
+        if (snap.val() === null && navigator.onLine === false) return;
 
         const data = snap.val() || {};
-        
+       
         _reprintData = Object.keys(data)
             .map(id => normalizarRequisicaoReimpressao(id, data[id]))
             .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            
+           
         if (userRole === 'gerente') {
             renderGerenteReimpressoes();
         } else if (userRole === 'editor' && document.getElementById('reprintModalOverlay').classList.contains('open')) {
@@ -5865,7 +5865,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             const grupoSelect = document.getElementById('editorFiltroGrupo');
             if (grupoSelect) {
                 const val = grupoSelect.value || 'todos';
-                grupoSelect.innerHTML = '<option value="todos">📦 Todos os Grupos</option>' + 
+                grupoSelect.innerHTML = '<option value="todos">📦 Todos os Grupos</option>' +
                     grupos.map(g => `<option value="${htmlSafe(g)}" ${val === g ? 'selected' : ''}>📦 ${htmlSafe(g)}</option>`).join('');
             }
 
@@ -5873,7 +5873,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             const coordSelect = document.getElementById('editorFiltroCoord');
             if (coordSelect) {
                 const val = coordSelect.value || 'todos';
-                coordSelect.innerHTML = '<option value="todos">👤 Todos os Coordenadores</option>' + 
+                coordSelect.innerHTML = '<option value="todos">👤 Todos os Coordenadores</option>' +
                     coords.map(c => `<option value="${htmlSafe(c)}" ${val === c ? 'selected' : ''}>👤 ${htmlSafe(c)}</option>`).join('');
             }
 
@@ -5881,7 +5881,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             const modeloSelect = document.getElementById('editorFiltroModelo');
             if (modeloSelect) {
                 const val = modeloSelect.value || 'todos';
-                modeloSelect.innerHTML = '<option value="todos">👟 Todos os Modelos</option>' + 
+                modeloSelect.innerHTML = '<option value="todos">👟 Todos os Modelos</option>' +
                     modelos.map(m => `<option value="${htmlSafe(m)}" ${val === m ? 'selected' : ''}>👟 ${htmlSafe(m)}</option>`).join('');
             }
         }
@@ -6077,17 +6077,17 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                     if (match) horaFeito = match[0];
                     else horaFeito = req.dataHoraFeito; // fallback
                 }
-                
+               
                 // 1. Define o que procurar (prioriza o campo do crachá, faz fallback pro feitoPor)
                 let identificador = req.feitoCracha || req.feitoPor || '--';
-                
+               
                 // 2. Cria uma Mega Lista com absolutamente todos os usuários do sistema
-                let megaLista = Object.assign({}, 
-                    defaultUsuarios, 
-                    coordenadoresAutorizados, 
+                let megaLista = Object.assign({},
+                    defaultUsuarios,
+                    coordenadoresAutorizados,
                     JSON.parse(localStorage.getItem('customUsuarios') || '{}')
                 );
-                
+               
                 // Inclui também os editores caso o crachá seja a própria chave de login deles
                 if (typeof credenciaisEditor === 'object') {
                     Object.keys(credenciaisEditor).forEach(k => {
@@ -6097,21 +6097,21 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
                 // 3. Tenta traduzir pelo identificador principal
                 let nomeReal = megaLista[identificador] || identificador;
-                
+               
                 // 4. Se ainda for número, tenta traduzir pelo outro campo (feitoPor) como última tentativa
                 if (nomeReal === identificador && megaLista[req.feitoPor]) {
                     nomeReal = megaLista[req.feitoPor];
                 }
-                
+               
                 let nomeFeito = String(nomeReal).split(' ')[0]; // Pega só o primeiro nome
-                
+               
                 badgesHtml = '<span class="req-status aprovado">Aprovado</span>' +
                              '<span class="req-status feito">Feito por ' + htmlSafe(nomeFeito) + ' às ' + htmlSafe(horaFeito) + '</span>';
             }
 
            // Se não for mais pendente (aprovado, reprovado ou feito), adiciona a classe "estatico" para parar de piscar
             const classePisca = statusFinal === 'pendente' ? 'badge-talao-pisca' : 'badge-talao-pisca estatico';
-            
+           
             const tituloVisual = req.tipoReimpressao === 'talao_fechado'
                 ? '<div style="margin-top:6px;"><span class="' + classePisca + '">⚠️ REIMPRESSÃO TALÃO FINALIZADO</span></div>'
                 : '<div class="req-meta">' + htmlSafe(req.grupo || '--') + ' - EST ' + String(req.estacao || '--').padStart(2, '0') + ' - ' + htmlSafe(req.modelo || '--') + ' / ' + htmlSafe(req.tamanho || '--') + '</div>';
@@ -6230,12 +6230,12 @@ async function cancelarReimpressaoEditor(id) {
         if (req.dataHora) logAtual.push({ tipo:'create', texto: 'Solicitação criada por ' + (req.solicitante||'--'), hora: req.dataHora });
         if (req.dataHoraAprovacao) logAtual.push({ tipo:'aprove', texto: 'Aprovada por ' + (req.aprovador||'--'), hora: req.dataHoraAprovacao });
     }
-    
+   
     // Adiciona ao log quem cancelou e o motivo
-    logAtual.push({ 
-        tipo:'reprove', 
-        texto: 'Cancelada pelo Editor ' + nomeEditor + ' — Motivo: ' + motivo.trim(), 
-        hora: dataHoraCancelamento 
+    logAtual.push({
+        tipo:'reprove',
+        texto: 'Cancelada pelo Editor ' + nomeEditor + ' — Motivo: ' + motivo.trim(),
+        hora: dataHoraCancelamento
     });
 
     const btn = document.getElementById('btnCancelar_' + id);
@@ -6256,18 +6256,18 @@ async function cancelarReimpressaoEditor(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updateData)
         });
-        
+       
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
         tocarSomErro(); // Feedback sonoro
         await customAlert('❌ Reimpressão cancelada com sucesso!\n\nResponsável: ' + nomeEditor);
         await carregarReimpressoes(true);
-        
+       
     } catch(e) {
         await customAlert('Falha ao cancelar a reimpressão. Verifique a conexão com a rede.');
-        if (btn && btn.isConnected) { 
-            btn.disabled = false; 
-            btn.innerHTML = '❌ Cancelar'; 
+        if (btn && btn.isConnected) {
+            btn.disabled = false;
+            btn.innerHTML = '❌ Cancelar';
         }
     }
 }
@@ -6438,10 +6438,10 @@ async function cancelarReimpressaoEditor(id) {
                     </div>
                 `;
             }
-            
+           
             // 2. Aguarda os dados do servidor
             await carregarReimpressoes(false);
-            
+           
             // 3. Substitui o loader pelos cards renderizados
             renderGerenteReimpressoes();
         }
@@ -6465,7 +6465,7 @@ async function cancelarReimpressaoEditor(id) {
             const feedFiltrado = _reprintData.filter(r => {
                 let s = r.status;
                 if (s !== 'aprovado' && s !== 'reprovado' && s !== 'feito') { s = 'pendente'; }
-                
+               
                 if (statusFiltro !== 'todos' && s !== statusFiltro) return false;
                 if (coordFiltro !== 'todos' && r.solicitante !== coordFiltro) return false;
                 if (modeloFiltro !== 'todos' && r.modelo !== modeloFiltro) return false;
@@ -6482,13 +6482,13 @@ async function cancelarReimpressaoEditor(id) {
             // 4. Atualiza os KPIs fixos do topo SEMPRE COM TODOS OS DADOS DA BASE
             const totalPendentes = _reprintData.filter(r => r.status !== 'aprovado' && r.status !== 'feito' && r.status !== 'reprovado').length;
             const totalAprovadas = _reprintData.filter(r => r.status === 'aprovado' || r.status === 'feito').length;
-            
+           
             document.getElementById('gerenteCountPendentes').textContent = totalPendentes;
             document.getElementById('gerenteCountAprovadas').textContent = totalAprovadas;
 
             // 5. SEPARAÇÃO PARA CELULAR (DOM Virtual para não travar)
             let dadosParaRenderizar = feedFiltrado;
-            let isMobile = window.innerWidth <= 768; 
+            let isMobile = window.innerWidth <= 768;
             let mostrarBotao = false;
 
             // Corta para 150 itens se for celular e não tiver clicado no botão
@@ -6498,7 +6498,7 @@ async function cancelarReimpressaoEditor(id) {
             }
 
             const mapaVias = obterMapaViasReimpressao();
-            
+           
             // 6. Gera o HTML apenas dos itens limitados
             let htmlCards = dadosParaRenderizar.length
                 ? dadosParaRenderizar.map(req => templateRequisicao(req, true, mapaVias)).join('')
@@ -6508,7 +6508,7 @@ async function cancelarReimpressaoEditor(id) {
             if (mostrarBotao) {
                 const restante = feedFiltrado.length - 150;
                 htmlCards += `
-                    <button onclick="renderGerenteReimpressoes(true)" 
+                    <button onclick="renderGerenteReimpressoes(true)"
                             style="width: 100%; padding: 14px; margin-top: 14px; margin-bottom: 24px; background: var(--stat-box); border: 2px dashed var(--glass-border); border-radius: 14px; color: var(--text-main); font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; box-shadow: var(--glass-shadow);">
                         ⬇️ Carregar o restante do histórico (${restante} requisições)
                     </button>
@@ -6517,10 +6517,10 @@ async function cancelarReimpressaoEditor(id) {
 
             // Injeta os cards na tela
             document.getElementById('gerentePendentesBody').innerHTML = htmlCards;
-            
+           
             const histAux = document.getElementById('gerenteHistoricoBody');
             if(histAux) histAux.innerHTML = '';
-            
+           
             // 8. Atualiza as ANÁLISES
             _popularFiltrosGerente();
             atualizarAnalisesGerente();
@@ -6619,11 +6619,11 @@ async function cancelarReimpressaoEditor(id) {
                     document.getElementById('status-update').innerText = "Sincronizando com Banco Global...";
                     try {
                         // CORREÇÃO: Utilizando o SDK do Firebase para evitar problemas de cache/sincronia
-                        await db.ref(`/alocacao/${grupo}/${estacao}`).update({ 
-                            prManual: novoPr, 
-                            prTime: novoTime 
+                        await db.ref(`/alocacao/${grupo}/${estacao}`).update({
+                            prManual: novoPr,
+                            prTime: novoTime
                         });
-                        
+                       
                         localStorage.setItem('alocacaoGlobalSalva', JSON.stringify({ grupo: grupo, cracha: crachaDigitado, dataHora: new Date().toLocaleString('pt-BR') }));
                         carregarPainel();
                     } catch (e) { await customAlert("Falha na comunicação com o banco."); }
@@ -6726,7 +6726,7 @@ window._ultimoHashOrdens = window._ultimoHashOrdens || {}; // Memória para as o
 
 async function registrarHistoricoSeMudou(grupo, estacao, item) {
     if (!item || !item.modelo || item.modelo === 'Não Alocado' || item.modelo === 'VAZIO') return;
-    
+   
     const chaveEstacao = `${grupo}_${estacao}`;
     const modeloAtual = item.modelo.trim();
     const tamanhoAtual = String(item.tamanho || '').trim();
@@ -6736,13 +6736,13 @@ async function registrarHistoricoSeMudou(grupo, estacao, item) {
     const detalhes = item.detalhes || [];
     const ordensUnicas = [];
     const assinaturas = new Set();
-    
+   
     detalhes.forEach(d => {
         const o = String(d.ordem || '--').trim();
         const p = String(d.pacote || '--').trim();
         const c = String(d.cor || '--').trim();
         const sig = `${o}_${p}_${c}`;
-        
+       
         if (!assinaturas.has(sig)) {
             assinaturas.add(sig);
             ordensUnicas.push({ ordem: o, pacote: p, cor: c });
@@ -6758,15 +6758,15 @@ async function registrarHistoricoSeMudou(grupo, estacao, item) {
     }
 
     const refHist = db.ref(`/historico_estacoes/${grupo}/estacao_${estacao}`);
-    
+   
     refHist.orderByKey().limitToLast(1).once('value', snapshot => {
         let ultimoSalvo = null;
         let ultimaChave = null;
-        snapshot.forEach(child => { 
-            ultimoSalvo = child.val(); 
+        snapshot.forEach(child => {
+            ultimoSalvo = child.val();
             ultimaChave = child.key;
         });
-        
+       
         if (!ultimoSalvo || ultimoSalvo.modelo !== modeloAtual || ultimoSalvo.tamanho !== tamanhoAtual) {
             // CRIAR NOVO: O modelo/matriz mudou!
             refHist.push({
@@ -6782,7 +6782,7 @@ async function registrarHistoricoSeMudou(grupo, estacao, item) {
                 ordens: ordensUnicas
             });
         }
-        
+       
         // Atualiza a memória para o próximo ciclo
         window._ultimoModeloEstacao[chaveEstacao] = modeloHash;
         window._ultimoHashOrdens[chaveEstacao] = ordensHash;
@@ -6793,33 +6793,33 @@ function abrirHistoricoEstacao(grupo, estacao) {
     document.getElementById('historicoModalTitulo').innerText = `EST ${String(estacao).padStart(2, '0')} (${grupo})`;
     const body = document.getElementById('historicoModalBody');
     body.innerHTML = '<p style="text-align:center; padding: 30px; font-weight: 700; color: var(--text-muted);">Carregando histórico...</p>';
-    
+   
     document.getElementById('historicoModalOverlay').classList.add('open');
-    
+   
     // Traz os ÚLTIMOS 5 registros
     db.ref(`/historico_estacoes/${grupo}/estacao_${estacao}`).orderByChild('timestamp').limitToLast(5).once('value', snapshot => {
         const dados = [];
         snapshot.forEach(child => {
             dados.push({ key: child.key, ...child.val() });
         });
-        
+       
         if (dados.length === 0) {
             body.innerHTML = '<p style="text-align:center; padding: 30px; font-weight: 700; color: var(--text-muted);">Nenhum histórico registrado para esta estação.</p>';
             return;
         }
-        
-        dados.reverse(); 
-        
+       
+        dados.reverse();
+       
         let html = '';
         dados.forEach((d, index) => {
             const dataFmt = d.dataHoraEntrada || new Date(d.timestamp).toLocaleString('pt-BR');
             const isAtual = index === 0 ? '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 900; margin-left: 8px;">ATUAL</span>' : '';
-            
+           
             let ordensHtml = '';
             if (d.ordens && d.ordens.length > 0) {
                 ordensHtml += '<span class="hist-ordens-title" style="margin-top: 14px;">Lotes desta Matriz:</span>';
                 ordensHtml += '<div class="hist-ordens-container">';
-                
+               
                 d.ordens.forEach(o => {
                     ordensHtml += `
                     <div class="hist-ordem-tag" title="Cor: ${htmlSafe(o.cor)}">
@@ -6843,7 +6843,7 @@ function abrirHistoricoEstacao(grupo, estacao) {
                 ${ordensHtml}
             </div>`;
         });
-        
+       
         body.innerHTML = html;
     });
 }
@@ -6853,7 +6853,7 @@ function fecharHistoricoModal() {
 }
 // =====================================================================
 // =====================================================================
-                
+               
                 async function carregarPainel(snapAlocData = null) {
             const grupoAtual = document.getElementById('filtroGrupo').value;
             const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
@@ -7411,8 +7411,8 @@ function fecharHistoricoModal() {
                             if (isFirstTamRow) { html += `<td rowspan="${totalRowsTam}" class="wip-group-cell wip-tam-cell">${tam}</td>`; isFirstTamRow = false; }
                             html += `<td>${det.cor}</td><td>${det.ordem}</td><td>${det.pacote}</td><td>${det.alocacao}</td>
                             <td style="text-align:center;">
-                                <button onclick="solicitarReimpressaoUnica('${det.grupoRaw}', '${det.estacaoRaw}', '${mod}', '${tam}', '${det.cor}', '${det.ordem}', '${det.pacote}', event)" 
-                                        style="background:linear-gradient(135deg,#007AFF,#5E5CE6); color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); transition: 0.2s;" 
+                                <button onclick="solicitarReimpressaoUnica('${det.grupoRaw}', '${det.estacaoRaw}', '${mod}', '${tam}', '${det.cor}', '${det.ordem}', '${det.pacote}', event)"
+                                        style="background:linear-gradient(135deg,#007AFF,#5E5CE6); color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); transition: 0.2s;"
                                         onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
                                         title="Solicitar Reimpressão Desta Ordem">🖨️ ➔</button>
                             </td></tr>`;
@@ -7654,7 +7654,7 @@ function fecharHistoricoModal() {
             carregarPainel();
             _carregarInversoes();
             _carregarNotas();
-            
+           
             const grupo = document.getElementById('filtroGrupo').value;
 
             // 2. Cria o Tubo Direto (WebSockets) com o Firebase
@@ -7676,7 +7676,7 @@ function fecharHistoricoModal() {
             document.getElementById('mainApp').style.display = 'block';
             mostrarAreaGerente();
             carregarReimpressoesGerente();
-            
+           
             // Liga apenas os ouvintes necessários para o Gerente
             _iniciarOuvintesBackgroundGlobais();
         }
@@ -7685,7 +7685,7 @@ function fecharHistoricoModal() {
             // A - REIMPRESSÕES
             if(!window._refReimp) {
                 window._refReimp = db.ref('/reimpressoes');
-                
+               
                 window._refReimp.on('child_added', (snap) => {
                     const r = snap.val();
                     if(r && r.timestamp && _ultimoTimestampReimpressao > 0 && r.timestamp > _ultimoTimestampReimpressao) {
@@ -7716,10 +7716,10 @@ function fecharHistoricoModal() {
                 window._refAlocBg.on('child_added', (snap) => {
                     const logData = snap.val();
                     if (!logData || !logData.grupo) return;
-                    
+                   
                     const grupoAlterado = logData.grupo;
-                    if (grupoAlterado === document.getElementById('filtroGrupo').value) return; 
-                    
+                    if (grupoAlterado === document.getElementById('filtroGrupo').value) return;
+                   
                     const chave = (logData.dataHora || "") + (logData.cracha || logData.operador || "");
                     if (chave !== "" && historicoGrupos[grupoAlterado] !== chave) {
                         historicoGrupos[grupoAlterado] = chave;
@@ -7728,15 +7728,15 @@ function fecharHistoricoModal() {
                 });
             }
         }
-        
-        function trocarGrupo() { 
-            _filtroStatusAtivo = null; 
-            ['wrapRodando','wrapParada','wrapTroca'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('ativo','inativo');} }); 
-            var grupo = document.getElementById('filtroGrupo').value; 
-            localStorage.setItem('ultimoGrupoSelecionado', grupo); 
-            
+       
+        function trocarGrupo() {
+            _filtroStatusAtivo = null;
+            ['wrapRodando','wrapParada','wrapTroca'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('ativo','inativo');} });
+            var grupo = document.getElementById('filtroGrupo').value;
+            localStorage.setItem('ultimoGrupoSelecionado', grupo);
+           
             // Aqui é a mágica: em vez de só carregar a tela, reinicia o "tubo" para o grupo novo
-            iniciarSistema(); 
+            iniciarSistema();
         }
 
         // ... apague também a função abrirSistemaGerente() inteira ...
@@ -8851,14 +8851,14 @@ function fecharHistoricoModal() {
                 const myId = _usuarioAtual.user.replace(/\./g, '_');
                 const currentChannel = typeof getChatChannelPath === 'function' ? getChatChannelPath(_chatAtivo) : _chatAtivo;
 
-                const isTyping = Object.entries(_chatOnlineUsers).find(([uid, data]) => 
-                    uid !== myId && 
-                    data.typingIn === currentChannel && 
+                const isTyping = Object.entries(_chatOnlineUsers).find(([uid, data]) =>
+                    uid !== myId &&
+                    data.typingIn === currentChannel &&
                     (Date.now() - data.typingTs < 3000)
                 );
-                
+               
                 const ind = document.getElementById('chatTypingIndicator');
-                
+               
                 if(isTyping) {
                     const perfil = (typeof perfilDoUsuario === 'function' ? perfilDoUsuario(isTyping[0].replace(/_/g, '.')) : null) || { nome: isTyping[0] };
                     const nameEl = document.getElementById('chatTypingName');
@@ -8889,13 +8889,13 @@ function fecharHistoricoModal() {
             window._usersRef.once('value', (snapshot) => {
                 _chatOnlineUsers = snapshot.val() || {};
                 _atualizarInterfaceUsuariosChat();
-                
+               
                 // A partir daqui, escuta APENAS o usuário específico que mudou
                 window._usersRef.on('child_changed', (childSnap) => {
                     _chatOnlineUsers[childSnap.key] = childSnap.val();
                     _atualizarInterfaceUsuariosChat();
                 });
-                
+               
                 window._usersRef.on('child_added', (childSnap) => {
                     _chatOnlineUsers[childSnap.key] = childSnap.val();
                     _atualizarInterfaceUsuariosChat();
@@ -9008,7 +9008,7 @@ function fecharHistoricoModal() {
                         const perfil = perfilDoUsuario(alvoId.replace(/_/g, '.')) || { nome: alvoId, avatar: 'masculino' };
                         const presence = _chatOnlineUsers[alvoId] || {};
                         const isOnline = presence.online && (Date.now() - presence.lastSeen < 120000);
-                        
+                       
                         headerInfo.innerHTML = `
                             <div class="chat-contact-avatar">${htmlAvatarPerfil(perfil)}</div>
                             <div><div class="chat-contact-name" style="font-size:15px;">${perfil.nome}</div><div class="chat-contact-status" id="chatHeaderStatus" style="font-size:11px;">${isOnline ? '<span style="color:#10b981;">Online</span>' : formatarUltimoVisto(presence.lastSeen)}</div></div>
@@ -9025,7 +9025,7 @@ window.abrirImagemChatNova = function(mediaId, thumbBase64) {
             const modal = document.getElementById('chatImageModalOverlay');
             const img = document.getElementById('chatImageModalImg');
             const loader = document.getElementById('chatImageModalLoader');
-            
+           
             img.src = thumbBase64;
             img.style.filter = 'blur(10px)'; // Efeito borrado enquanto baixa a original
             loader.style.display = 'block';
@@ -9110,12 +9110,12 @@ function formatarTextoWhatsApp(texto) {
            
            if (m.thumbBase64 && m.mediaId && !m.deleted) {
                 // NOVO SISTEMA: Prévia Nítida e Compacta de Alta Performance (Estilo WhatsApp Oficial)
-              
+             
 conteudoImagem = `
     <div style="position: relative; margin-top: 8px; cursor: pointer; border-radius: 8px; overflow: hidden; width: 220px; height: 220px; background: #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onclick="window.abrirImagemChatNova('${m.mediaId}', '${m.thumbBase64}')">
-        
+       
         <img src="${m.thumbBase64}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block;">
-        
+       
     </div>`;
 
             } else if (m.imagemBase64 && !m.deleted) {
@@ -9196,7 +9196,7 @@ conteudoImagem = `
             }
         }
 
-        
+       
         async function enviarMensagemChat() {
             const input = document.getElementById('chatInputMsg');
             const text = input.value.trim();
@@ -9234,10 +9234,10 @@ conteudoImagem = `
         // --- FUNÇÕES DE EDITAR E APAGAR ---
                async function editarMensagemChat(msgId, btnEl) {
     const textEl = btnEl.closest('.chat-bubble').querySelector('.msg-text-content');
-    
+   
     // Recupera o texto exatamente como foi digitado usando decodificação URI
     const textoAtual = decodeURIComponent(textEl.getAttribute('data-raw') || '');
-    
+   
     // Chama o novo modal multiline, que preserva as quebras de linha
     const novoTexto = await customPromptMultiline('Editar mensagem:', textoAtual);
    
@@ -9262,23 +9262,23 @@ conteudoImagem = `
 
                 let _bloqueioEnvioChat = false;
         function handleChatEnter(e) {
-            if(e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
+            if(e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 if (_bloqueioEnvioChat) return;
                 _bloqueioEnvioChat = true;
-                enviarMensagemHibrida(); 
-                setTimeout(() => { _bloqueioEnvioChat = false; }, 500); 
+                enviarMensagemHibrida();
+                setTimeout(() => { _bloqueioEnvioChat = false; }, 500);
             }
         }
 
         let _typingDebounceTimer = null;
 function handleChatTyping() {
     const input = document.getElementById('chatInputMsg');
-    input.style.height = 'auto'; 
+    input.style.height = 'auto';
     input.style.height = (input.scrollHeight) + 'px';
-    
+   
     if(!_usuarioAtual) return;
-    
+   
     // Trava de Spam: Só atualiza o Firebase a cada 1.5 segundos
     if (_typingDebounceTimer) return;
     _typingDebounceTimer = setTimeout(() => {
@@ -9287,17 +9287,17 @@ function handleChatTyping() {
 
     const myId = _usuarioAtual.user.replace(/\./g, '_');
     const channel = getChatChannelPath(_chatAtivo);
-    
-    fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { 
-        method: 'PATCH', 
-        body: JSON.stringify({ typingIn: channel, typingTs: Date.now() }) 
+   
+    fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ typingIn: channel, typingTs: Date.now() })
     });
    
     clearTimeout(_chatTypingTimeout);
     _chatTypingTimeout = setTimeout(() => {
-        fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { 
-            method: 'PATCH', 
-            body: JSON.stringify({ typingIn: null }) 
+        fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ typingIn: null })
         });
     }, 3000);
 }
@@ -9338,10 +9338,7 @@ function handleChatTyping() {
             }
         }
 
-        
-
-
-
+       
     </script>
 
 
@@ -9414,7 +9411,7 @@ function handleChatTyping() {
 
             botSpeechBubble.innerHTML = mensagem;
             nexusBotContainer.classList.add('show');
-            
+           
             _botTimeout1 = setTimeout(() => {
                 botSpeechBubble.classList.add('show');
                 try {
@@ -9448,7 +9445,7 @@ function handleChatTyping() {
             const hoje = new Date();
             const dia = hoje.getDate();
             const mes = hoje.getMonth() + 1;
-            
+           
             if (dia === 1 && mes === 1) return "Feliz Ano Novo! 🎆 Que este ano nossa eficiência seja de 100%!";
             if (dia === 8 && mes === 3) return "Feliz Dia da Mulher! 🌷 Uma homenagem especial às nossas colaboradoras.";
             if (dia === 1 && mes === 5) return "Feliz Dia do Trabalhador! 🛠️ Muito orgulho da nossa equipe que faz tudo acontecer.";
@@ -9490,7 +9487,7 @@ function handleChatTyping() {
                         const saudacao = obterSaudacao();
                         const msgExtra = obterDatasComemorativas();
                         const fraseApoio = msgExtra ? msgExtra : "Vamos começar mais um dia excelente de trabalho!";
-                        
+                       
                         setTimeout(() => {
                             falarComBot(`Oi, ${saudacao} <b>${primeiroNome}</b>! ✨<br>${fraseApoio}`, 9000);
                         }, 1500);
@@ -9809,9 +9806,9 @@ function handleChatTyping() {
                           // 1. Full Image (Alta Resolução - 1920px)
                             var canvasFull = document.createElement('canvas');
                             var wF = img.width, hF = img.height;
-                            if (wF > 1920 || hF > 1920) { 
-                                if (wF > hF) { hF = Math.round(hF * 1920 / wF); wF = 1920; } 
-                                else { wF = Math.round(wF * 1920 / hF); hF = 1920; } 
+                            if (wF > 1920 || hF > 1920) {
+                                if (wF > hF) { hF = Math.round(hF * 1920 / wF); wF = 1920; }
+                                else { wF = Math.round(wF * 1920 / hF); hF = 1920; }
                             }
                             canvasFull.width = wF; canvasFull.height = hF;
                             canvasFull.getContext('2d').drawImage(img, 0, 0, wF, hF);
@@ -10141,7 +10138,7 @@ function handleChatTyping() {
 
     const myId = _usuarioAtual.user.replace(/\./g, '_');
     const canais = ['public', 'public_geral'];
-    
+   
     Object.keys(credenciaisEditor || {}).forEach(uid => {
         const safeUid = uid.replace(/\./g, '_');
         if (safeUid !== myId) {
@@ -10220,7 +10217,7 @@ function handleChatTyping() {
         if (window._pollMsgInterval) clearInterval(window._pollMsgInterval);
         window.iniciarListenerDeMensagens = function(channel) {
     // 1. Limpa ouvintes antigos para não duplicar tráfego
-    if (window._chatMsgRef) window._chatMsgRef.off(); 
+    if (window._chatMsgRef) window._chatMsgRef.off();
 
     const blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
     if (blocked[channel]) return;
@@ -10231,7 +10228,7 @@ function handleChatTyping() {
     // 3. O Firebase só roda isso aqui quando o banco realmente for alterado!
     window._chatMsgRef.on('value', (snapshot) => {
         if(!document.getElementById('chatWindow').classList.contains('open')) return;
-        
+       
         const data = snapshot.val() || {};
         const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
 
@@ -10364,34 +10361,25 @@ function handleChatTyping() {
             document.getElementById('retModalOverlay').style.display = 'none';
         }
 
-        // Função para adicionar linha de Retrabalho com limite de 8 dígitos
-function adicionarLinhaRet() {
-    const container = document.getElementById('retRowsContainer');
-    const div = document.createElement('div');
-    div.className = 'ret-row'; 
-    
-    // Adicionamos o maxlength e oninput para travar em 8 dígitos
-    div.innerHTML = `
-        <input type="number" 
-               class="login-inp" 
-               placeholder="Ordem..." 
-               oninput="if(this.value.length > 8) this.value = this.value.slice(0, 8);"
-               style="flex: 1; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #007AFF;">
-               
-        <input type="text" 
-               class="login-inp" 
-               placeholder="Pacote (Ex: 1/2/3)" 
-               style="flex: 1; font-weight: 600;">
-               
-        <button type="button" 
-                class="btn-ret-del" 
-                onclick="this.parentElement.remove()" 
-                title="Remover linha">✕</button>
-    `;
-    
-    container.appendChild(div);
-}
-            
+        function adicionarLinhaRet() {
+            const container = document.getElementById('retRowsContainer');
+            const index = container.children.length;
+           
+            const row = document.createElement('div');
+            row.className = 'ret-row';
+            row.innerHTML = `
+                <div style="flex:1;">
+                    ${index === 0 ? '<label style="font-size:9px; font-weight:900; color:var(--text-muted); text-transform:uppercase;">Ordem (8 dígitos)</label>' : ''}
+                    <input type="text" class="profile-input ret-ordem-inp" placeholder="Ex: 15872253" maxlength="8" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" oninput="this.value = this.value.replace(/[^0-9]/g, '');" autocomplete="off">
+                </div>
+                <div style="flex:1;">
+                    ${index === 0 ? '<label style="font-size:9px; font-weight:900; color:var(--text-muted); text-transform:uppercase;">Pacotes</label>' : ''}
+                    <input type="text" class="profile-input ret-pacote-inp" placeholder="Ex: 1 ou 1/2/3" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" autocomplete="off">
+                </div>
+                <button type="button" class="btn-ret-del" onclick="removerLinhaRet(this)" title="Remover ordem" style="${index === 0 ? 'margin-top:14px;' : ''}">-</button>
+            `;
+            container.appendChild(row);
+           
             // Foco na ordem recém-adicionada
             const newInp = row.querySelector('.ret-ordem-inp');
             if (newInp) setTimeout(() => newInp.focus(), 50);
@@ -10439,10 +10427,10 @@ function adicionarLinhaRet() {
 
             // Exige crachá do coordenador
             const solicitanteObj = await obterSolicitanteReimpressao();
-            if (!solicitanteObj) { 
-                await customAlert('Solicitação cancelada.'); 
+            if (!solicitanteObj) {
+                await customAlert('Solicitação cancelada.');
                 document.getElementById('retModalOverlay').style.display = 'flex'; // Reabre se cancelar
-                return; 
+                return;
             }
             const solicitanteNome = solicitanteObj.nome;
             const solicitanteCracha = solicitanteObj.id;
@@ -10455,10 +10443,10 @@ function adicionarLinhaRet() {
             }
 
             const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', listaGerentes);
-            if (!aprovador) { 
-                await customAlert('Solicitação cancelada.'); 
+            if (!aprovador) {
+                await customAlert('Solicitação cancelada.');
                 document.getElementById('retModalOverlay').style.display = 'flex'; // Reabre se cancelar
-                return; 
+                return;
             }
 
             const numRequisicao = gerarNumeroRequisicao();
@@ -10486,15 +10474,15 @@ function adicionarLinhaRet() {
                 });
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
-                const notifReimpData = { 
-                    tipo: 'solicitar_talao_fechado', 
-                    numRequisicao, 
-                    solicitante: solicitanteNome, 
-                    aprovadorSolicitado: aprovador, 
-                    ordem: ordens.map(o => o.ordem).join(', '), 
-                    pacote: ordens.map(o => o.pacote).join(', '), 
-                    dataHora: payload.dataHora, 
-                    timestamp: payload.timestamp 
+                const notifReimpData = {
+                    tipo: 'solicitar_talao_fechado',
+                    numRequisicao,
+                    solicitante: solicitanteNome,
+                    aprovadorSolicitado: aprovador,
+                    ordem: ordens.map(o => o.ordem).join(', '),
+                    pacote: ordens.map(o => o.pacote).join(', '),
+                    dataHora: payload.dataHora,
+                    timestamp: payload.timestamp
                 };
                 localStorage.setItem('notifReimpressao', JSON.stringify(notifReimpData));
 
@@ -10864,251 +10852,7 @@ function adicionarLinhaRet() {
 
 
 
-// =========================================================================
-// LÓGICA DE RETRABALHO / TALÃO FECHADO COM BUSCA INTELIGENTE DE MODELO
-// =========================================================================
 
-// 1. Variável e função para carregar todos os modelos ativos do banco de dados
-let modelosDisponiveisDB = new Set();
-
-async function carregarModelosDisponiveis() {
-    try {
-        const snap = await db.ref('/alocacao').once('value');
-        const data = snap.val();
-        if(data) {
-            for(let grupo in data) {
-                const estacoes = Object.keys(data[grupo]);
-                for(let est of estacoes) {
-                    const info = data[grupo][est];
-                    if(info && info.modelo && info.modelo !== "VAZIO" && info.modelo !== "--") {
-                        modelosDisponiveisDB.add(info.modelo);
-                    }
-                }
-            }
-        }
-    } catch(e) {
-        console.error("Erro ao carregar modelos para o select:", e);
-    }
-}
-setTimeout(carregarModelosDisponiveis, 2000);
-
-// 2. Função para abrir o modal
-function abrirModalRet() {
-    const container = document.getElementById('retRowsContainer');
-    container.innerHTML = ''; 
-    adicionarLinhaRet();      
-    document.getElementById('retModalOverlay').style.display = 'flex';
-}
-
-function fecharModalRet() {
-    document.getElementById('retModalOverlay').style.display = 'none';
-}
-
-// 3. Função para adicionar uma nova linha
-function adicionarLinhaRet() {
-    const container = document.getElementById('retRowsContainer');
-    const row = document.createElement('div');
-    row.className = 'ret-row';
-    row.style.cssText = 'flex-wrap: wrap; padding: 12px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 12px; position: relative;';
-    
-    // O evento 'onblur' aciona a busca assim que você termina de digitar a ordem e clica fora
-    row.innerHTML = `
-        <div style="display: flex; gap: 8px; width: 100%;">
-            <input type="number" class="config-input ordem-input" placeholder="Ordem (Ex: 15872253)" style="flex: 1; margin: 0; padding: 10px; font-family: 'JetBrains Mono', monospace;" onblur="buscarModeloNaLinha(this)">
-            <input type="text" class="config-input pacote-input" placeholder="Pacote (Ex: 1/2/3)" style="flex: 1; margin: 0; padding: 10px;">
-            <button type="button" class="btn-ret-del" onclick="this.closest('.ret-row').remove()" title="Remover linha">✕</button>
-        </div>
-        <div class="modelo-container" style="width: 100%; margin-top: 8px; display: flex; align-items: center; gap: 8px; min-height: 30px;">
-            <span class="modelo-feedback" style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Aguardando Ordem...</span>
-            <select class="config-input modelo-select" style="display: none; flex: 1; margin: 0; padding: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
-                <option value="">Selecione o Modelo manualmente...</option>
-            </select>
-            <input type="hidden" class="modelo-final" value="">
-        </div>
-    `;
-    
-    const select = row.querySelector('.modelo-select');
-    Array.from(modelosDisponiveisDB).sort().forEach(modelo => {
-        const opt = document.createElement('option');
-        opt.value = modelo;
-        opt.textContent = modelo;
-        select.appendChild(opt);
-    });
-
-    container.appendChild(row);
-}
-
-// 4. Função inteligente que busca a ordem no Firebase filtrando lixos antigos
-async function buscarModeloNaLinha(inputOrdem) {
-    const ordem = inputOrdem.value.trim();
-    const row = inputOrdem.closest('.ret-row');
-    const feedback = row.querySelector('.modelo-feedback');
-    const select = row.querySelector('.modelo-select');
-    const hiddenModelo = row.querySelector('.modelo-final');
-
-    if (ordem.length < 5) {
-        feedback.textContent = "Aguardando Ordem...";
-        feedback.style.color = "var(--text-muted)";
-        select.style.display = "none";
-        hiddenModelo.value = "";
-        return;
-    }
-
-    feedback.textContent = "Buscando modelo no Firebase ⏳...";
-    feedback.style.color = "#007AFF";
-    select.style.display = "none";
-
-    try {
-        let modeloEncontrado = null;
-        // Filtro robusto para ignorar lixos salvos antigamente no banco
-        const modelosIgnorados = ["Múltiplas / Fechado", "Vários", "VAZIO", "--", "", "Múltiplas", "Fechado"];
-        
-        // Busca os últimos 1000 registros para garantir a varredura
-        const snap = await db.ref('/reimpressoes').orderByChild('timestamp').limitToLast(1000).once('value');
-        const data = snap.val();
-        
-        if (data) {
-            const requisicoes = Object.values(data);
-            for (let i = requisicoes.length - 1; i >= 0; i--) {
-                const req = requisicoes[i];
-                if (req.ordens && Array.isArray(req.ordens)) {
-                    for (let o of req.ordens) {
-                        // Só aceita se achar a ordem E o modelo não for um dos textos ignorados
-                        if (o.ordem === ordem && req.modelo && !modelosIgnorados.includes(req.modelo)) {
-                            modeloEncontrado = req.modelo;
-                            break;
-                        }
-                    }
-                }
-                if (modeloEncontrado) break;
-            }
-        }
-
-        if (modeloEncontrado) {
-            feedback.innerHTML = `✅ Modelo: <span style="color:#10b981;">${modeloEncontrado}</span>`;
-            feedback.style.color = "var(--text-main)";
-            hiddenModelo.value = modeloEncontrado;
-            select.style.display = "none";
-        } else {
-            feedback.textContent = "⚠️ Não Fechado. Selecione o Modelo:";
-            feedback.style.color = "#f59e0b";
-            hiddenModelo.value = "";
-            select.style.display = "block"; // ABRE O SELECT!
-        }
-    } catch(e) {
-        feedback.textContent = "❌ Erro na busca. Selecione:";
-        feedback.style.color = "#ef4444";
-        select.style.display = "block";
-    }
-}
-
-// 5. Função final de Solicitar (Exige os modelos preenchidos e SÓ DEPOIS pede o Crachá)
-async function solicitarRet() {
-    const rows = document.querySelectorAll('#retRowsContainer .ret-row');
-    if(rows.length === 0) {
-        await customAlert("Adicione pelo menos uma ordem e pacote.");
-        return;
-    }
-
-    const ordensAgrupadas = [];
-    let todosValidos = true;
-
-    // Validação visual e captura de dados antes de pedir qualquer senha
-    for (let row of rows) {
-        const ordem = row.querySelector('.ordem-input').value.trim();
-        const pacote = row.querySelector('.pacote-input').value.trim();
-        const select = row.querySelector('.modelo-select');
-        let modelo = row.querySelector('.modelo-final').value;
-
-        if(!ordem || !pacote) {
-            await customAlert("Preencha todos os campos de Ordem e Pacote.");
-            todosValidos = false;
-            break;
-        }
-
-        // Se não achou automático e a lista suspensa está visível, pega o valor do select
-        if (!modelo && select.style.display !== "none") {
-            modelo = select.value;
-        }
-
-        if (!modelo) {
-            await customAlert(`Você precisa aguardar a busca ou selecionar um modelo para a Ordem ${ordem}.`);
-            todosValidos = false;
-            break;
-        }
-
-        // Salva com o modelo que foi encontrado/escolhido
-        ordensAgrupadas.push({ ordem: ordem, pacote: pacote, cor: modelo, modeloVinculado: modelo });
-    }
-
-    if (!todosValidos) return;
-
-    // ==============================================================
-    // TUDO VALIDADO! AGORA SIM ELE PEDE O CRACHÁ E O APROVADOR
-    // ==============================================================
-    const solicitanteObj = await obterSolicitanteReimpressao();
-    if (!solicitanteObj) { await customAlert('Solicitação cancelada.'); return; }
-    
-    const listaGerentes = Object.values(credenciaisGerente).map(g => ({ value: g.nome, label: g.nome }));
-    if(listaGerentes.length === 0) {
-        await customAlert('Nenhum Gerente cadastrado para aprovação.');
-        return;
-    }
-
-    const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', listaGerentes);
-    if (!aprovador) { await customAlert('Solicitação cancelada.'); return; }
-
-    const numRequisicao = gerarNumeroRequisicao();
-    const dataHora = new Date().toLocaleString('pt-BR');
-    
-    try {
-        const btnSubmit = document.querySelector('#retModalOverlay .btn-confirmar');
-        const btnHtml = btnSubmit.innerHTML;
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = 'Enviando...';
-
-        // O modelo principal do Talão Fechado será o da primeira ordem para aparecer no título do CARD
-        const modeloPrincipal = ordensAgrupadas[0].modeloVinculado;
-
-        const payload = {
-            numRequisicao: numRequisicao,
-            tipoReimpressao: 'talao_fechado',
-            grupo: '--', 
-            estacao: '--',
-            modelo: modeloPrincipal, 
-            tamanho: '--',
-            ordens: ordensAgrupadas,
-            status: 'pendente',
-            solicitante: solicitanteObj.nome,
-            solicitanteCracha: solicitanteObj.id,
-            aprovadorSolicitado: aprovador,
-            dataHora: dataHora,
-            timestamp: Date.now()
-        };
-
-        const resp = await fetch(`${FIREBASE_URL}/reimpressoes/${numRequisicao}.json${AUTH}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!resp.ok) throw new Error('Falha HTTP');
-
-        // Dispara a notificação local para aparecer o popup de sucesso em verde na tela
-        const notifData = { tipo: 'solicitar_talao_fechado', numRequisicao, solicitante: solicitanteObj.nome, ordem: ordensAgrupadas[0].ordem, pacote: ordensAgrupadas[0].pacote, aprovadorSolicitado: aprovador };
-        localStorage.setItem('notifReimpressao', JSON.stringify(notifData));
-
-        await customAlert('Solicitação de Retrabalho enviada com sucesso!\nRequisição: ' + numRequisicao);
-        fecharModalRet();
-        
-        btnSubmit.disabled = false;
-        btnSubmit.innerHTML = btnHtml;
-
-    } catch(e) {
-        await customAlert('Falha ao enviar retrabalho. Verifique a conexão.');
-        console.error(e);
-    }
-}
 
 
 
