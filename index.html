@@ -6396,7 +6396,7 @@ async function cancelarReimpressaoEditor(id) {
             if (!ts) return periodo === 'tudo';
             
             const agora = new Date();
-            // Zera as horas para comparar dias inteiros de forma exata
+            // Zera as horas de "hoje" para comparar o dia exato
             const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
             
             const d = new Date(ts);
@@ -6405,15 +6405,13 @@ async function cancelarReimpressaoEditor(id) {
             if (periodo === 'hoje') {
                 return dataReq.getTime() === hoje.getTime();
             } else if (periodo === 'semana') {
-                // Últimos 7 dias corridos
-                const seteDiasAtras = new Date(hoje);
-                seteDiasAtras.setDate(hoje.getDate() - 7);
-                return dataReq >= seteDiasAtras;
+                // Semana do calendário atual (Começa no último Domingo)
+                const inicioSemana = new Date(hoje);
+                inicioSemana.setDate(hoje.getDate() - hoje.getDay()); // Volta para o domingo desta semana exata
+                return dataReq >= inicioSemana;
             } else if (periodo === 'mes') {
-                // Últimos 30 dias corridos (resolve o bug de começo de mês)
-                const trintaDiasAtras = new Date(hoje);
-                trintaDiasAtras.setDate(hoje.getDate() - 30);
-                return dataReq >= trintaDiasAtras;
+                // Mês do calendário atual (Mês e Ano exatos)
+                return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
             } else if (periodo === 'data' && dataEspecifica) {
                 // Corrige o fuso horário da data escolhida no calendário
                 const [ano, mes, dia] = dataEspecifica.split('-');
@@ -6422,7 +6420,6 @@ async function cancelarReimpressaoEditor(id) {
             }
             return true;
         }
-
         function atualizarAnalisesGerente() {
             const periodo = document.getElementById('gerenteFiltroPeriodo').value;
             const dataEspec = document.getElementById('gerenteFiltroData').value;
