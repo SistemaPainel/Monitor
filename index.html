@@ -849,6 +849,24 @@
         .flip-card-back .no-details { text-align: center; color: var(--text-muted); font-size: 12px; padding: 40px 0;
             font-weight: 600; }
 
+/* ===== LINHA DO TEMPO DAS REQUISIÇÕES ===== */
+        .req-timeline { display: flex; align-items: flex-start; justify-content: space-between; position: relative; margin: 20px 0; z-index: 1; }
+        .req-timeline::before { content: ''; position: absolute; top: 15px; left: 16%; right: 16%; height: 2px; background: var(--glass-border); z-index: -1; }
+        .rt-step { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; z-index: 2; position: relative; }
+        .rt-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--stat-box); border: 2px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: var(--text-muted); transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+        .rt-label { font-size: 10px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+        .rt-time { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); opacity: 0.8; text-align: center; line-height: 1.4; }
+
+        /* Cores Dinâmicas dos Status */
+        .rt-step.done .rt-icon { background: #10b981; border-color: #10b981; color: #fff; box-shadow: 0 0 14px rgba(16,185,129,0.4); }
+        .rt-step.done .rt-label { color: #10b981; }
+        .rt-step.waiting .rt-icon { background: #f59e0b; border-color: #f59e0b; color: #fff; box-shadow: 0 0 14px rgba(245,158,11,0.4); animation: pulse 1.5s infinite; }
+        .rt-step.waiting .rt-label { color: #f59e0b; }
+        .rt-step.active .rt-icon { background: #007AFF; border-color: #007AFF; color: #fff; box-shadow: 0 0 14px rgba(0,122,255,0.4); }
+        .rt-step.active .rt-label { color: #007AFF; }
+        .rt-step.rejected .rt-icon { background: #ef4444; border-color: #ef4444; color: #fff; box-shadow: 0 0 14px rgba(239,68,68,0.4); }
+        .rt-step.rejected .rt-label { color: #ef4444; }
+
         /* === RESPONSIVO — TODOS OS TAMANHOS === */
 
         /* Widescreen 1440px+ */
@@ -1546,6 +1564,18 @@
             letter-spacing: 1px; color: var(--text-muted); margin-top: 6px; display: block;
         }
 
+        /* ===== RANKING HORIZONTAL (COORDENADORES E GERENTES) ===== */
+        .ranking-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); margin: 24px 0 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px; }
+        .ranking-container { display: flex; gap: 24px; overflow-x: auto; padding: 10px 5px 20px; scrollbar-width: none; }
+        .ranking-container::-webkit-scrollbar { display: none; }
+        .ranking-item { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
+        .ranking-avatar-wrap { width: 66px; height: 66px; border-radius: 50%; padding: 3px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; transition: transform 0.3s; }
+        .ranking-item:hover .ranking-avatar-wrap { transform: scale(1.08) translateY(-3px); }
+        .ranking-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--stat-box); overflow: hidden; border: 2px solid var(--glass-bg); }
+        .ranking-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .ranking-name { font-size: 12px; font-weight: 900; color: var(--text-main); text-align: center; white-space: nowrap; margin-bottom: 2px; }
+        .ranking-role { font-size: 9px; color: var(--text-muted); text-align: center; margin-bottom: 6px; }
+        .ranking-metric { font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 900; padding: 3px 10px; border-radius: 12px; display: flex; align-items: center; gap: 4px; }
         /* Tabela de breakdown mais bonita */
         .gerente-breakdown-wrap {
             background: var(--input-bg); border: 1px solid var(--glass-border);
@@ -3268,6 +3298,10 @@ rx="1.5" fill="#f59e0b"/>
                             <span class="g-stat-lbl">Reimpressas ✓</span>
                         </div>
                     </div>
+                    
+                    <!-- NOVO: Contêiner dos Rankings Horizontais -->
+                    <div id="gerenteRankingContainer"></div>
+                    
                     <div class="gerente-breakdown-wrap">
                         <div id="gerenteAnalyticsTabela"></div>
                     </div>
@@ -3375,7 +3409,8 @@ rx="1.5" fill="#f59e0b"/>
                 </div>
                 <button class="btn-sync btn-global" id="btnGlobal" onclick="alterarStatusGlobal()"> Aplicar</button>
                 <button class="btn-sync btn-print" onclick="gerarImpressao()"> Imprimir</button>
-                <button class="btn-sync btn-reprints" id="btnReprints" onclick="abrirPainelReimpressoes()" style="display:none;">Reimpressoes</button>
+               <button class="btn-sync btn-reprints" id="btnReprints" onclick="abrirPainelReimpressoes()" style="display:none;">Reimpressoes</button>
+<button class="btn-sync btn-reprints" id="btnLogsReimp" onclick="abrirPainelReimpressoes()" style="display:none;">Logs Reimp</button>
                 <div class="btn-limpar-wrap" id="btnLimparWrap">
                     <button class="btn-sync btn-clear-manual" id="btnClearManual" onclick="toggleMenuLimpar(event)">🗑️ Limpar ▾</button>
                     <div class="btn-limpar-menu" id="menuLimpar">
@@ -3556,7 +3591,7 @@ rx="1.5" fill="#f59e0b"/>
                     <h2 class="wip-header-title"><span>🖨</span> Solicitacoes de Reimpressao</h2>
                     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;">
                         <button class="wip-global-toggle" onclick="carregarReimpressoes()">Atualizar</button>
-                        <button class="wip-global-toggle danger" onclick="limparRegistrosReimpressoes()">Limpar registros</button>
+                        <button class="wip-global-toggle danger" id="btnLimparReimp" onclick="limparRegistrosReimpressoes()">Limpar registros</button>
                         <button class="kpi-close-btn" style="margin-left:10px;" onclick="fecharPainelReimpressoes()">✕</button>
                     </div>
                 </div>
@@ -4929,7 +4964,12 @@ rx="1.5" fill="#f59e0b"/>
             if (btnPerfil) btnPerfil.style.display = userRole === 'viewer' ? 'none' : 'inline-flex';
            
             // Exibe botão de Reimpressões apenas para o Editor
-            document.getElementById('btnReprints').style.display = userRole === 'editor' ? '' : 'none';
+            // Exibe botão de Reimpressões apenas para o Editor
+        document.getElementById('btnReprints').style.display = userRole === 'editor' ? '' : 'none';
+        // Exibe botão de Logs Reimp apenas para o Visualizador
+        if (document.getElementById('btnLogsReimp')) {
+            document.getElementById('btnLogsReimp').style.display = userRole === 'viewer' ? '' : 'none';
+        }
            
             // EXCLUSIVO DO TOTEM: Botão RET aparece SOMENTE para a Visualização Borracha (viewer)
             const btnRet = document.getElementById('btnRetrabalho');
@@ -5846,10 +5886,17 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         // editor solicita, gerente aprova, tudo fica registrado
         // =====================================================================
         async function abrirPainelReimpressoes() {
-            if (userRole !== 'editor') {
-                await customAlert('Acesso restrito. A central de reimpressao e exclusiva para usuarios editor.');
+            if (userRole !== 'editor' && userRole !== 'viewer') {
+                await customAlert('Acesso restrito. A central de reimpressão é exclusiva para editores e visualizadores.');
                 return;
             }
+            
+            // Esconde o botão de "Limpar registros" se for apenas visualizador
+            const btnLimpar = document.getElementById('btnLimparReimp');
+            if (btnLimpar) {
+                btnLimpar.style.display = userRole === 'viewer' ? 'none' : 'flex';
+            }
+
             document.getElementById('reprintModalOverlay').classList.add('open');
             document.getElementById('reprintBody').innerHTML = '<p style="text-align:center;color:var(--text-muted);font-weight:700;">Carregando solicitacoes...</p>';
             await carregarReimpressoes(true);
@@ -6008,17 +6055,33 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             }
         }
 
-        function templateRequisicao(req, modoGerente, mapaVias) {
+     function templateRequisicao(req, modoGerente, mapaVias) {
             const grupos = agruparOrdensRequisicao(req.ordens);
-            // Define o status real de forma correta
             const statusFinal = req.status === 'feito' ? 'feito' : req.status === 'aprovado' ? 'aprovado' : req.status === 'reprovado' ? 'reprovado' : 'pendente';
             const mapaViasReq = mapaVias || obterMapaViasReimpressao();
 
-            const ordensHtml = grupos.map(g =>
-                '<div class="req-order-row"><strong>' + htmlSafe(g.ordem) + '</strong>' + renderPacoteComVias(g.ordem, g.pacote, mapaViasReq) + '<span>' + htmlSafe(g.cor) + '</span></div>'
-            ).join('');
+            const ordensHtml = grupos.map(g => {
+                let iconeFeito = '';
+                let checkboxHtml = '';
+                
+                if (statusFinal === 'feito') {
+                    // Verifica se a ordem foi marcada como feita ou não
+                    const foiFeita = req.resultados && req.resultados[g.ordem] === false ? false : true; 
+                    iconeFeito = foiFeita 
+                        ? '<span style="color:#10b981; font-weight:900; font-size:12px; margin-right:6px;" title="Impressão executada">✔</span>' 
+                        : '<span style="color:#ef4444; font-weight:900; font-size:12px; margin-right:6px;" title="Ordem não impressa">✖</span>';
+                } else if (statusFinal === 'aprovado' && !modoGerente && userRole === 'editor') {
+                    // Prepara os checkboxes, mas eles nascem escondidos até clicar no botão
+                    checkboxHtml = '<input type="checkbox" class="chk-feito-' + htmlSafe(req.id) + '" value="' + htmlSafe(g.ordem) + '" style="display:none; width:14px; height:14px; margin-right:6px; accent-color:#10b981; cursor:pointer;" checked>';
+                }
 
-            // Garante que os botões só apareçam se o statusFinal for EXATAMENTE 'pendente'
+                return '<div class="req-order-row">' + 
+                    '<div style="display:flex; align-items:center;">' + checkboxHtml + iconeFeito + '<strong>' + htmlSafe(g.ordem) + '</strong></div>' + 
+                    '<div style="display:flex; align-items:center;">' + renderPacoteComVias(g.ordem, g.pacote, mapaViasReq) + '</div>' + 
+                    '<div style="text-align:right; display:flex; justify-content:flex-end; align-items:center;"><span>' + htmlSafe(g.cor) + '</span></div>' +
+                    '</div>';
+            }).join('');
+
             const acaoGerente = modoGerente && statusFinal === 'pendente'
                 ? '<div class="gerente-acoes-wrap">' +
                   '<button class="btn-aprovar-req" onclick="gerenteAprovarReimpressao(\'' + jsSafe(req.id) + '\')">✅ Autorizar</button>' +
@@ -6026,18 +6089,14 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                   '</div>'
                 : '';
 
-            const aprovadoPor = statusFinal === 'aprovado'
-                ? '<div class="req-meta" style="color:#10b981;font-weight:900;">✅ Aprovado por: ' + htmlSafe(req.aprovador || '--') + ' - ' + htmlSafe(req.dataHoraAprovacao || '') + '</div>'
-                : statusFinal === 'feito'
-                ? '<div class="req-meta" style="color:#10b981;font-weight:900;">✅ Aprovado por: ' + htmlSafe(req.aprovador || '--') + ' - ' + htmlSafe(req.dataHoraAprovacao || '') + '</div>'
-                : statusFinal === 'reprovado'
-                ? '<div class="req-meta" style="color:#ef4444;font-weight:900;">❌ Reprovada por: ' + htmlSafe(req.reprovador || '--') + ' - ' + htmlSafe(req.dataHoraReprovacao || '') + (req.motivoReprovacao ? '<br>Motivo: ' + htmlSafe(req.motivoReprovacao) : '') + '</div>'
-                : '<div class="req-meta">Aguardando aprovacao de: ' + htmlSafe(req.aprovadorSolicitado || '--') + '</div>';
-
-            // Seção de "Marcar como Feito" para editor (não aparece no modo gerente)
             let doneSection = '';
             if (!modoGerente) {
-                if (statusFinal === 'feito') {
+                if (userRole === 'viewer') {
+                    doneSection = '<div class="req-done-section">' +
+                        (statusFinal === 'feito' ? '<span class="req-done-badge">✔ Reimpressão Executada por ' + htmlSafe(req.feitoPor || '--') + ' em ' + htmlSafe(req.dataHoraFeito || '--') + '</span>' : '') +
+                        '<button class="req-log-toggle" onclick="toggleLogReq(\'' + jsSafe(req.id) + '\')">📋 Ver Log</button>' +
+                        '</div>' + _renderLogPanel(req);
+                } else if (statusFinal === 'feito') {
                     doneSection = '<div class="req-done-section">' +
                         '<span class="req-done-badge">✔ Reimpressão Executada por ' + htmlSafe(req.feitoPor || '--') + ' em ' + htmlSafe(req.dataHoraFeito || '--') + '</span>' +
                         '<button class="req-log-toggle" onclick="toggleLogReq(\'' + jsSafe(req.id) + '\')">📋 Ver Log</button>' +
@@ -6045,13 +6104,12 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                         _renderLogPanel(req);
                 } else if (statusFinal === 'aprovado') {
                     doneSection = '<div class="req-done-section">' +
-                        '<button class="btn-marcar-feito" id="btnFeito_' + htmlSafe(req.id) + '" onclick="marcarReimpressaoFeita(\'' + jsSafe(req.id) + '\')">✔ Marcar como Feito</button>' +
+                        '<button class="btn-marcar-feito" id="btnFeito_' + htmlSafe(req.id) + '" onclick="iniciarSelecaoFeito(\'' + jsSafe(req.id) + '\')">✔ Marcar como Feito</button>' +
                         '<button class="btn-cancelar-reimp" id="btnCancelar_' + htmlSafe(req.id) + '" onclick="cancelarReimpressaoEditor(\'' + jsSafe(req.id) + '\')">❌ Cancelar</button>' +
                         '<button class="req-log-toggle" onclick="toggleLogReq(\'' + jsSafe(req.id) + '\')">📋 Ver Log</button>' +
                         '</div>' +
                         _renderLogPanel(req);
                 } else {
-                    // pendente — só log
                     doneSection = '<div class="req-done-section">' +
                         '<button class="btn-cancelar-reimp" id="btnCancelar_' + htmlSafe(req.id) + '" onclick="cancelarReimpressaoEditor(\'' + jsSafe(req.id) + '\')">❌ Cancelar</button>' +
                         '<button class="req-log-toggle" onclick="toggleLogReq(\'' + jsSafe(req.id) + '\')">📋 Ver Log</button>' +
@@ -6060,7 +6118,6 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 }
             }
 
-            // Lógica de dois balões: Um para aprovação e outro para execução (impressão)
             let badgesHtml = '';
             if (statusFinal === 'pendente') {
                 badgesHtml = '<span class="req-status pendente">Aprovação Pendente</span>';
@@ -6070,63 +6127,79 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 badgesHtml = '<span class="req-status aprovado">Aprovado</span>' +
                              '<span class="req-status pendente" title="Aguardando Editor imprimir">Impressão Pendente</span>';
             } else if (statusFinal === 'feito') {
-                // Extrai apenas a hora da string dataHoraFeito (ex: "28/07/2026, 01:10:22")
                 let horaFeito = '--';
                 if (req.dataHoraFeito) {
                     const match = req.dataHoraFeito.match(/\d{2}:\d{2}:\d{2}|\d{2}:\d{2}/);
                     if (match) horaFeito = match[0];
-                    else horaFeito = req.dataHoraFeito; // fallback
+                    else horaFeito = req.dataHoraFeito; 
                 }
                
-                // 1. Define o que procurar (prioriza o campo do crachá, faz fallback pro feitoPor)
                 let identificador = req.feitoCracha || req.feitoPor || '--';
+                let megaLista = Object.assign({}, defaultUsuarios, coordenadoresAutorizados, JSON.parse(localStorage.getItem('customUsuarios') || '{}'));
                
-                // 2. Cria uma Mega Lista com absolutamente todos os usuários do sistema
-                let megaLista = Object.assign({},
-                    defaultUsuarios,
-                    coordenadoresAutorizados,
-                    JSON.parse(localStorage.getItem('customUsuarios') || '{}')
-                );
-               
-                // Inclui também os editores caso o crachá seja a própria chave de login deles
                 if (typeof credenciaisEditor === 'object') {
-                    Object.keys(credenciaisEditor).forEach(k => {
-                        megaLista[k] = credenciaisEditor[k].nome || k;
-                    });
+                    Object.keys(credenciaisEditor).forEach(k => { megaLista[k] = credenciaisEditor[k].nome || k; });
                 }
 
-                // 3. Tenta traduzir pelo identificador principal
                 let nomeReal = megaLista[identificador] || identificador;
-               
-                // 4. Se ainda for número, tenta traduzir pelo outro campo (feitoPor) como última tentativa
-                if (nomeReal === identificador && megaLista[req.feitoPor]) {
-                    nomeReal = megaLista[req.feitoPor];
-                }
-               
-                let nomeFeito = String(nomeReal).split(' ')[0]; // Pega só o primeiro nome
+                if (nomeReal === identificador && megaLista[req.feitoPor]) { nomeReal = megaLista[req.feitoPor]; }
+                let nomeFeito = String(nomeReal).split(' ')[0];
                
                 badgesHtml = '<span class="req-status aprovado">Aprovado</span>' +
                              '<span class="req-status feito">Feito por ' + htmlSafe(nomeFeito) + ' às ' + htmlSafe(horaFeito) + '</span>';
             }
 
-           // Se não for mais pendente (aprovado, reprovado ou feito), adiciona a classe "estatico" para parar de piscar
             const classePisca = statusFinal === 'pendente' ? 'badge-talao-pisca' : 'badge-talao-pisca estatico';
            
             const tituloVisual = req.tipoReimpressao === 'talao_fechado'
                 ? '<div style="margin-top:6px;"><span class="' + classePisca + '">⚠️ REIMPRESSÃO TALÃO FINALIZADO</span></div>'
                 : '<div class="req-meta">' + htmlSafe(req.grupo || '--') + ' - EST ' + String(req.estacao || '--').padStart(2, '0') + ' - ' + htmlSafe(req.modelo || '--') + ' / ' + htmlSafe(req.tamanho || '--') + '</div>';
+
+            let step1Class = 'done', step1Icon = '✓', step1Time = htmlSafe(req.solicitante || '--') + '<br>' + htmlSafe(req.dataHora || '--');
+            let step2Class = '', step2Icon = '2', step2Time = '--', step2Label = 'Aprovação';
+            let step3Class = '', step3Icon = '3', step3Time = '--', step3Label = 'Impressão';
+
+            if (statusFinal === 'pendente') {
+                step2Class = 'waiting'; step2Icon = '⏳';
+                step2Time = 'Aguardando<br>' + htmlSafe(req.aprovadorSolicitado || '--');
+            } else if (statusFinal === 'reprovado') {
+                step2Class = 'rejected'; step2Icon = '✕'; step2Label = 'Reprovada';
+                step2Time = htmlSafe(req.reprovador || '--') + '<br>' + htmlSafe(req.dataHoraReprovacao || '--');
+            } else if (statusFinal === 'aprovado') {
+                step2Class = 'done'; step2Icon = '✓';
+                step2Time = htmlSafe(req.aprovador || '--') + '<br>' + htmlSafe(req.dataHoraAprovacao || '--');
+                step3Class = 'waiting'; step3Icon = '🖨';
+                step3Time = 'Aguardando<br>Editor';
+            } else if (statusFinal === 'feito') {
+                step2Class = 'done'; step2Icon = '✓';
+                step2Time = htmlSafe(req.aprovador || '--') + '<br>' + htmlSafe(req.dataHoraAprovacao || '--');
+                step3Class = 'done'; step3Icon = '✓';
+                
+                let hrFeito = req.dataHoraFeito || '--';
+                const match = hrFeito.match(/\d{2}:\d{2}:\d{2}|\d{2}:\d{2}/);
+                if (match) hrFeito = match[0];
+                
+                let nomeFeito = req.feitoPor ? req.feitoPor.split(' ')[0] : '--';
+                step3Time = htmlSafe(nomeFeito) + '<br>' + htmlSafe(hrFeito);
+            }
+
+            const timelineHtml = '<div class="req-timeline">' +
+                '<div class="rt-step ' + step1Class + '"><div class="rt-icon">' + step1Icon + '</div><div class="rt-label">Solicitado</div><div class="rt-time">' + step1Time + '</div></div>' +
+                '<div class="rt-step ' + step2Class + '"><div class="rt-icon">' + step2Icon + '</div><div class="rt-label">' + step2Label + '</div><div class="rt-time">' + step2Time + '</div></div>' +
+                '<div class="rt-step ' + step3Class + '"><div class="rt-icon">' + step3Icon + '</div><div class="rt-label">' + step3Label + '</div><div class="rt-time">' + step3Time + '</div></div>' +
+            '</div>';
+
             return '<div class="req-card" id="reqCard_' + htmlSafe(req.id) + '">' +
                 '<div class="req-card-header"><div><div class="req-num">' + htmlSafe(req.numRequisicao) + '</div>' +
                 tituloVisual + '</div>' +
                 '<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start;">' + badgesHtml + '</div></div>' +
-                '<div class="req-meta">Solicitado por: ' + htmlSafe(req.solicitante || '--') + ' - ' + htmlSafe(req.dataHora || '--') + '</div>' +
-                '<div class="req-order-list">' + ordensHtml + '</div>' +
-                aprovadoPor +
+                timelineHtml +
+                '<div class="req-order-list" style="margin-top:20px;">' + ordensHtml + '</div>' +
                 (acaoGerente ? '<div style="margin-top:12px;">' + acaoGerente + '</div>' : '') +
                 doneSection +
             '</div>';
         }
-
+        
         function _renderLogPanel(req) {
             const log = Array.isArray(req.log) ? req.log : [];
             if (!log.length) {
@@ -6150,19 +6223,53 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             if (panel) panel.classList.toggle('open');
         }
 
-        async function marcarReimpressaoFeita(id) {
+
+      function iniciarSelecaoFeito(id) {
+            // Mostra os checkboxes ao lado de cada ordem
+            const checkboxes = document.querySelectorAll('.chk-feito-' + id);
+            checkboxes.forEach(cb => cb.style.display = 'inline-block');
+            
+            // Altera o botão principal para Salvar
+            const btnFeito = document.getElementById('btnFeito_' + id);
+            if (btnFeito) {
+                btnFeito.innerHTML = '💾 Salvar Execução';
+                btnFeito.setAttribute('onclick', 'confirmarReimpressaoFeita(\'' + id + '\')');
+                btnFeito.style.background = 'linear-gradient(135deg, #007AFF, #5E5CE6)';
+                btnFeito.style.boxShadow = '0 6px 18px rgba(0,122,255,0.4)';
+            }
+            
+            // Esconde o botão de cancelar para evitar conflito
+            const btnCancelar = document.getElementById('btnCancelar_' + id);
+            if (btnCancelar) btnCancelar.style.display = 'none';
+        }
+
+        async function confirmarReimpressaoFeita(id) {
             const req = _reprintData.find(r => r.id === id);
             if (!req) return;
-            if (req.status === 'pendente') {
-                await customAlert('Esta solicitação ainda não foi aprovada pelo gerente. Aguarde a autorização antes de marcar como feita.');
+
+            // Identifica quais ordens foram marcadas como feitas
+            const checkboxes = document.querySelectorAll('.chk-feito-' + id);
+            let resultados = {};
+            let todasDesmarcadas = true;
+            
+            checkboxes.forEach(cb => {
+                resultados[cb.value] = cb.checked;
+                if (cb.checked) todasDesmarcadas = false;
+            });
+            
+            if (todasDesmarcadas) {
+                const conf = await customConfirm('Você desmarcou todas as ordens. Isso significa que nenhuma foi impressa. Deseja cancelar a solicitação inteira em vez disso?', 'Sim, Cancelar', 'Voltar');
+                if (conf) {
+                    cancelarReimpressaoEditor(id);
+                }
                 return;
             }
 
-            // Pede o crachá do editor para registrar no log
-            const cracha = await customPrompt('Para confirmar que a reimpressão foi executada, digite seu Usuário/Crachá:', false);
+            // Pede o crachá do editor para registrar
+            const cracha = await customPrompt('Para confirmar a execução, digite seu Usuário/Crachá:', false);
             if (!cracha || !cracha.trim()) return;
 
-            usuariosAutorizados = usuariosAutorizados = defaultUsuarios;
+            usuariosAutorizados = usuariosAutorizados || defaultUsuarios;
             const nomeEditor = usuariosAutorizados[cracha.trim()] || cracha.trim();
 
             const dataHoraFeito = new Date().toLocaleString('pt-BR');
@@ -6173,7 +6280,13 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 if (req.dataHora) logAtual.push({ tipo:'create', texto: 'Solicitação criada por ' + (req.solicitante||'--'), hora: req.dataHora });
                 if (req.dataHoraAprovacao) logAtual.push({ tipo:'aprove', texto: 'Aprovada por ' + (req.aprovador||'--'), hora: req.dataHoraAprovacao });
             }
-            logAtual.push({ tipo:'done', texto: 'Reimpressão executada por ' + nomeEditor + ' (crachá: ' + cracha.trim() + ')', hora: dataHoraFeito });
+            
+            let textoLog = 'Reimpressão executada parcialmente por ' + nomeEditor;
+            if (!Object.values(resultados).includes(false)) {
+                textoLog = 'Reimpressão total executada por ' + nomeEditor;
+            }
+            
+            logAtual.push({ tipo:'done', texto: textoLog + ' (crachá: ' + cracha.trim() + ')', hora: dataHoraFeito });
 
             const btn = document.getElementById('btnFeito_' + id);
             if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
@@ -6184,6 +6297,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                     feitoPor: nomeEditor,
                     feitoCracha: cracha.trim(),
                     dataHoraFeito,
+                    resultados,
                     log: logAtual
                 };
                 const resp = await fetch(`${FIREBASE_URL}/reimpressoes/${id}.json${AUTH}`, {
@@ -6193,7 +6307,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 });
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
-                // Registra log global de execuções
+                // Registra log global
                 await fetch(`${FIREBASE_URL}/notificacoes/ultimaExecucaoReimpressao.json${AUTH}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -6201,14 +6315,17 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 }).catch(() => {});
 
                 tocarSomAuth();
-                await customAlert('✅ Reimpressão marcada como executada!\n\nResponsável: ' + nomeEditor + '\nData/Hora: ' + dataHoraFeito);
+                await customAlert('✅ Reimpressão salva com sucesso!\n\nResponsável: ' + nomeEditor);
                 await carregarReimpressoes(true);
             } catch(e) {
                 await customAlert('Falha ao registrar execução. Verifique a conexão.');
-                if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = '✔ Marcar como Feito'; }
+                if (btn && btn.isConnected) { 
+                    btn.disabled = false; 
+                    btn.textContent = '💾 Salvar Execução'; 
+                }
             }
         }
-
+        
 async function cancelarReimpressaoEditor(id) {
     const req = _reprintData.find(r => r.id === id);
     if (!req) return;
@@ -6277,17 +6394,31 @@ async function cancelarReimpressaoEditor(id) {
         function _filtrarPeriodo(req, periodo, dataEspecifica) {
             const ts = req.timestamp;
             if (!ts) return periodo === 'tudo';
+            
             const agora = new Date();
+            // Zera as horas para comparar dias inteiros de forma exata
+            const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+            
             const d = new Date(ts);
+            const dataReq = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
             if (periodo === 'hoje') {
-                return d.toDateString() === agora.toDateString();
+                return dataReq.getTime() === hoje.getTime();
             } else if (periodo === 'semana') {
-                const semAgo = new Date(agora); semAgo.setDate(agora.getDate() - 7);
-                return d >= semAgo;
+                // Últimos 7 dias corridos
+                const seteDiasAtras = new Date(hoje);
+                seteDiasAtras.setDate(hoje.getDate() - 7);
+                return dataReq >= seteDiasAtras;
             } else if (periodo === 'mes') {
-                return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+                // Últimos 30 dias corridos (resolve o bug de começo de mês)
+                const trintaDiasAtras = new Date(hoje);
+                trintaDiasAtras.setDate(hoje.getDate() - 30);
+                return dataReq >= trintaDiasAtras;
             } else if (periodo === 'data' && dataEspecifica) {
-                return d.toDateString() === new Date(dataEspecifica + 'T00:00:00').toDateString();
+                // Corrige o fuso horário da data escolhida no calendário
+                const [ano, mes, dia] = dataEspecifica.split('-');
+                const dataFiltro = new Date(ano, mes - 1, dia);
+                return dataReq.getTime() === dataFiltro.getTime();
             }
             return true;
         }
@@ -6342,29 +6473,89 @@ async function cancelarReimpressaoEditor(id) {
             document.getElementById('gAnalFeitas').textContent    = feitas;
             _atualizarBadgeAnalytics(pendentes);
 
-            // Tabela de breakdown por grupo
+            // Tabela de breakdown por grupo e RANKING
             const porGrupo = {};
             const porCoord = {};
+            const porGerente = {}; // Rastreador de aprovações
+
             filtrado.forEach(r => {
                 const g = r.grupo || 'N/A';
                 const c = r.solicitante || 'N/A';
                 const taloes = contarTaloes(r);
+                
                 if (!porGrupo[g]) porGrupo[g] = { total:0, aprov:0, taloes:0 };
                 if (!porCoord[c]) porCoord[c] = { total:0, aprov:0, taloes:0 };
+                
                 porGrupo[g].total++;
                 porGrupo[g].taloes += taloes;
                 porCoord[c].total++;
                 porCoord[c].taloes += taloes;
+                
                 if (r.status === 'aprovado' || r.status === 'feito') {
                     porGrupo[g].aprov++;
                     porCoord[c].aprov++;
+                    
+                    // Contabiliza o gerente
+                    const aprovador = r.aprovador || 'N/A';
+                    if (!porGerente[aprovador]) porGerente[aprovador] = { total:0, taloes:0 };
+                    porGerente[aprovador].total++;
+                    porGerente[aprovador].taloes += taloes;
                 }
             });
 
-            const maxGrupo = Math.max(1, ...Object.values(porGrupo).map(v => v.total));
-            const maxCoord = Math.max(1, ...Object.values(porCoord).map(v => v.total));
+            // ----------------------------------------------------
+            // 1. RENDERIZAR RANKINGS HORIZONTAIS
+            // ----------------------------------------------------
+            function _renderRanking(obj, title, role, colorCode) {
+                // Filtra os 'N/A' e ordena do maior para o menor (Top 6)
+                const sorted = Object.entries(obj).filter(([k]) => k !== 'N/A').sort((a,b) => b[1].total - a[1].total).slice(0, 6);
+                if(!sorted.length) return '';
+                
+                let rankHtml = '<div class="ranking-section-title">' + title + '</div><div class="ranking-container">';
+                sorted.forEach(([nome, v]) => {
+                    
+                    // Busca o perfil real do usuário pelo nome no banco de dados para puxar a foto/avatar salvo
+                    let perfilEncontrado = null;
+                    const megaListaPerfis = Object.assign({}, usuarioPerfis, credenciaisGerente, credenciaisEditor, credenciaisDev);
+                    
+                    for (let key in megaListaPerfis) {
+                        if (megaListaPerfis[key].nome === nome || key === nome) {
+                            perfilEncontrado = megaListaPerfis[key];
+                            break;
+                        }
+                    }
+                    
+                    // Extrai o HTML da foto real do usuário ou o avatar 3D padrão dele
+                    let avatarHtml = htmlAvatarPerfil(perfilEncontrado || { avatar: 'masculino' });
+                    // Garante que a foto ou SVG preencha o círculo direitinho cortando as bordas
+                    avatarHtml = avatarHtml.replace('<img ', '<img style="width:100%;height:100%;object-fit:cover;border-radius:50%;" ').replace('<svg ', '<svg style="width:100%;height:100%;object-fit:cover;border-radius:50%;" ');
 
+                    const prNome = nome.split(' ')[0]; // Só o primeiro nome para não quebrar o layout
+                    
+                    rankHtml += '<div class="ranking-item">' +
+                        '<div class="ranking-avatar-wrap" style="background: linear-gradient(160deg, ' + colorCode + ', transparent 70%);">' +
+                            '<div class="ranking-avatar">' + avatarHtml + '</div>' +
+                        '</div>' +
+                        '<div class="ranking-name">' + htmlSafe(prNome) + '</div>' +
+                        '<div class="ranking-role">' + role + '</div>' +
+                        '<div class="ranking-metric" style="color: ' + colorCode + '; background: ' + colorCode + '1A;">★ ' + v.total + '</div>' +
+                    '</div>';
+                });
+                rankHtml += '</div>';
+                return rankHtml;
+            }
+
+            const htmlRankCoord = _renderRanking(porCoord, '🏆 Top Coordenadores (Mais Solicitações)', 'Coordenador', '#f59e0b');
+            const htmlRankGer = _renderRanking(porGerente, '🌟 Top Gerentes (Mais Aprovações)', 'Aprovador', '#10b981');
+            
+            document.getElementById('gerenteRankingContainer').innerHTML = htmlRankCoord + htmlRankGer;
+
+            // ----------------------------------------------------
+            // 2. RENDERIZAR A TABELA DE BREAKDOWN 
+            // ----------------------------------------------------
+            const maxGrupo = Math.max(1, ...Object.values(porGrupo).map(v => v.total));
             let html = '';
+            
             if (Object.keys(porGrupo).length) {
                 html += '<p style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin:0;padding:12px 14px 6px;border-bottom:1px solid var(--glass-border);">📦 Por Grupo</p>' +
                 '<table class="gerente-breakdown-table"><thead><tr><th>Grupo</th><th>Solicitações</th><th>Talões</th><th>Aprovadas</th><th>Distribuição</th></tr></thead><tbody>' +
@@ -6377,19 +6568,7 @@ async function cancelarReimpressaoEditor(id) {
                 ).join('') + '</tbody></table>';
             }
 
-            if (Object.keys(porCoord).length) {
-                html += '<p style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin:0;padding:16px 14px 6px;border-bottom:1px solid var(--glass-border);border-top:1px solid var(--glass-border);">👤 Por Coordenador</p>' +
-                '<table class="gerente-breakdown-table"><thead><tr><th>Coordenador</th><th>Solicitações</th><th>Talões</th><th>Aprovadas</th><th>Distribuição</th></tr></thead><tbody>' +
-                Object.entries(porCoord).sort((a,b)=>b[1].total-a[1].total).map(([c,v]) =>
-                    '<tr><td><span class="g-badge-coord">' + htmlSafe(c) + '</span></td>' +
-                    '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:900;">' + v.total + '</td>' +
-                    '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:900;color:#007AFF;">' + v.taloes + '</td>' +
-                    '<td style="color:#10b981;font-weight:900;font-family:\'JetBrains Mono\',monospace;">' + v.aprov + '</td>' +
-                    '<td><div class="gerente-chart-bar-wrap"><div class="gerente-chart-bar-bg"><div class="gerente-chart-bar-fill" style="width:' + Math.round(v.total/maxCoord*100) + '%"></div></div></div></td></tr>'
-                ).join('') + '</tbody></table>';
-            }
-
-            if (!html) html = '<p style="color:var(--text-muted);font-size:12px;font-weight:600;text-align:center;padding:20px 0;">Nenhum dado encontrado para os filtros selecionados.</p>';
+           if (!html) html = '<p style="color:var(--text-muted);font-size:12px;font-weight:600;text-align:center;padding:20px 0;">Nenhum dado encontrado para os filtros selecionados.</p>';
             document.getElementById('gerenteAnalyticsTabela').innerHTML = html;
         }
 
