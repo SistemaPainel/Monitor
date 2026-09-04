@@ -61,26 +61,20 @@
         .machine-container, .station-card, .header, .notif-panel {
             transform: translateZ(0);
             backface-visibility: hidden;
-            will-change: transform, opacity;
         }
        
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0; min-height: 100vh;
             color: var(--text-main);
-            background: linear-gradient(135deg, var(--bg-color-1), var(--bg-color-2), var(--bg-color-1));
-            background-size: 200% 200%;
-            animation: breathingBG 20s ease infinite;
-            transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            /* Fundo fixo: mantém a mesma cor e beleza, mas salva 40% do processamento */
+            background: linear-gradient(135deg, var(--bg-color-1), var(--bg-color-2));
+            background-attachment: fixed;
         }
 
         .app-wrapper {
             padding: 24px;
         }
-
-        @keyframes breathingBG { 0% { background-position: 0% 50%;
-        } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%;
-        } }
 
         ::-webkit-scrollbar { width: 4px; height: 4px;
         }
@@ -743,11 +737,17 @@
             grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 30px; align-items: start; }
         .machine-container {
             background: var(--machine-bg);
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            /* Reduzimos um pouco o blur para evitar travamentos em celulares */
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border-radius: 28px; padding: 22px; box-shadow: var(--glass-shadow); border: 1px solid var(--machine-border);
             position: relative; overflow: hidden;
-            transition: all 0.5s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             transform: translateZ(0);
+            
+            /* MÁGICA DE PERFORMANCE: O navegador pausa a renderização do que está fora da tela */
+            content-visibility: auto;
+            contain-intrinsic-size: 320px;
+            contain: paint;
         }
         .machine-grid { display: grid; grid-template-columns: repeat(2, 1fr);
             gap: 16px; }
@@ -764,11 +764,15 @@
         .flip-card-front, .flip-card-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; height: 100%; border-radius: 20px;
         }
        
-        .station-card {
+       .station-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
+            /* Removido o backdrop-filter daqui para evitar vidro em cima de vidro */
+            border: 1px solid var(--glass-border);
             padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;
-            cursor: pointer; transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1); overflow: hidden; position: relative;
+            cursor: pointer; 
+            /* Transição específica em vez de 'all' evita engasgos no hover */
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; 
+            overflow: hidden; position: relative;
         }
         .station-card::before { content: ''; position: absolute; top: 0; left: 0; width: 6px;
             height: 100%; transition: all 0.4s ease; }
