@@ -619,11 +619,8 @@
         .stat-id-tag.refil-tag  { color:#f59e0b; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); }
         .stat-id-tag.reprov-tag { color:#ef4444; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); }
 
-        .nota-preview { font-size:9px; color:#f59e0b; font-style:italic; font-weight:600;
-            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 30px);
-            margin-top:5px; padding:4px 8px; background:rgba(245,158,11,0.08);
-            border-left:2px solid #f59e0b; border-radius:0 4px 4px 0; display:none; }
-        .nota-preview.visivel { display:block; }
+        /* Oculta a prévia de texto no card permanentemente */
+        .nota-preview, .nota-preview.visivel { display: none !important; }
 
         /* Modal de nota */
         .nota-modal-overlay { position:fixed; inset:0; z-index:10000; display:none; align-items:center;
