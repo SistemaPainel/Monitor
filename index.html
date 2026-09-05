@@ -818,16 +818,12 @@
         .health-bar-fill { height: 100%; border-radius: 4px;
             transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); }
 
-        .stats-grid { display: grid;
-            grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: auto; flex-shrink: 0; min-width: 0;
-        }
-        .stat-box { text-align: center; padding: 8px 2px; background: var(--stat-box); border-radius: 10px;
-            border: 1px solid var(--glass-border); transition: 0.3s; min-width: 0; }
-        .stat-num { display: block;
-            font-size: 14px; font-weight: 800; color: var(--text-main); font-family: 'JetBrains Mono', monospace;
-        }
-        .stat-label { font-size: 8px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
-            margin-top: 2px; display: block; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: auto; flex-shrink: 0; min-width: 0; }
+        .stat-box { position: relative; text-align: center; padding: 6px 2px 4px; background: var(--stat-box); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; align-items: center; min-width: 0; }
+        .gauge-wrap { position: relative; width: 100%; max-width: 50px; margin: 0 auto 2px; display: flex; align-items: flex-end; justify-content: center; }
+        .gauge-svg { width: 100%; height: auto; display: block; overflow: visible; }
+        .stat-num { position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 900; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .stat-label { font-size: 8px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; line-height: 1; }
 
         .flip-card-back {
             position: absolute;
@@ -7227,6 +7223,36 @@ function fecharHistoricoModal() {
                     front.className = `flip-card-front station-card status-${statusBanco}${(giroNum < 48 && giroNum > 0 && statusBanco === 'rodando') ? ' giro-baixo' : ''}`;
                     front.setAttribute('data-modelo', modeloBanco.trim()); front.setAttribute('data-estacao', i); front.setAttribute('data-pr', prManual);
                    
+                   // Define o máximo do velocímetro para preenchimento visual da barra
+                    const maxGiro = 100;
+                    const maxRefil = 20;
+                    const maxReprov = 10;
+                    
+                    const getGauge = (val, max, baseColor, isGiro) => {
+                        let pct = Math.min(val / max, 1);
+                        if (isNaN(pct)) pct = 0;
+                        let displayColor = baseColor;
+                        
+                        // Sistema inteligente de cores
+                        if (isGiro) {
+                            if (val >= 48) displayColor = '#10b981'; 
+                            else if (val > 0 && statusBanco === 'rodando') displayColor = '#f59e0b'; 
+                            else displayColor = '#007AFF'; 
+                        }
+
+                        // Cálculo exato para meio círculo perfeito
+                        const dashArray = 113;
+                        const dashOffset = dashArray * (1 - pct);
+
+                        return `<div class="gauge-wrap">
+                            <svg viewBox="0 0 100 52" class="gauge-svg">
+                                <path d="M 14 48 A 36 36 0 0 1 86 48" fill="none" stroke="rgba(150,150,150,0.15)" stroke-width="9" stroke-linecap="round"></path>
+                                <path d="M 14 48 A 36 36 0 0 1 86 48" fill="none" stroke="${displayColor}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}" style="transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1); filter: drop-shadow(0 2px 3px ${displayColor}40);"></path>
+                            </svg>
+                            <span class="stat-num" title="${val}">${val}</span>
+                        </div>`;
+                    };
+
                     front.innerHTML = `
                         <div class="card-header"><h2 title="EST ${String(i).padStart(2, '0')}">EST ${String(i).padStart(2, '0')}${badgeRepetido}</h2>
                             <select onchange="mudarStatus('${grupoAtual}', ${i}, this.value)" onclick="event.stopPropagation()" ${disableSelect}>
@@ -7239,13 +7265,20 @@ function fecharHistoricoModal() {
                             <div class="health-bar-bg"><div class="health-bar-fill" style="width: ${saude}%; background: ${saudeColor}; box-shadow: 0 0 8px ${saudeColor};"></div></div>
                         </div>
                         <div class="stats-grid">
-                            <div class="stat-box" style="position: relative; overflow: visible;">
+                            <div class="stat-box">
                                 ${prManual > 0 ? `<div style="position: absolute; top: -8px; right: -8px; background: #007AFF; color: white; font-size: 10px; padding: 2px 6px; border-radius: 8px; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.4); z-index: 5;" title="${titleTooltip}">+${prManual}</div>` : ''}
-                                ${(giroNum < 48 && giroNum > 0 && statusBanco === 'rodando') ? `<div class="giro-alert-badge">⚠ Giro Baixo ${prManual > 0 ? `(+${prManual})` : ''}</div>` : ''}
-                                <span class="stat-num" title="${giroNum}">${giroNum}</span><span class="stat-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Giro ${buttonHtml}</span>
+                                ${(giroNum < 48 && giroNum > 0 && statusBanco === 'rodando') ? `<div class="giro-alert-badge">⚠ Baixo ${prManual > 0 ? `(+${prManual})` : ''}</div>` : ''}
+                                ${getGauge(giroNum, maxGiro, '#007AFF', true)}
+                                <span class="stat-label">Giro ${buttonHtml}</span>
                             </div>
-                            <div class="stat-box"><span class="stat-num" title="${refilNum}">${refilNum}</span><span class="stat-label">Refil</span></div>
-                            <div class="stat-box"><span class="stat-num" title="${reprovNum}">${reprovNum}</span><span class="stat-label">Reprov</span></div>
+                            <div class="stat-box">
+                                ${getGauge(refilNum, maxRefil, '#f59e0b', false)}
+                                <span class="stat-label">Refil</span>
+                            </div>
+                            <div class="stat-box">
+                                ${getGauge(reprovNum, maxReprov, '#ef4444', false)}
+                                <span class="stat-label">Reprov</span>
+                            </div>
                         </div>`;
 
                     const notaPreview = document.createElement('div');
