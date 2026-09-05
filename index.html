@@ -467,7 +467,7 @@
         }
 
         .actions-tail {
-            display: contents; /* Isso faz a cauda "sumir" e junta os últimos botões diretamente com o resto */
+            display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap; flex: 1 1 auto; margin-top: 0 !important;
         }
 
                 .actions-tail .btn-sync,
@@ -883,91 +883,80 @@
         /* Tablet landscape / desktop pequeno */
         @media (max-width: 1024px) {
             .app-wrapper { padding: 16px; }
-            .header {
-                position: relative; top: 0;
-                flex-direction: column; align-items: stretch; text-align: center;
-                padding: 18px 20px; margin-bottom: 20px;
-            }
-            .header-left { align-items: center; margin-bottom: 12px; }
+            .header { position: relative; top: 0; flex-direction: column; align-items: stretch; padding: 18px 20px; margin-bottom: 20px; height: auto; }
+            .header-left { align-items: center; margin-bottom: 12px; text-align: center; }
             .global-status-circles { justify-content: center; margin-bottom: 12px; }
-            .actions-container {
-                display: grid; grid-template-columns: repeat(3, 1fr);
-                gap: 10px; width: 100%;
-            }
-            .filter-box, .btn-sync { width: 100%; margin-top: 0; height: 100%; }
-            .actions-tail {
-                grid-column: 1 / -1; width: 100%; margin-top: 0; justify-content: flex-end;
-            }
-            .actions-tail .btn-sync { width: auto; height: 44px; }
-            .btn-sync { padding: 12px; }
-            #status-update { grid-column: 1 / -1; }
+            
+            /* Transforma o Grid em Flexbox flexível para não vazar o fundo */
+            .actions-container { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; justify-content: center; }
+            .filter-box { flex: 1 1 calc(33.333% - 10px); min-width: 140px; margin-top: 0; }
+            .btn-sync { margin-top: 0; flex: 1 1 calc(33.333% - 10px); min-width: 140px; height: 44px; }
+            .actions-tail { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; justify-content: center; margin-top: 0; }
+            .actions-tail > * { margin-top: 0 !important; }
+            
+            #status-update { width: 100%; }
             .main-container { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         }
 
-        /* Tablet portrait */
+        /* Tablet portrait & Mobile grande */
         @media (max-width: 768px) {
             .app-wrapper { padding: 12px; }
-            .header { padding: 14px 16px; margin-bottom: 16px; border-radius: 18px; }
+            .header { padding: 16px; border-radius: 18px; }
             .header-left h1 { font-size: 1.2rem; }
-            .main-container { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-            .machine-container { padding: 16px; border-radius: 22px; }
-            .machine-grid { gap: 12px; }
-            .flip-card-wrapper { height: 225px; }
-            .actions-container { grid-template-columns: repeat(2, 1fr); }
-            #status-update { grid-column: 1 / -1; }
-            .btn-theme-floating { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 22px; }
-        }
-
-        /* Mobile grande (480px–600px) */
-        @media (max-width: 600px) {
-            .app-wrapper { padding: 10px; }
-            .header { padding: 12px 14px; border-radius: 16px; gap: 12px; }
-            .header-left h1 { font-size: 1.1rem; gap: 8px; }
-            .header-left p { font-size: 0.7rem; }
-            .global-status-circles { gap: 10px; }
-            .status-circle { width: 36px; height: 36px; font-size: 13px; }
-            .status-circle-lbl { font-size: 9px; }
-            .main-container { grid-template-columns: 1fr; gap: 14px; }
+            .actions-container { gap: 8px; }
+            
+            /* Dois botões por linha perfeitamente distribuídos */
+            .filter-box { flex: 1 1 calc(50% - 8px); min-width: 130px; }
+            .filter-box:nth-child(3) { flex: 1 1 100%; } 
+            .btn-sync, .btn-limpar-wrap, .btn-visao-wrap { flex: 1 1 calc(50% - 8px); min-width: 130px; }
+            
+            .main-container { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .machine-container { padding: 14px; border-radius: 20px; }
-            .machine-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .flip-card-wrapper { height: 215px; }
-            .actions-container { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .actions-tail { justify-content: flex-start; overflow-x: auto; padding-bottom: 2px; }
-            .filter-box select { font-size: 12px; padding: 9px 10px; }
-            .btn-sync { font-size: 10px; padding: 10px 12px; }
-            #status-update { grid-column: 1 / -1; font-size: 9px; }
+            .machine-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+            
+            /* AUMENTA A ALTURA DO CARD PARA CABER O VELOCÍMETRO */
+            .flip-card-wrapper { height: 265px !important; }
+            .station-card { padding: 12px 10px; }
         }
 
         /* Mobile pequeno (até 480px) */
         @media (max-width: 480px) {
             .app-wrapper { padding: 8px; }
-            .header { flex-direction: column; padding: 12px; border-radius: 14px; gap: 10px; }
-            .header-left h1 { font-size: 1rem; }
-            .main-container { gap: 10px; }
-            .machine-container { padding: 12px; border-radius: 18px; }
+            .header { padding: 14px 12px; border-radius: 14px; gap: 10px; }
+            .global-status-circles { gap: 8px; }
+            .status-circle { width: 34px; height: 34px; font-size: 12px; }
+            .status-circle-lbl { font-size: 8px; }
+            
+            /* Botões do header compactos */
+            .btn-sync { font-size: 10px; padding: 10px; height: 40px; }
+            .filter-box select { font-size: 11px; padding: 8px; }
+            
             .machine-grid { gap: 8px; }
-            .flip-card-wrapper { height: 200px; }
-            .station-card { padding: 12px; }
-            .card-header h2 { font-size: 0.95rem; }
-            .info-value { font-size: 12px; }
-            .stat-num { font-size: 13px; }
-            .actions-container { grid-template-columns: 1fr 1fr; gap: 7px; }
-            .actions-tail { gap: 7px; }
-            .actions-tail .profile-chip { width: 44px; padding: 6px; }
-            .actions-tail .profile-chip-name { display: none; }
-            .filter-box label { font-size: 8px; }
-            .filter-box select { font-size: 11px; padding: 8px 10px; border-radius: 10px; }
-            .btn-sync { font-size: 9px; padding: 9px 10px; border-radius: 10px; }
+            .flip-card-wrapper { height: 265px !important; }
+            .station-card { padding: 10px 6px; }
+            
+            .card-header h2 { font-size: 0.85rem; }
+            .card-header select { font-size: 8px; max-width: 65px; padding: 4px; }
+            .info-value { font-size: 10.5px; }
+            .health-container { padding: 6px; margin-bottom: 8px; }
+            
+            /* Ajuste Fino dos Velocímetros para telas pequenas */
+            .gauge-wrap { max-width: 42px; margin-bottom: 2px; }
+            .stat-num { font-size: 12px; bottom: -3px; }
+            .stat-label { font-size: 7.5px; margin-top: 6px; gap: 2px; }
+            .stats-grid { gap: 4px; }
+            
             .btn-theme-floating { bottom: 14px; right: 14px; width: 44px; height: 44px; font-size: 20px; }
         }
 
-        /* Mobile muito pequeno (até 360px) */
+        /* Mobile muito pequeno (até 360px - ex: iPhone SE) */
         @media (max-width: 360px) {
-            .machine-grid { grid-template-columns: 1fr; }
-            .flip-card-wrapper { height: 230px; }
-            .actions-container { grid-template-columns: 1fr; }
-            .actions-tail { grid-column: 1; }
-            .filter-box, .btn-sync { width: 100%; }
+            /* Garante que continue lado a lado sem quebrar */
+            .gauge-wrap { max-width: 36px; }
+            .stat-num { font-size: 11px; bottom: -2px;}
+            .flip-card-wrapper { height: 260px !important; }
+            .card-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .card-header select { width: 100%; max-width: 100%; }
         }
 
         .custom-modal-overlay { position: fixed;
