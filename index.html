@@ -592,10 +592,10 @@
         }
 
         /* === NOTAS POR ESTAÇÃO === */
-        .nota-btn { position:absolute; bottom:7px; right:7px; width:22px; height:22px; border-radius:6px;
-            background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
-            color:var(--text-muted); font-size:11px; cursor:pointer; display:flex; align-items:center;
-            justify-content:center; transition:all 0.2s; z-index:6; padding:0; line-height:1; }
+.nota-btn { position:absolute; bottom:46px; right:10px; width:22px; height:22px; border-radius:6px;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
+    color:var(--text-muted); font-size:11px; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; transition:all 0.2s; z-index:6; padding:0; line-height:1; }
         .nota-btn:hover { background:rgba(245,158,11,0.2); border-color:#f59e0b; color:#f59e0b; transform:scale(1.1); }
         .nota-btn.tem-nota { background:rgba(245,158,11,0.18); border-color:#f59e0b88; color:#f59e0b; }
         .nota-btn.tem-nota::after { content:''; position:absolute; top:-3px; right:-3px; width:7px; height:7px;
@@ -816,11 +816,12 @@
             transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: auto; flex-shrink: 0; min-width: 0; }
-        .stat-box { position: relative; text-align: center; padding: 6px 2px 4px; background: var(--stat-box); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; align-items: center; min-width: 0; }
-        .gauge-wrap { position: relative; width: 100%; max-width: 50px; margin: 0 auto 2px; display: flex; align-items: flex-end; justify-content: center; }
+        .stat-box { position: relative; text-align: center; padding: 8px 2px 4px; background: var(--stat-box); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; justify-content: center; align-items: center; min-width: 0; }
+        .gauge-wrap { position: relative; width: 100%; max-width: 48px; margin: 0 auto; display: flex; justify-content: center; }
         .gauge-svg { width: 100%; height: auto; display: block; overflow: visible; }
-        .stat-num { position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 900; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .stat-label { font-size: 8px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; line-height: 1; }
+        /* Subimos o número (bottom: 2px) e aumentamos a fonte para encaixar perfeitamente */
+        .stat-num { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 900; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .stat-label { font-size: 8px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; line-height: 1; }
 
         .flip-card-back {
             position: absolute;
@@ -2335,13 +2336,13 @@ body.is-resizing * { transition: none !important; animation: none !important; }
 }
 
 /* === BOTÃO DE HISTÓRICO NA ESTAÇÃO === */
-        .hist-btn {
-            position: absolute; bottom: 7px; right: 34px;
-            width: 22px; height: 22px; border-radius: 6px;
-            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);
-            color: var(--text-muted); font-size: 11px; cursor: pointer; display: flex;
-            align-items: center; justify-content: center; transition: all 0.2s; z-index: 6; padding: 0; line-height: 1;
-        }
+.hist-btn {
+    position: absolute; bottom: 46px; right: 36px;
+    width: 22px; height: 22px; border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-muted); font-size: 11px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: all 0.2s; z-index: 6; padding: 0; line-height: 1;
+}
         .hist-btn:hover { background: rgba(0, 122, 255, 0.2); border-color: #007AFF; color: #007AFF; transform: scale(1.1); }
 
         /* === MODAL DE HISTÓRICO (NOVO LAYOUT) === */
