@@ -3228,6 +3228,7 @@ rx="1.5" fill="#f59e0b"/>
                             <span class="gerente-filter-label">Filtrar por Grupo</span>
                             <select class="gerente-filter-select" id="gerenteFiltroGrupo" onchange="atualizarAnalisesGerente()">
                                 <option value="todos">Todos os Grupos</option>
+                                <option value="11337">11337</option>
                                 <option value="Grupo 1">Grupo 1</option>
                                 <option value="Grupo 2">Grupo 2</option>
                                 <option value="Grupo 3">Grupo 3</option>
@@ -3361,13 +3362,12 @@ rx="1.5" fill="#f59e0b"/>
                  <div class="filter-box">
                     <label>GRUPO</label>
                     <select id="filtroGrupo" onchange="trocarGrupo()">
+                        <option value="11337">11337</option>
                         <option value="Grupo 1">Grupo 1</option>
-                     
                         <option value="Grupo 2">Grupo 2</option>
                         <option value="Grupo 3">Grupo 3</option>
                         <option value="Grupo 4">Grupo 4</option>
                         <option value="Grupo 5">Grupo 5</option>
-             
                         <option value="Grupo 6">Grupo 6</option>
                         <option value="Grupo 7">Grupo 7</option>
                         <option value="Grupo 8">Grupo 8</option>
@@ -3624,6 +3624,7 @@ rx="1.5" fill="#f59e0b"/>
                         <label style="font-size:10px;font-weight:900;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Filtrar Grupo:</label>
                         <select id="macroFiltroGrupo" onchange="renderMacroPlanta()" style="background:var(--input-bg);border:1px solid var(--glass-border);border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--text-main);cursor:pointer;outline:none;">
                             <option value="TODOS">Todos os Grupos</option>
+                            <option value="11337">11337</option>
                             <option value="Grupo 1">Grupo 1</option>
                             <option value="Grupo 2">Grupo 2</option>
                             <option value="Grupo 3">Grupo 3</option>
@@ -3813,7 +3814,7 @@ rx="1.5" fill="#f59e0b"/>
 
         // === INICIALIZAÇÃO DO BANCO ===
         firebase.initializeApp({
-            databaseURL: "https://gen-lang-client-0514567939-default-rtdb.firebaseio.com"
+            databaseURL: "https://projeto-hackton-618ca-default-rtdb.firebaseio.com"
         });
         window.db = firebase.database();
 
@@ -3824,7 +3825,7 @@ rx="1.5" fill="#f59e0b"/>
     // cola a URL do banco aqui — sem barra no final
     // a secret fica vazia se o banco for público
     // =====================================================================
-    const FIREBASE_URL = "https://gen-lang-client-0514567939-default-rtdb.firebaseio.com";
+    const FIREBASE_URL = "https://projeto-hackton-618ca-default-rtdb.firebaseio.com";
     const FIREBASE_SECRET = "";
     const AUTH = FIREBASE_SECRET && !/^https?:\/\//i.test(FIREBASE_SECRET) ? `?auth=${encodeURIComponent(FIREBASE_SECRET)}` : "";
     // =====================================================================
@@ -7015,11 +7016,17 @@ function fecharHistoricoModal() {
 // =====================================================================
 // =====================================================================
                
-                async function carregarPainel(snapAlocData = null) {
+              async function carregarPainel(snapAlocData = null) {
             const grupoAtual = document.getElementById('filtroGrupo').value;
-            const numEstacoes = (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") ? 48 : 36;
-           
-            try {
+            let numEstacoes = 36; // Padrão
+            
+            if (grupoAtual === "Grupo 4" || grupoAtual === "Grupo 5") {
+                numEstacoes = 48;
+            } else if (grupoAtual === "11337") {
+                numEstacoes = 18; // 3 máquinas * 6 estações
+            }
+            
+            try  {
                 // Se o usuário está com algum card virado (back visível com possível interação),
                 // suspende a reconstrução do DOM para não interromper fluxo de reimpressão ou nota
                 const cardEmUso = document.querySelector('.flip-card-wrapper.flipped');
@@ -7058,10 +7065,18 @@ function fecharHistoricoModal() {
                         //   índices [0 .. nGiro-1]                        → GIRO
                         //   índices [nGiro .. nGiro+nRefil-1]             → REFIL
                         //   índices [nGiro+nRefil .. nGiro+nRefil+nReprov-1] → REPROV
-                        const _todosDetalhes = _normDetalhes(prod.detalhes);
-                        const _nGiro   = parseInt(prod.giro      || 0);
-                        const _nRefil  = parseInt(prod.refilagem || 0);
-                        const _nReprov = parseInt(prod.reprovado || 0);
+                       const _todosDetalhes = _normDetalhes(prod.detalhes);
+                        
+                        let _nGiro, _nRefil, _nReprov;
+                        if (grupoAtual === "11337") {
+                            _nGiro   = parseInt(prod.giroInj  || 0);
+                            _nRefil  = 0; // Removido
+                            _nReprov = 0; // Removido
+                        } else {
+                            _nGiro   = parseInt(prod.giro      || 0);
+                            _nRefil  = parseInt(prod.refilagem || 0);
+                            _nReprov = parseInt(prod.reprovado || 0);
+                        }
 
                         // Decide limites: se contadores > nº de entradas, são contagens de pares
                         // e precisamos distribuir proporcionalmente; caso contrário usa posição direta.
@@ -7094,10 +7109,20 @@ function fecharHistoricoModal() {
                             if (idx < _limRefil) return Object.assign({}, d, {_tipo: 'refil'});
                             return Object.assign({}, d, {_tipo: 'reprov'});
                         });
-                        estacoesReais[i] = {
-                            ...item,
-                            giro: prod.giro, refilagem: prod.refilagem, reprovados: prod.reprovado, detalhes: _detalhesComTipo
-                        };
+                        if (grupoAtual === "11337") {
+                            estacoesReais[i] = {
+                                ...item,
+                                giro: prod.giroInj || 0, 
+                                refilagem: 0, 
+                                reprovados: 0, 
+                                detalhes: _detalhesComTipo
+                            };
+                        } else {
+                            estacoesReais[i] = {
+                                ...item,
+                                giro: prod.giro, refilagem: prod.refilagem, reprovados: prod.reprovado, detalhes: _detalhesComTipo
+                            };
+                        }
                     }
                 }
                 const listaExibida = Object.values(estacoesReais);
@@ -7131,12 +7156,23 @@ function fecharHistoricoModal() {
                     }
                 });
                
-                // OTIMIZAÇÃO: Cria Fragment para evitar repaints sucessivos
+               // OTIMIZAÇÃO: Cria Fragment para evitar repaints sucessivos
                 const fragment = document.createDocumentFragment();
                 const numMaquinas = 3; const containersMaquinas = {};
                 for (let m = 1; m <= numMaquinas; m++) {
                     const wrapper = document.createElement('div'); wrapper.className = `machine-container m${m}`;
-                    wrapper.innerHTML = `<div class="machine-grid" id="grid-maq-${m}"></div>`;
+                    
+                    // Exibe o título de Máquina APENAS para o grupo 11337
+                    const tituloMaquina = (grupoAtual === "11337") ? `
+                        <div style="font-size: 13px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 18px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px;">
+                            ⚙️ MÁQUINA ${m}
+                        </div>` : '';
+
+                    wrapper.innerHTML = `
+                        ${tituloMaquina}
+                        <div class="machine-grid" id="grid-maq-${m}"></div>
+                    `;
+                    
                     fragment.appendChild(wrapper);
                     containersMaquinas[m] = wrapper.querySelector('.machine-grid');
                 }
@@ -7149,6 +7185,12 @@ function fecharHistoricoModal() {
                     const chaveAtual = `${modeloBanco.trim()}-${tamanhoBanco}`;
                     const totalRepetido = contagem[chaveAtual] || 0;
                     const badgeRepetido = totalRepetido > 1 ? `<span class="badge-repetido">${totalRepetido}x</span>` : "";
+                    
+                    // Exibe a etiqueta de Matriz (DUPLA/MONA) exclusivamente no Grupo 11337
+                    const badgeMatriz = (grupoAtual === "11337" && item && item.tipoMatriz)
+                        ? `<span style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 900; margin-left: 6px; border: 1px solid rgba(139, 92, 246, 0.4);">${item.tipoMatriz}</span>`
+                        : "";
+
                     const detalhes = (item && item.detalhes) ? item.detalhes : [];
 
                     const prManual = item && item.prManual ? parseInt(item.prManual) : 0;
@@ -7189,9 +7231,13 @@ function fecharHistoricoModal() {
                                         `<span class="sit-prefix">${prefix[0]}:</span>${o}/${p}</span>`;
                             });
                         };
-                        addTags('giro',   'Giro',   'giro-tag',   giroNum);
-                        addTags('refil',  'Refil',  'refil-tag',  refilNum);
-                        addTags('reprov', 'Reprov', 'reprov-tag', reprovNum);
+                        if (grupoAtual === "11337") {
+                            addTags('giro',   'Giro',   'giro-tag',   giroNum);
+                        } else {
+                            addTags('giro',   'Giro',   'giro-tag',   giroNum);
+                            addTags('refil',  'Refil',  'refil-tag',  refilNum);
+                            addTags('reprov', 'Reprov', 'reprov-tag', reprovNum);
+                        }
                         return tags ? `<div class="stat-ids-row">${tags}</div>` : '';
                     };
                     const statIdsRowHtml = _buildIdsRow();
@@ -7207,7 +7253,7 @@ function fecharHistoricoModal() {
                     const front = document.createElement('div');
                     front.className = `flip-card-front station-card status-${statusBanco}${(giroNum < 48 && giroNum > 0 && statusBanco === 'rodando') ? ' giro-baixo' : ''}`;
                     front.setAttribute('data-modelo', modeloBanco.trim()); front.setAttribute('data-estacao', i); front.setAttribute('data-pr', prManual);
-                   
+                    
                    // Define o máximo do velocímetro para preenchimento visual da barra
                     const maxGiro = 100;
                     const maxRefil = 20;
@@ -7237,7 +7283,7 @@ function fecharHistoricoModal() {
                     };
 
                     front.innerHTML = `
-                        <div class="card-header"><h2 title="EST ${String(i).padStart(2, '0')}">EST ${String(i).padStart(2, '0')}${badgeRepetido}</h2>
+                        <div class="card-header"><h2 title="EST ${String(i).padStart(2, '0')}">EST ${String(i).padStart(2, '0')}${badgeRepetido}${badgeMatriz}</h2>
                             <select onchange="mudarStatus('${grupoAtual}', ${i}, this.value)" onclick="event.stopPropagation()" ${disableSelect}>
                                 <option value="rodando" ${statusBanco === 'rodando' ? 'selected' : ''}>RODANDO</option><option value="parada" ${statusBanco === 'parada' ? 'selected' : ''}>PARADA</option><option value="TROCA" ${statusBanco === 'TROCA' ? 'selected' : ''}>TROCA</option>
                             </select></div>
@@ -7247,13 +7293,14 @@ function fecharHistoricoModal() {
                             <div class="health-header"><span class="health-label">Saúde Operacional</span><span style="font-size: 10px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: ${saudeColor};">${saude}%</span></div>
                             <div class="health-bar-bg"><div class="health-bar-fill" style="width: ${saude}%; background: ${saudeColor}; box-shadow: 0 0 8px ${saudeColor};"></div></div>
                         </div>
-                        <div class="stats-grid">
+                        <div class="stats-grid" ${grupoAtual === "11337" ? 'style="grid-template-columns: 1fr;"' : ''}>
                             <div class="stat-box">
                                 ${prManual > 0 ? `<div style="position: absolute; top: -8px; right: -8px; background: #007AFF; color: white; font-size: 10px; padding: 2px 6px; border-radius: 8px; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.4); z-index: 5;" title="${titleTooltip}">+${prManual}</div>` : ''}
                                 ${(giroNum < 48 && giroNum > 0 && statusBanco === 'rodando') ? `<div class="giro-alert-badge">⚠ Baixo ${prManual > 0 ? `(+${prManual})` : ''}</div>` : ''}
                                 ${getGauge(giroNum, maxGiro, '#007AFF', true)}
                                 <span class="stat-label">Giro ${buttonHtml}</span>
                             </div>
+                            ${grupoAtual !== "11337" ? `
                             <div class="stat-box">
                                 ${getGauge(refilNum, maxRefil, '#f59e0b', false)}
                                 <span class="stat-label">Refil</span>
@@ -7261,9 +7308,8 @@ function fecharHistoricoModal() {
                             <div class="stat-box">
                                 ${getGauge(reprovNum, maxReprov, '#ef4444', false)}
                                 <span class="stat-label">Reprov</span>
-                            </div>
+                            </div>` : ''}
                         </div>`;
-
                     const notaPreview = document.createElement('div');
                     notaPreview.className = 'nota-preview';
                     notaPreview.id = 'nota-preview-' + i;
@@ -7301,10 +7347,21 @@ function fecharHistoricoModal() {
                     return flipWrapper;
                 };
 
-                const metade = numEstacoes / 2; const paresPorMaquina = metade / 3; const _dadosGiroParaAlerta = [];
-                for (let i = 1; i <= metade; i++) {
-                    const numMaq = Math.ceil(i / paresPorMaquina); const gridDestino = containersMaquinas[numMaq];
-                    gridDestino.appendChild(criarCardElemento(i)); gridDestino.appendChild(criarCardElemento(i + metade));
+               const _dadosGiroParaAlerta = [];
+                if (grupoAtual === "11337") {
+                    // LÓGICA SEQUENCIAL (11337): 1 do lado do 2, 3 do lado do 4, etc.
+                    for (let i = 1; i <= 18; i++) {
+                        const numMaq = Math.ceil(i / 6); // A cada 6 estações pula para a próxima máquina
+                        const gridDestino = containersMaquinas[numMaq];
+                        gridDestino.appendChild(criarCardElemento(i));
+                    }
+                } else {
+                    // LÓGICA FRENTE A FRENTE (Outros Grupos)
+                    const metade = numEstacoes / 2; const paresPorMaquina = metade / 3; 
+                    for (let i = 1; i <= metade; i++) {
+                        const numMaq = Math.ceil(i / paresPorMaquina); const gridDestino = containersMaquinas[numMaq];
+                        gridDestino.appendChild(criarCardElemento(i)); gridDestino.appendChild(criarCardElemento(i + metade));
+                    }
                 }
                
                 listaExibida.forEach(d => {
@@ -7515,7 +7572,7 @@ function fecharHistoricoModal() {
             body.innerHTML = `<div style="text-align:center; padding:80px 20px;"><div style="font-size: 45px; margin-bottom: 20px;">📡</div><p style="color:var(--text-main);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:1px;">Sincronizando Malha Global...</p></div>`;
            
            try {
-                const gruposStr = ["Grupo 1", "Grupo 2", "Grupo 3", "Grupo 4", "Grupo 5", "Grupo 6", "Grupo 7", "Grupo 8"];
+                const gruposStr = ["11337", "Grupo 1", "Grupo 2", "Grupo 3", "Grupo 4", "Grupo 5", "Grupo 6", "Grupo 7", "Grupo 8"];
                 // Puxa do Firebase via SDK (usa a compactação e o cache interno)
                 const promessas = gruposStr.map(g => db.ref(`/alocacao/${g}`).once('value').then(snap => snap.val()));
                 const resultadosAloc = await Promise.all(promessas);
@@ -8324,7 +8381,7 @@ function fecharHistoricoModal() {
             const body = document.getElementById('macroBody');
             body.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-weight:700;padding:40px 0;">⏳ Carregando dados de todos os grupos...</p>';
 
-            const grupos = ['Grupo 1','Grupo 2','Grupo 3','Grupo 4','Grupo 5','Grupo 6','Grupo 7','Grupo 8'];
+            const grupos = ['11337','Grupo 1','Grupo 2','Grupo 3','Grupo 4','Grupo 5','Grupo 6','Grupo 7','Grupo 8'];
             _macroData = {};
 
             try {
@@ -8332,7 +8389,10 @@ function fecharHistoricoModal() {
                 const alocAll = (await respAloc.json()) || {};
 
                 for (const g of grupos) {
-                    const numEst = (g === 'Grupo 4' || g === 'Grupo 5') ? 48 : 36;
+                    let numEst = 36;
+                    if (g === 'Grupo 4' || g === 'Grupo 5') numEst = 48;
+                    else if (g === '11337') numEst = 18;
+                    
                     const alocGrupo = alocAll[g] || {};
                     const estacoes = {};
                     for (let i = 1; i <= numEst; i++) {
@@ -8480,38 +8540,56 @@ function fecharHistoricoModal() {
 
                 // Cada máquina
                 for(let m=1;m<=nMaq;m++){
-                    const iStart = Math.round((m-1)*pares)+1;
-                    const iEnd   = Math.round(m*pares);
-
                     html += `
                         <div style="border:1.5px solid var(--glass-border);border-radius:14px;overflow:hidden;background:var(--machine-bg);">
                             <!-- Cabeçalho máquina -->
                             <div style="background:var(--stat-box);padding:7px 10px;text-align:center;border-bottom:1px solid var(--glass-border);">
                                 <span style="font-size:10px;font-weight:900;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;">⚙ Máquina ${m}</span>
                             </div>
-
-                            <!-- Pares de estações: i frente a frente com i+metade -->
                             <div style="padding:8px 8px 10px;display:flex;flex-direction:column;gap:5px;">`;
 
-                    // Rótulo colunas
-                    html += `<div style="display:grid;grid-template-columns:1fr 8px 1fr;gap:4px;align-items:center;margin-bottom:2px;">
-                                <div style="text-align:center;font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);opacity:0.7;">Frente</div>
-                                <div></div>
-                                <div style="text-align:center;font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);opacity:0.7;">Frente</div>
+                    if (g === '11337') {
+                        // LÓGICA SEQUENCIAL - GRUPO 11337
+                        html += `<div style="display:grid;grid-template-columns:1fr 8px 1fr;gap:4px;align-items:center;margin-bottom:2px;">
+                                    <div style="text-align:center;font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);opacity:0.7;">Lado</div>
+                                    <div></div>
+                                    <div style="text-align:center;font-size:7.5px;font-weiaght:900;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);opacity:0.7;">Lado</div>
+                                </div>`;
+                        const maqStart = (m - 1) * 6 + 1; 
+                        for (let i = maqStart; i < maqStart + 6; i += 2) {
+                            const estA = estacoes[i]   || {vazia:true,status:'parada',modelo:'',tamanho:'',giro:0,prManual:0};
+                            const estB = estacoes[i+1] || {vazia:true,status:'parada',modelo:'',tamanho:'',giro:0,prManual:0};
+                            html += `<div style="display:grid;grid-template-columns:1fr 8px 1fr;gap:4px;align-items:stretch;">
+                                ${_cell(i, estA)}
+                                <div style="display:flex;align-items:center;justify-content:center;">
+                                    <div style="width:2px;height:100%;min-height:20px;background:linear-gradient(to bottom,transparent,rgba(100,116,139,0.3),transparent);border-radius:2px;"></div>
+                                </div>
+                                ${_cell(i+1, estB)}
                             </div>`;
+                        }
+                    } else {
+                        // LÓGICA FRENTE A FRENTE - OUTROS GRUPOS
+                        const iStart = Math.round((m-1)*pares)+1;
+                        const iEnd   = Math.round(m*pares);
+                        
+                        html += `<div style="display:grid;grid-template-columns:1fr 8px 1fr;gap:4px;align-items:center;margin-bottom:2px;">
+                                    <div style="text-align:center;font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);opacity:0.7;">Frente</div>
+                                    <div></div>
+                                    <div style="text-align:center;font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);opacity:0.7;">Frente</div>
+                                </div>`;
 
-                    for(let i=iStart;i<=iEnd;i++){
-                        const estA = estacoes[i]        || {vazia:true,status:'parada',modelo:'',tamanho:'',giro:0,prManual:0};
-                        const estB = estacoes[i+metade] || {vazia:true,status:'parada',modelo:'',tamanho:'',giro:0,prManual:0};
+                        for(let i=iStart;i<=iEnd;i++){
+                            const estA = estacoes[i]        || {vazia:true,status:'parada',modelo:'',tamanho:'',giro:0,prManual:0};
+                            const estB = estacoes[i+metade] || {vazia:true,status:'parada',modelo:'',tamanho:'',giro:0,prManual:0};
 
-                        // Separador de par
-                        html += `<div style="display:grid;grid-template-columns:1fr 8px 1fr;gap:4px;align-items:stretch;">
-                            ${_cell(i, estA)}
-                            <div style="display:flex;align-items:center;justify-content:center;">
-                                <div style="width:2px;height:100%;min-height:20px;background:linear-gradient(to bottom,transparent,rgba(100,116,139,0.3),transparent);border-radius:2px;"></div>
-                            </div>
-                            ${_cell(i+metade, estB)}
-                        </div>`;
+                            html += `<div style="display:grid;grid-template-columns:1fr 8px 1fr;gap:4px;align-items:stretch;">
+                                ${_cell(i, estA)}
+                                <div style="display:flex;align-items:center;justify-content:center;">
+                                    <div style="width:2px;height:100%;min-height:20px;background:linear-gradient(to bottom,transparent,rgba(100,116,139,0.3),transparent);border-radius:2px;"></div>
+                                </div>
+                                ${_cell(i+metade, estB)}
+                            </div>`;
+                        }
                     }
 
                     html += `</div></div>`;
