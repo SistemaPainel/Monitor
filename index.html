@@ -6775,6 +6775,7 @@ async function cancelarReimpressaoEditor(id) {
         // detectou automaticamente — só editor pode fazer isso
         // =====================================================================
         async function adicionarPrManual(grupo, estacao, atual, event) {
+            if (event) event.preventDefault(); // Impede o pulo da página
             event.stopPropagation();
             const val = await customPrompt(`Quantos PRs adicionar manualmente na EST ${estacao} do ${grupo}?\n(Atual: +${atual}. Digite 0 para zerar)`, false);
             if (val !== null && val.trim() !== '') {
@@ -7387,6 +7388,10 @@ function fecharHistoricoModal() {
                 // OTIMIZAÇÃO: Atualização do DOM via requestAnimationFrame
                 requestAnimationFrame(() => {
                     const grid = document.getElementById('stationGrid');
+                    
+                    // 1. TRAVA A ALTURA DA TELA para o scroll não pular pro topo
+                    grid.style.minHeight = grid.offsetHeight + 'px';
+                    
                     document.getElementById('loading-msg').style.display = 'none';
                     grid.innerHTML = "";
                     grid.appendChild(fragment);
@@ -7411,8 +7416,11 @@ function fecharHistoricoModal() {
                     document.getElementById('status-update').innerHTML = `Sync ERP DB: ${new Date().toLocaleTimeString()} &nbsp;&nbsp;|&nbsp;&nbsp; Alocação: ${dataAlocacaoFormatada}`;
                     aplicarFiltroModelo();
                    
-                    // Restaura posição do scroll após reconstrução do DOM
+                   // Restaura posição do scroll após reconstrução do DOM
                     window.scrollTo({ top: scrollYAntes, behavior: 'instant' });
+                    
+                    // 2. Destrava a altura do grid (depois que tudo voltou pro lugar)
+                    setTimeout(() => { grid.style.minHeight = ''; }, 50);
 
                     // Encadeando na próxima animação visual
                     requestAnimationFrame(() => {
