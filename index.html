@@ -5557,7 +5557,15 @@ function customPromptMultiline(msg, defaultValue = '') {
 
         function gerarBackContent(detalhes, estacao, modelo, tamanho, temReprovado) {
             const backId = 'back-est-' + estacao;
-            let html = '<div class="back-title"><span>EST ' + String(estacao).padStart(2, '0') + ' - MATRIZ DETALHADA</span><span class="back-close">X</span></div>';
+            
+            // Corrige a numeração do título do verso para o grupo 11337
+            let numExibicao = estacao;
+            const grupoSelect = document.getElementById('filtroGrupo');
+            if (grupoSelect && grupoSelect.value === "11337") {
+                numExibicao = ((estacao - 1) % 6) + 1;
+            }
+            
+            let html = '<div class="back-title"><span>EST ' + String(numExibicao).padStart(2, '0') + ' - MATRIZ DETALHADA</span><span class="back-close">X</span></div>';
             if (!detalhes || detalhes.length === 0) { html += '<div class="no-details">Sem registros no banco de dados</div>'; return html; }
 
             const linhas = [];
@@ -7282,8 +7290,15 @@ function fecharHistoricoModal() {
                         </div>`;
                     };
 
+                    // Lógica para reiniciar a contagem por máquina no grupo 11337
+                    let numExibicao = i;
+                    if (grupoAtual === "11337") {
+                        numExibicao = ((i - 1) % 6) + 1;
+                    }
+                    let strEstacao = String(numExibicao).padStart(2, '0');
+
                     front.innerHTML = `
-                        <div class="card-header"><h2 title="EST ${String(i).padStart(2, '0')}">EST ${String(i).padStart(2, '0')}${badgeRepetido}${badgeMatriz}</h2>
+                        <div class="card-header"><h2 title="EST ${strEstacao} (ID Real: ${i})">EST ${strEstacao}${badgeRepetido}${badgeMatriz}</h2>
                             <select onchange="mudarStatus('${grupoAtual}', ${i}, this.value)" onclick="event.stopPropagation()" ${disableSelect}>
                                 <option value="rodando" ${statusBanco === 'rodando' ? 'selected' : ''}>RODANDO</option><option value="parada" ${statusBanco === 'parada' ? 'selected' : ''}>PARADA</option><option value="TROCA" ${statusBanco === 'TROCA' ? 'selected' : ''}>TROCA</option>
                             </select></div>
