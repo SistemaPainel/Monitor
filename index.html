@@ -7453,8 +7453,8 @@ function fecharHistoricoModal() {
             const btn = document.getElementById('btnSyncRef');
             try {
                 btn.disabled = true; btn.innerText = " Processando..."; document.getElementById('status-update').innerText = "Requisitando...";
-                setTimeout(async () => { await customAlert('Sincronização puxada com sucesso do Banco Matriz.'); carregarPainel(); btn.disabled = false; btn.innerHTML = " Atualizar DB"; }, 800);
-            } catch (error) { await customAlert('Falha de telemetria.'); btn.disabled = false; btn.innerHTML = " Atualizar DB"; }
+                setTimeout(async () => { await customAlert('Sincronização puxada com sucesso do Banco Matriz.'); carregarPainel(); btn.disabled = false; btn.innerHTML = " ERP"; }, 800);
+            } catch (error) { await customAlert('Falha de telemetria.'); btn.disabled = false; btn.innerHTML = " ERP"; }
         }
 
         function gerarImpressao() {
