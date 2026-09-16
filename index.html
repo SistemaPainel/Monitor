@@ -5555,7 +5555,7 @@ function customPromptMultiline(msg, defaultValue = '') {
             return '<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(16,185,129,0.18);color:#10b981;border:1px solid rgba(16,185,129,0.35);border-radius:6px;padding:1px 6px;font-size:8px;font-weight:900;letter-spacing:0.5px;white-space:nowrap;">▶ GIRO</span>';
         }
 
-        function gerarBackContent(detalhes, estacao, modelo, tamanho, temReprovado) {
+       function gerarBackContent(detalhes, estacao, modelo, tamanho, temReprovado) {
             const backId = 'back-est-' + estacao;
             
             // Corrige a numeração do título do verso para o grupo 11337
@@ -5568,30 +5568,53 @@ function customPromptMultiline(msg, defaultValue = '') {
             let html = '<div class="back-title"><span>EST ' + String(numExibicao).padStart(2, '0') + ' - MATRIZ DETALHADA</span><span class="back-close">X</span></div>';
             if (!detalhes || detalhes.length === 0) { html += '<div class="no-details">Sem registros no banco de dados</div>'; return html; }
 
-            const linhas = [];
+            // 1. Agrupar os detalhes pelas BNs (Cores)
+            const agrupadoPorBN = {};
             detalhes.forEach(function(d) {
                 const cor    = (d.cor    || '--').toString().trim();
                 const ordem  = (d.ordem  || '--').toString().trim();
                 const pacote = (d.pacote || '--').toString().trim();
                 const tipo   = _identificarTipo(d);
-                linhas.push({ cor, ordem, pacote, tipo });
+                
+                if (!agrupadoPorBN[cor]) agrupadoPorBN[cor] = [];
+                agrupadoPorBN[cor].push({ cor, ordem, pacote, tipo });
             });
 
-            html += '<div class="detail-header" style="grid-template-columns:24px 1fr 1fr 1fr 64px;">' +
+            // 2. Cria o cabeçalho (sem a coluna COR, para dar mais espaço para Ordem e Pacote)
+            html += '<div class="detail-header" style="grid-template-columns:24px 1.2fr 1fr 64px;">' +
                 '<div><input type="checkbox" class="reimp-check-all" data-back="' + backId + '" onchange="toggleTodosLote(\'' + backId + '\', this.checked)"></div>' +
-                '<div>COR</div><div>ORDEM</div><div>PACOTE</div><div style="text-align:center;">TIPO</div></div>';
+                '<div>ORDEM</div><div>PACOTE</div><div style="text-align:center;">TIPO</div></div>';
 
-            linhas.forEach(function(l) {
-                const isReprov = l.tipo === 'reprov';
-                const ordemClass = isReprov ? 'detail-cell ordem-reprovada' : 'detail-cell';
-                html += '<div class="detail-row" style="grid-template-columns:24px 1fr 1fr 1fr 64px;" onclick="event.stopPropagation()">' +
-                    '<div class="reimp-check-cell"><input type="checkbox" class="reimp-check"' +
-                    ' data-back="' + backId + '" data-cor="' + htmlSafe(l.cor) + '" data-ordem="' + htmlSafe(l.ordem) + '" data-pacote="' + htmlSafe(l.pacote) + '" data-tipo="' + htmlSafe(l.tipo) + '"' +
-                    ' onchange="atualizarBotaoLote(\'' + backId + '\')"></div>' +
-                    '<div class="detail-cell cor-cell" title="' + htmlSafe(l.cor) + '">' + htmlSafe(l.cor) + '</div>' +
-                    '<div class="' + ordemClass + '" title="' + htmlSafe(l.ordem) + '">' + htmlSafe(l.ordem) + '</div>' +
-                    '<div class="detail-cell" title="' + htmlSafe(l.pacote) + '">' + htmlSafe(l.pacote) + '</div>' +
-                    '<div class="detail-cell" style="display:flex;align-items:center;justify-content:center;">' + _badgeTipo(l.tipo) + '</div></div>';
+            // 3. Renderiza cada grupo separado pela BN
+            const bnsOrdenadas = Object.keys(agrupadoPorBN).sort();
+
+            bnsOrdenadas.forEach(function(bn) {
+                // Calcula a quantidade de pacotes dentro dessa BN
+                const qtdPacotes = agrupadoPorBN[bn].length;
+
+                // Divisor e Título da BN com a contagem de pacotes e CSS blindado contra quebra de linha
+                html += `<div style="grid-column: 1 / -1; background: rgba(0, 122, 255, 0.08); border-left: 4px solid #007AFF; padding: 6px 10px; font-size: 11px; font-weight: 900; color: #007AFF; margin: 6px 0; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div style="flex: 1; word-break: break-word; line-height: 1.3;">
+                        🎨 BN: ${htmlSafe(bn)}
+                    </div>
+                    <span style="background: rgba(0, 122, 255, 0.15); border: 1px solid rgba(0, 122, 255, 0.4); padding: 3px 8px; border-radius: 12px; font-size: 9px; letter-spacing: 1px; color: #007AFF; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;">
+                        ${qtdPacotes} PCT
+                    </span>
+                </div>`;
+
+                // Renderiza as linhas de Ordem e Pacote debaixo da BN correspondente
+                agrupadoPorBN[bn].forEach(function(l) {
+                    const isReprov = l.tipo === 'reprov';
+                    const ordemClass = isReprov ? 'detail-cell ordem-reprovada' : 'detail-cell';
+                    
+                    html += '<div class="detail-row" style="grid-template-columns:24px 1.2fr 1fr 64px;" onclick="event.stopPropagation()">' +
+                        '<div class="reimp-check-cell"><input type="checkbox" class="reimp-check"' +
+                        ' data-back="' + backId + '" data-cor="' + htmlSafe(l.cor) + '" data-ordem="' + htmlSafe(l.ordem) + '" data-pacote="' + htmlSafe(l.pacote) + '" data-tipo="' + htmlSafe(l.tipo) + '"' +
+                        ' onchange="atualizarBotaoLote(\'' + backId + '\')"></div>' +
+                        '<div class="' + ordemClass + '" title="' + htmlSafe(l.ordem) + '">' + htmlSafe(l.ordem) + '</div>' +
+                        '<div class="detail-cell" title="' + htmlSafe(l.pacote) + '">' + htmlSafe(l.pacote) + '</div>' +
+                        '<div class="detail-cell" style="display:flex;align-items:center;justify-content:center;">' + _badgeTipo(l.tipo) + '</div></div>';
+                });
             });
 
             html += '<div class="back-reimp-footer" id="' + backId + '-footer"><button class="btn-reimp-lote" onclick="solicitarReimpressaoLote(\'' + jsSafe(estacao) + '\', \'' + jsSafe(modelo) + '\', \'' + jsSafe(tamanho || '--') + '\', \'' + backId + '\', event)">Selecionar e enviar solicitação <span id="' + backId + '-count" style="background:rgba(255,255,255,0.25);padding:1px 7px;border-radius:10px;">0</span></button></div>';
