@@ -1889,10 +1889,21 @@
         @keyframes typingPulse { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
        
         @media(max-width: 768px) {
-            .chat-window { right: -100%; width: 100vw; height: 100vh; bottom: 0; border-radius: 0; flex-direction: column; }
+            /* Coloca lado a lado e esconde o que passar da tela */
+            .chat-window { right: -100%; width: 100vw; height: 100vh; bottom: 0; border-radius: 0; flex-direction: row; overflow: hidden; }
             .chat-window.open { right: 0; }
-            .chat-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--glass-border); height: 250px; flex-shrink: 0; }
+            
+            /* Sidebar e Chat ocupam 100% da tela. A transição cria o efeito de deslizar */
+            .chat-sidebar { width: 100vw; height: 100%; border-right: none; flex-shrink: 0; transition: margin-left 0.3s ease; }
+            .chat-main { width: 100vw; height: 100%; flex-shrink: 0; }
+            
+            /* Classe que será ativada via JS para deslizar a tela */
+            .chat-window.mobile-chat-ativo .chat-sidebar { margin-left: -100vw; }
+            
             .chat-fab { bottom: 20px; right: 20px; }
+            
+            /* Garante que o botão de voltar fique visível no mobile */
+            .btn-chat-back-mobile { display: flex !important; }
         }
    
 /* Ações de Mensagem (Editar/Apagar/Responder/Mídia) */
@@ -9090,8 +9101,9 @@ function fecharHistoricoModal() {
                 _recalcularBadgeGlobal();
                
                 renderizarContatosChat();
-                carregarMensagensChat(_chatAtivo);
-                setTimeout(() => document.getElementById('chatInputMsg').focus(), 500);
+            carregarMensagensChat(_chatAtivo);
+            ativarChatMobile();
+            setTimeout(() => document.getElementById('chatInputMsg').focus(), 500);
             } else {
                 win.classList.remove('open');
                 overlay.style.opacity = '0';
@@ -9101,15 +9113,15 @@ function fecharHistoricoModal() {
         }
 
 
-            function abrirSidebarChat() {
-                document.getElementById('chatSidebar').classList.add('mobile-open');
-                document.getElementById('chatSidebarOverlay').classList.add('show');
-            }
-            function fecharSidebarChat() {
-                document.getElementById('chatSidebar').classList.remove('mobile-open');
-                const overlay = document.getElementById('chatSidebarOverlay');
-                if (overlay) overlay.classList.remove('show');
-            }
+            // Volta para a lista de pessoas (Sidebar)
+function abrirSidebarChat() {
+    document.getElementById('chatWindow').classList.remove('mobile-chat-ativo');
+}
+
+// Desliza para mostrar a conversa
+function ativarChatMobile() {
+    document.getElementById('chatWindow').classList.add('mobile-chat-ativo');
+}
 
             // Monitora o gesto de arrastar o dedo para a direita para fechar o chat no celular
             const chatWin = document.getElementById('chatWindow');
