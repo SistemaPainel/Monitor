@@ -3716,10 +3716,10 @@ rx="1.5" fill="#f59e0b"/>
             </div>
         </div>
         <div class="chat-main" style="position: relative;">
-            <div class="chat-main-header">
-                <!-- Agrupando o botão de voltar e o Perfil para ficarem sempre juntos na esquerda -->
-                <div style="display: flex; align-items: center; gap: 4px;">
-                    <button class="btn-chat-back-mobile" onclick="abrirSidebarChat()" ontouchstart="abrirSidebarChat()" style="display:none; background:none; border:none; color:var(--text-main); font-size:32px; cursor:pointer; padding:10px 15px 10px 0; align-items:center; z-index: 100; touch-action: manipulation;">☰</button>
+            <div class="chat-main-header" style="position: relative; z-index: 99999;">
+                <div style="display: flex; align-items: center; gap: 2px;">
+                    <!-- Botão convertido para DIV, com z-index alto e área de toque gigante -->
+                    <div class="btn-chat-back-mobile" onclick="abrirSidebarChat()" style="display:none; position: relative; z-index: 99999; font-size: 35px; cursor: pointer; padding: 10px 25px 10px 5px; margin-left: -5px; color: var(--text-main); user-select: none; -webkit-tap-highlight-color: transparent;">☰</div>
                     
                     <div class="chat-active-info" id="chatActiveHeader">
                         <div class="chat-contact-avatar"><span class="chat-group-icon">🌍</span></div>
@@ -3729,7 +3729,6 @@ rx="1.5" fill="#f59e0b"/>
                         </div>
                     </div>
                 </div>
-
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div class="chat-search-wrap" style="position: relative;">
                         <input type="text" id="chatSearchInput" placeholder="🔍 Buscar..." oninput="filtrarMensagensChat()" style="background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 8px 14px; font-size: 11px; color: var(--text-main); font-family: 'Inter', sans-serif; outline: none; width: 140px; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
