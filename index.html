@@ -1890,7 +1890,17 @@
        
         @media(max-width: 768px) {
             /* Coloca lado a lado e esconde o que passar da tela */
-            .chat-window { right: -100%; width: 100vw; height: 100vh; bottom: 0; border-radius: 0; flex-direction: row; overflow: hidden; }
+            .chat-window { 
+                right: -100%; 
+                width: 100vw; 
+                max-width: 100vw; /* Força a ocupar a tela toda e tira a margem esquerda */
+                height: 100dvh; /* Usa dvh para respeitar a barra do Safari no iPhone */
+                bottom: 0; 
+                border-radius: 0; 
+                border: none; /* Remove a borda arredondada para parecer um app nativo */
+                flex-direction: row; 
+                overflow: hidden; 
+            }
             .chat-window.open { right: 0; }
             
             /* Sidebar e Chat ocupam 100% da tela. A transição cria o efeito de deslizar */
