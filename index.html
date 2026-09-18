@@ -9102,7 +9102,6 @@ function fecharHistoricoModal() {
                
                 renderizarContatosChat();
             carregarMensagensChat(_chatAtivo);
-            ativarChatMobile();
             setTimeout(() => document.getElementById('chatInputMsg').focus(), 500);
             } else {
                 win.classList.remove('open');
@@ -9347,6 +9346,7 @@ function ativarChatMobile() {
                         `;
                     }
             await carregarMensagensChat(alvoId);
+            ativarChatMobile(); // <--- AGORA SIM ELE DESLIZA APENAS QUANDO VOCÊ CLICA NO NOME DA PESSOA
         }
 
         // --- RENDERIZADOR UNIVERSAL DE MENSAGENS ---
