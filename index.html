@@ -3832,6 +3832,20 @@ rx="1.5" fill="#f59e0b"/>
 
     </div>
 
+<!-- MODAL DE PERMISSÃO DE NOTIFICAÇÕES DO CHAT -->
+    <div id="modalPermissaoNotif" class="custom-modal-overlay" style="z-index: 1000000;">
+        <div class="custom-modal-box" style="width: 380px;">
+            <div style="font-size: 45px; margin-bottom: 10px; animation: bellShake 1s ease infinite;">🔔</div>
+            <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--text-main); margin-bottom: 12px; font-weight: 900;">Ativar Notificações</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; font-weight: 600;">Quer ser avisado quando chegar uma nova mensagem no chat, mesmo se estiver em outra aba do navegador?</p>
+            
+            <div class="custom-modal-actions">
+                <button type="button" onclick="document.getElementById('modalPermissaoNotif').style.display='none'" class="btn-cancelar">Agora não</button>
+                <button type="button" onclick="aceitarNotificacoesNativas()" class="btn-confirmar" style="background: linear-gradient(135deg, #007AFF, #5E5CE6); box-shadow: 0 6px 20px rgba(0,122,255,0.4);">Sim, avisar!</button>
+            </div>
+        </div>
+    </div>
+
 <!-- MODAL DE RETRABALHO (TALÃO FECHADO) -->
     <div id="retModalOverlay" class="custom-modal-overlay" onclick="if(event.target===this) fecharModalRet()">
         <div class="custom-modal-box" style="text-align: left; width: 460px; max-width: 95vw;">
@@ -9211,8 +9225,31 @@ function fecharHistoricoModal() {
                 chatWin.addEventListener('touchend', () => isDragging = false, { passive: true });
             }
 
+      // Função ativada quando o usuário clica em "Sim, avisar!" no nosso Pop-up bonito
+        window.aceitarNotificacoesNativas = function() {
+            document.getElementById('modalPermissaoNotif').style.display = 'none';
+            // Agora sim disparamos a permissão oficial do navegador, porque o usuário já concordou
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    if (typeof showToast === 'function') showToast("Notificações ativadas com sucesso! 🔔");
+                }
+            });
+        };
+
         async function iniciarServicosChat() {
             if(!_usuarioAtual) return;
+            
+            // Verifica se o navegador suporta e se a permissão ainda não foi dada nem negada ("default")
+            if ("Notification" in window && Notification.permission === "default") {
+                // Apenas exibe o pop-up se não tivermos perguntado nesta sessão (pra não ser chato)
+                if (!sessionStorage.getItem('notifPromptShown')) {
+                    setTimeout(() => {
+                        document.getElementById('modalPermissaoNotif').style.display = 'flex';
+                        sessionStorage.setItem('notifPromptShown', 'true');
+                    }, 2000); // Espera 2 segundos após o login para não assustar o usuário
+                }
+            }
+
             const myId = _usuarioAtual.user.replace(/\./g, '_');
            
             const presenceRef = `${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`;
@@ -10598,23 +10635,51 @@ function handleChatTyping() {
                 localStorage.setItem('chatLastMsgIds', JSON.stringify(lastMsgIds));
 
                 if (m.sender !== myId && (Date.now() - m.ts < 180000)) {
-                    if (!muted[canal]) {
-                        _unreadPerChannel[canal] = (_unreadPerChannel[canal] || 0) + 1;
-                        localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
-                        if(typeof _destacarContatoNaSidebar === 'function') _destacarContatoNaSidebar(canal);
+                            if (!muted[canal]) {
+                                _unreadPerChannel[canal] = (_unreadPerChannel[canal] || 0) + 1;
+                                localStorage.setItem('chatUnreadPerChannel', JSON.stringify(_unreadPerChannel));
+                                if(typeof _destacarContatoNaSidebar === 'function') _destacarContatoNaSidebar(canal);
 
-                        if (typeof tocarSomNotificacao === 'function') tocarSomNotificacao();
-                        if (typeof window._recalcularBadgeGlobal === 'function') window._recalcularBadgeGlobal();
+                                if (typeof tocarSomNotificacao === 'function') tocarSomNotificacao();
+                                if (typeof window._recalcularBadgeGlobal === 'function') window._recalcularBadgeGlobal();
 
-                        if (!isOpen) {
-                            const fab = document.getElementById('btnChatToggle');
-                            if(fab) {
-                                fab.style.transform = 'scale(1.15) translateY(-5px)';
-                                setTimeout(() => fab.style.transform = '', 300);
+                                if (!isOpen) {
+                                    const fab = document.getElementById('btnChatToggle');
+                                    if(fab) {
+                                        fab.style.transform = 'scale(1.15) translateY(-5px)';
+                                        setTimeout(() => fab.style.transform = '', 300);
+                                    }
+                                }
+
+                                // INÍCIO: NOTIFICAÇÃO NATIVA DO NAVEGADOR (Facebook Style)
+                                if (Notification.permission === 'granted' && document.hidden) {
+                                    let nomeRemetente = m.sender;
+                                    try {
+                                        const usuariosMap = Object.assign({}, defaultUsuarios, credenciaisEditor, credenciaisGerente, credenciaisDev);
+                                        if (usuariosMap[m.sender]) {
+                                            nomeRemetente = usuariosMap[m.sender].nome || usuariosMap[m.sender];
+                                        }
+                                    } catch(e) {}
+                                    
+                                    const previewTexto = m.text ? m.text : "📸 Imagem recebida";
+                                    
+                                    const notification = new Notification("Nova mensagem de " + nomeRemetente, {
+                                        body: previewTexto,
+                                        icon: "https://api.dicebear.com/9.x/lorelei/svg?seed=" + m.sender + "&backgroundColor=transparent",
+                                        tag: "chat-msg" // Agrupa mensagens para não encher a tela
+                                    });
+
+                                    // Se o usuário clicar na notificação, traz a aba do sistema para a frente
+                                    notification.onclick = function() {
+                                        window.focus();
+                                        if (typeof toggleChatWindow === 'function' && !document.getElementById('chatWindow').classList.contains('open')) {
+                                            toggleChatWindow();
+                                        }
+                                    };
+                                }
+                                // FIM: NOTIFICAÇÃO NATIVA
                             }
                         }
-                    }
-                }
             }
         });
     });
