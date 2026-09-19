@@ -9239,8 +9239,8 @@ function fecharHistoricoModal() {
         async function iniciarServicosChat() {
             if(!_usuarioAtual) return;
             
-            // Verifica se o navegador suporta e se a permissão ainda não foi dada nem negada ("default")
-            if ("Notification" in window && Notification.permission === "default") {
+            // Verifica se suporta, se a permissão é "default" E se é uma tela de Desktop (> 768px)
+            if ("Notification" in window && Notification.permission === "default" && window.innerWidth > 768) {
                 // Apenas exibe o pop-up se não tivermos perguntado nesta sessão (pra não ser chato)
                 if (!sessionStorage.getItem('notifPromptShown')) {
                     setTimeout(() => {
@@ -10651,8 +10651,8 @@ function handleChatTyping() {
                                     }
                                 }
 
-                                // INÍCIO: NOTIFICAÇÃO NATIVA DO NAVEGADOR (Facebook Style)
-                                if (Notification.permission === 'granted' && document.hidden) {
+                                // INÍCIO: NOTIFICAÇÃO NATIVA DO NAVEGADOR (Facebook Style - Apenas Desktop)
+                                if (Notification.permission === 'granted' && document.hidden && window.innerWidth > 768) {
                                     let nomeRemetente = m.sender;
                                     try {
                                         const usuariosMap = Object.assign({}, defaultUsuarios, credenciaisEditor, credenciaisGerente, credenciaisDev);
