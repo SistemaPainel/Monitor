@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Painel de Monitoramento - Talonário </title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- Chart.js removido daqui (será carregado dinamicamente para não travar a tela de login) -->
     <style>
 
 
@@ -764,18 +764,23 @@
        
        .station-card {
             background: var(--glass-bg);
-            /* Removido o backdrop-filter daqui para evitar vidro em cima de vidro */
             border: 1px solid var(--glass-border);
-            padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;
+            padding: 16px; display: flex; flex-direction: column; justify-content: space-between;
             cursor: pointer; 
-            /* Transição específica em vez de 'all' evita engasgos no hover */
-            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; 
+            transition: transform 0.25s ease, border-color 0.25s ease; 
             overflow: hidden; position: relative;
         }
-        .station-card::before { content: ''; position: absolute; top: 0; left: 0; width: 6px;
-            height: 100%; transition: all 0.4s ease; }
-        .station-card:hover { transform: translateY(-5px); box-shadow: var(--glass-hover-shadow);
+        /* Sombra estática base */
+        .station-card { box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        
+        /* Sombra forte pré-renderizada, ativada via opacidade no hover (Performance MÁXIMA) */
+        .station-card::after {
+            content: ''; position: absolute; inset: 0; border-radius: inherit;
+            box-shadow: var(--glass-hover-shadow); opacity: 0; transition: opacity 0.25s ease; pointer-events: none; z-index: -1;
         }
+        .station-card::before { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; transition: all 0.4s ease; }
+        .station-card:hover { transform: translateY(-5px); }
+        .station-card:hover::after { opacity: 1; }
         .station-card.status-parada::before { background: var(--color-parada); box-shadow: 2px 0 15px var(--color-parada-glow);
         }
         .station-card.status-TROCA::before { background: var(--color-TROCA); box-shadow: 2px 0 15px var(--color-TROCA-glow);
@@ -2651,6 +2656,16 @@ body.is-resizing * { transition: none !important; animation: none !important; }
     transform: none;
 }
 
+/* OTIMIZAÇÃO DE PERFORMANCE MOBILE: Reduz o cálculo de GPU */
+@media (max-width: 768px) {
+    .glass-bg, .station-card, .chat-window, .notif-panel, .kpi-modal, .machine-container, .login-box {
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+    }
+    .station-card {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+    }
+}
     </style>
 </head>
 <body>
@@ -7749,9 +7764,28 @@ function fecharHistoricoModal() {
         function kpiSetTab(btn, tab) { document.querySelectorAll('.kpi-tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); _kpiTabAtual = tab; _renderKpiBody(_coletarDados()); }
         function fecharDashboard() { document.getElementById('kpiOverlay').classList.remove('open'); _kpiCharts.forEach(c => { try { c.destroy(); } catch(ex){} }); _kpiCharts = []; }
         function abrirDashboard() {
+            // Se o script do Chart.js ainda não foi baixado, baixa agora
+            if (typeof Chart === 'undefined') {
+                document.getElementById('kpiSubtitle').textContent = 'Carregando motor de gráficos...';
+                document.getElementById('kpiOverlay').classList.add('open');
+                
+                const script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js";
+                script.onload = () => {
+                    iniciarRenderizacaoDashboard();
+                };
+                document.head.appendChild(script);
+            } else {
+                iniciarRenderizacaoDashboard();
+            }
+        }
+
+        function iniciarRenderizacaoDashboard() {
             _kpiCharts.forEach(c => { try { c.destroy(); } catch(ex){} }); _kpiCharts = []; _kpiTabAtual = 'geral';
-            document.querySelectorAll('.kpi-tab').forEach((t,i) => t.classList.toggle('active', i===0)); document.getElementById('kpiOverlay').classList.add('open');
-            const grupo = document.getElementById('filtroGrupo').value; document.getElementById('kpiSubtitle').textContent = grupo + ' · Telemetria Ativa · ' + new Date().toLocaleTimeString('pt-BR');
+            document.querySelectorAll('.kpi-tab').forEach((t,i) => t.classList.toggle('active', i===0)); 
+            document.getElementById('kpiOverlay').classList.add('open');
+            const grupo = document.getElementById('filtroGrupo').value; 
+            document.getElementById('kpiSubtitle').textContent = grupo + ' · Telemetria Ativa · ' + new Date().toLocaleTimeString('pt-BR');
             _renderKpiBody(_coletarDados());
         }
         function _coletarDados() {
