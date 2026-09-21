@@ -7768,7 +7768,7 @@ function fecharHistoricoModal() {
 
                 if (!hasData) { body.innerHTML = `<p style="text-align:center;color:var(--text-muted);font-weight:700;padding:40px;">Nenhum dado WIP registrado na rede ativa.</p>`; return; }
 
-               body.innerHTML = `<table class="wip-table"><thead><tr><th style="width:20%;">Modelo<br><select id="fw-modelo" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:10%;">Tamanho<br><select id="fw-tamanho" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Cor Variante<br><select id="fw-cor" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Documento (Ordem)<br><select id="fw-ordem" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:12%;">Lote/Pacote<br><select id="fw-pacote" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:14%;">Alocação<br><select id="fw-aloc" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:8%;text-align:center;">Ação</th></tr></thead><tbody id="wipTableBody"></tbody></table>`;
+              body.innerHTML = `<table class="wip-table"><thead><tr><th style="width:20%;">Modelo<br><select id="fw-modelo" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:10%;">Tamanho<br><select id="fw-tamanho" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Cor Variante<br><select id="fw-cor" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Documento (Ordem)<br><input type="text" id="fw-ordem" onkeyup="renderTabelaWIP()" class="wip-filter-select" placeholder="🔍 Buscar Ordem..." autocomplete="off"></th><th style="width:12%;">Lote/Pacote<br><input type="text" id="fw-pacote" onkeyup="renderTabelaWIP()" class="wip-filter-select" placeholder="🔍 Buscar Pct..." autocomplete="off"></th><th style="width:14%;">Alocação<br><select id="fw-aloc" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:8%;text-align:center;">Ação</th></tr></thead><tbody id="wipTableBody"></tbody></table>`;
                 fillWIPSelects(); collapsedModels.clear(); renderTabelaWIP();
             } catch (err) {
                 console.error("Erro no WIP:", err);
@@ -7777,12 +7777,11 @@ function fecharHistoricoModal() {
         }
 
         function fillWIPSelects() {
-            const selects = { mod: new Set(), tam: new Set(), cor: new Set(), ord: new Set(), pac: new Set(), aloc: new Set() };
-            wipRawData.forEach(d => { selects.mod.add(d.modelo); selects.tam.add(d.tamanho); selects.cor.add(d.cor); selects.ord.add(d.ordem); selects.pac.add(d.pacote); selects.aloc.add(d.alocacao); });
+            const selects = { mod: new Set(), tam: new Set(), cor: new Set(), aloc: new Set() };
+            wipRawData.forEach(d => { selects.mod.add(d.modelo); selects.tam.add(d.tamanho); selects.cor.add(d.cor); selects.aloc.add(d.alocacao); });
             const populate = (id, set) => { const el = document.getElementById(id); if(!el) return; let html = '<option value="">Todos</option>'; [...set].sort().forEach(val => html += `<option value="${val}">${val}</option>`); el.innerHTML = html; };
-            populate('fw-modelo', selects.mod); populate('fw-tamanho', selects.tam); populate('fw-cor', selects.cor); populate('fw-ordem', selects.ord); populate('fw-pacote', selects.pac); populate('fw-aloc', selects.aloc);
+            populate('fw-modelo', selects.mod); populate('fw-tamanho', selects.tam); populate('fw-cor', selects.cor); populate('fw-aloc', selects.aloc);
         }
-
         function toggleWipModel(mod) { if(collapsedModels.has(mod)) collapsedModels.delete(mod); else collapsedModels.add(mod); renderTabelaWIP(); }
         function toggleAllWip(collapse) {
             if (collapse) {
@@ -7792,8 +7791,15 @@ function fecharHistoricoModal() {
         }
 
         function renderTabelaWIP() {
-            const fMod = document.getElementById('fw-modelo')?.value || ""; const fTam = document.getElementById('fw-tamanho')?.value || ""; const fCor = document.getElementById('fw-cor')?.value || ""; const fOrd = document.getElementById('fw-ordem')?.value || ""; const fPac = document.getElementById('fw-pacote')?.value || ""; const fAloc = document.getElementById('fw-aloc')?.value || "";
-            const filtered = wipRawData.filter(d => { return (fMod === "" || d.modelo === fMod) && (fTam === "" || d.tamanho === fTam) && (fCor === "" || d.cor === fCor) && (fOrd === "" || d.ordem === fOrd) && (fPac === "" || d.pacote === fPac) && (fAloc === "" || d.alocacao === fAloc); });
+            const fMod = document.getElementById('fw-modelo')?.value || ""; const fTam = document.getElementById('fw-tamanho')?.value || ""; const fCor = document.getElementById('fw-cor')?.value || ""; const fOrd = (document.getElementById('fw-ordem')?.value || "").toLowerCase(); const fPac = (document.getElementById('fw-pacote')?.value || "").toLowerCase(); const fAloc = document.getElementById('fw-aloc')?.value || "";
+            const filtered = wipRawData.filter(d => { 
+                return (fMod === "" || d.modelo === fMod) && 
+                       (fTam === "" || d.tamanho === fTam) && 
+                       (fCor === "" || d.cor === fCor) && 
+                       (fOrd === "" || d.ordem.toLowerCase().includes(fOrd)) && 
+                       (fPac === "" || d.pacote.toLowerCase().includes(fPac)) && 
+                       (fAloc === "" || d.alocacao === fAloc); 
+            });
             const tbody = document.getElementById('wipTableBody'); if(!tbody) return;
             if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; font-weight: 700; color: var(--text-muted);">Nenhuma peça corresponde aos filtros.</td></tr>`; return; }
 
