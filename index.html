@@ -5937,8 +5937,8 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         }
 
         async function carregarReimpressoes(renderModal = true) {
-            try {
-                const snap = await db.ref('/reimpressoes').once('value');
+    try {
+        const snap = await db.ref('/reimpressoes').orderByKey().limitToLast(200).once('value');
                 const data = snap.val() || {};
                 _reprintData = Object.keys(data).map(id => normalizarRequisicaoReimpressao(id, data[id])).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 if (renderModal) renderReimpressoes();
@@ -5950,8 +5950,8 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         }
 
 
-        // OUVINTE EM TEMPO REAL ROBUSTO (Lida com quedas de conexão)
-    db.ref('/reimpressoes').on('value', (snap) => {
+        // OUVINTE EM TEMPO REAL ROBUSTO COM LIMITE
+db.ref('/reimpressoes').orderByKey().limitToLast(200).on('value', (snap) => {
         if (snap.val() === null && navigator.onLine === false) return;
 
         const data = snap.val() || {};
@@ -5995,31 +5995,43 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
         }
 
        // Função para preencher automaticamente as opções dos selects com base no que está no banco
-        function _popularFiltrosEditor() {
-            const grupos = [...new Set(_reprintData.map(r => r.grupo).filter(Boolean))].sort();
-            const grupoSelect = document.getElementById('editorFiltroGrupo');
-            if (grupoSelect) {
-                const val = grupoSelect.value || 'todos';
-                grupoSelect.innerHTML = '<option value="todos">📦 Todos os Grupos</option>' +
-                    grupos.map(g => `<option value="${htmlSafe(g)}" ${val === g ? 'selected' : ''}>📦 ${htmlSafe(g)}</option>`).join('');
-            }
+       function _popularFiltrosEditor() {
+    const gruposSet = new Set();
+    const coordsSet = new Set();
+    const modelosSet = new Set();
 
-            const coords = [...new Set(_reprintData.map(r => r.solicitante).filter(Boolean))].sort();
-            const coordSelect = document.getElementById('editorFiltroCoord');
-            if (coordSelect) {
-                const val = coordSelect.value || 'todos';
-                coordSelect.innerHTML = '<option value="todos">👤 Todos os Coordenadores</option>' +
-                    coords.map(c => `<option value="${htmlSafe(c)}" ${val === c ? 'selected' : ''}>👤 ${htmlSafe(c)}</option>`).join('');
-            }
+    // Loop único de alta performance
+    _reprintData.forEach(r => {
+        if (r.grupo) gruposSet.add(r.grupo);
+        if (r.solicitante) coordsSet.add(r.solicitante);
+        if (r.modelo) modelosSet.add(r.modelo);
+    });
 
-            const modelos = [...new Set(_reprintData.map(r => r.modelo).filter(Boolean))].sort();
-            const modeloSelect = document.getElementById('editorFiltroModelo');
-            if (modeloSelect) {
-                const val = modeloSelect.value || 'todos';
-                modeloSelect.innerHTML = '<option value="todos">👟 Todos os Modelos</option>' +
-                    modelos.map(m => `<option value="${htmlSafe(m)}" ${val === m ? 'selected' : ''}>👟 ${htmlSafe(m)}</option>`).join('');
-            }
-        }
+    const grupos = [...gruposSet].sort();
+    const coords = [...coordsSet].sort();
+    const modelos = [...modelosSet].sort();
+
+    const grupoSelect = document.getElementById('editorFiltroGrupo');
+    if (grupoSelect) {
+        const val = grupoSelect.value || 'todos';
+        grupoSelect.innerHTML = '<option value="todos">📦 Todos os Grupos</option>' +
+            grupos.map(g => `<option value="${htmlSafe(g)}" ${val === g ? 'selected' : ''}>📦 ${htmlSafe(g)}</option>`).join('');
+    }
+
+    const coordSelect = document.getElementById('editorFiltroCoord');
+    if (coordSelect) {
+        const val = coordSelect.value || 'todos';
+        coordSelect.innerHTML = '<option value="todos">👤 Todos os Coordenadores</option>' +
+            coords.map(c => `<option value="${htmlSafe(c)}" ${val === c ? 'selected' : ''}>👤 ${htmlSafe(c)}</option>`).join('');
+    }
+
+    const modeloSelect = document.getElementById('editorFiltroModelo');
+    if (modeloSelect) {
+        const val = modeloSelect.value || 'todos';
+        modeloSelect.innerHTML = '<option value="todos">👟 Todos os Modelos</option>' +
+            modelos.map(m => `<option value="${htmlSafe(m)}" ${val === m ? 'selected' : ''}>👟 ${htmlSafe(m)}</option>`).join('');
+    }
+}
 
         // Função de renderização com a aplicação dos filtros
     function renderReimpressoes() {
@@ -6068,9 +6080,24 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             return;
         }
 
-        // Monta os cards filtrados na tela
+        // Monta os cards filtrados na tela (Limitado a 50 para não travar o navegador)
         const mapaVias = obterMapaViasReimpressao();
-        body.innerHTML = filtrado.map(req => templateRequisicao(req, false, mapaVias)).join('');
+        
+        // Limita a renderização inicial para manter a UI fluida
+        const limiteRenderizacao = 50;
+        const dadosParaRenderizar = filtrado.slice(0, limiteRenderizacao);
+        
+        let htmlCards = dadosParaRenderizar.map(req => templateRequisicao(req, false, mapaVias)).join('');
+        
+        // Adiciona botão "Carregar Mais" se houver mais itens
+        if (filtrado.length > limiteRenderizacao) {
+            htmlCards += `
+                <div style="text-align: center; margin: 20px 0;">
+                    <p style="font-size: 11px; color: var(--text-muted);">Mostrando ${limiteRenderizacao} de ${filtrado.length} requisições recentes.</p>
+                </div>`;
+        }
+        
+        body.innerHTML = htmlCards;
     }
 
         async function autenticarDevReimpressao(titulo) {
