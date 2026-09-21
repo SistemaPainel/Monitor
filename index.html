@@ -3265,7 +3265,12 @@ rx="1.5" fill="#f59e0b"/>
             <!-- ===== PAINEL DE ANÁLISE DO GERENTE (colapsável) ===== -->
             <div class="gerente-analytics-panel" id="gerenteAnalyticsPanel">
                 <div class="gerente-analytics-inner">
-                    <p class="gerente-analytics-title">📊 Análise de Aprovações</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+                        <p class="gerente-analytics-title" style="margin: 0;">📊 Análise de Aprovações</p>
+                        <button id="btnPuxarTudoGerente" onclick="window.puxarHistoricoCompletoGerente()" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: none; padding: 8px 16px; border-radius: 10px; font-size: 10px; font-weight: 900; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.4); letter-spacing: 0.5px; transition: 0.2s;">
+                            📥 Puxar Base Completa
+                        </button>
+                    </div>
                     <div class="gerente-filters-row">
                         <div class="gerente-filter-group">
                             <span class="gerente-filter-label">Filtrar por Período</span>
@@ -3284,17 +3289,17 @@ rx="1.5" fill="#f59e0b"/>
                         <div class="gerente-filter-group">
                             <span class="gerente-filter-label">Filtrar por Grupo</span>
                             <select class="gerente-filter-select" id="gerenteFiltroGrupo" onchange="atualizarAnalisesGerente()">
-    <option value="todos">Todos os Grupos</option>
-    <option value="Grupo 1">Grupo 1</option>
-    <option value="Grupo 2">Grupo 2</option>
-    <option value="Grupo 3">Grupo 3</option>
-    <option value="Grupo 4">Grupo 4</option>
-    <option value="Grupo 5">Grupo 5</option>
-    <option value="Grupo 6">Grupo 6</option>
-    <option value="Grupo 7">Grupo 7</option>
-    <option value="Grupo 8">Grupo 8</option>
-    <option value="11337">11337</option>
-</select>
+                                <option value="todos">Todos os Grupos</option>
+                                <option value="11337">11337</option>
+                                <option value="Grupo 1">Grupo 1</option>
+                                <option value="Grupo 2">Grupo 2</option>
+                                <option value="Grupo 3">Grupo 3</option>
+                                <option value="Grupo 4">Grupo 4</option>
+                                <option value="Grupo 5">Grupo 5</option>
+                                <option value="Grupo 6">Grupo 6</option>
+                                <option value="Grupo 7">Grupo 7</option>
+                                <option value="Grupo 8">Grupo 8</option>
+                            </select>
                         </div>
                         <div class="gerente-filter-group">
                             <span class="gerente-filter-label">Filtrar por Coordenador</span>
@@ -3417,19 +3422,20 @@ rx="1.5" fill="#f59e0b"/>
             <div class="actions-container">
        
                  <div class="filter-box">
-    <label>GRUPO</label>
-    <select id="filtroGrupo" onchange="trocarGrupo()">
-        <option value="Grupo 1">Grupo 1</option>
-        <option value="Grupo 2">Grupo 2</option>
-        <option value="Grupo 3">Grupo 3</option>
-        <option value="Grupo 4">Grupo 4</option>
-        <option value="Grupo 5">Grupo 5</option>
-        <option value="Grupo 6">Grupo 6</option>
-        <option value="Grupo 7">Grupo 7</option>
-        <option value="Grupo 8">Grupo 8</option>
-        <option value="11337">11337</option>
-    </select>
-</div>
+                    <label>GRUPO</label>
+                    <select id="filtroGrupo" onchange="trocarGrupo()">
+                        <option value="11337">11337</option>
+                        <option value="Grupo 1">Grupo 1</option>
+                        <option value="Grupo 2">Grupo 2</option>
+                        <option value="Grupo 3">Grupo 3</option>
+                        <option value="Grupo 4">Grupo 4</option>
+                        <option value="Grupo 5">Grupo 5</option>
+                        <option value="Grupo 6">Grupo 6</option>
+                        <option value="Grupo 7">Grupo 7</option>
+                        <option value="Grupo 8">Grupo 8</option>
+                    </select>
+           
+                </div>
                 <div class="filter-box">
                     <label>MODELO</label>
                     <select id="filtroModelo" onchange="aplicarFiltroModelo()">
@@ -3679,17 +3685,17 @@ rx="1.5" fill="#f59e0b"/>
                     <div style="display:flex;align-items:center;gap:8px;">
                         <label style="font-size:10px;font-weight:900;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Filtrar Grupo:</label>
                         <select id="macroFiltroGrupo" onchange="renderMacroPlanta()" style="background:var(--input-bg);border:1px solid var(--glass-border);border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--text-main);cursor:pointer;outline:none;">
-    <option value="TODOS">Todos os Grupos</option>
-    <option value="Grupo 1">Grupo 1</option>
-    <option value="Grupo 2">Grupo 2</option>
-    <option value="Grupo 3">Grupo 3</option>
-    <option value="Grupo 4">Grupo 4</option>
-    <option value="Grupo 5">Grupo 5</option>
-    <option value="Grupo 6">Grupo 6</option>
-    <option value="Grupo 7">Grupo 7</option>
-    <option value="Grupo 8">Grupo 8</option>
-    <option value="11337">11337</option>
-</select>
+                            <option value="TODOS">Todos os Grupos</option>
+                            <option value="11337">11337</option>
+                            <option value="Grupo 1">Grupo 1</option>
+                            <option value="Grupo 2">Grupo 2</option>
+                            <option value="Grupo 3">Grupo 3</option>
+                            <option value="Grupo 4">Grupo 4</option>
+                            <option value="Grupo 5">Grupo 5</option>
+                            <option value="Grupo 6">Grupo 6</option>
+                            <option value="Grupo 7">Grupo 7</option>
+                            <option value="Grupo 8">Grupo 8</option>
+                        </select>
                         <select id="macroFiltroStatus" onchange="renderMacroPlanta()" style="background:var(--input-bg);border:1px solid var(--glass-border);border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--text-main);cursor:pointer;outline:none;">
                             <option value="TODOS">Todos os Status</option>
                             <option value="rodando">Rodando</option>
@@ -3849,7 +3855,7 @@ rx="1.5" fill="#f59e0b"/>
     <div id="retModalOverlay" class="custom-modal-overlay" onclick="if(event.target===this) fecharModalRet()">
         <div class="custom-modal-box" style="text-align: left; width: 460px; max-width: 95vw;">
             <h3 style="margin-top: 0; font-size: 1.2rem; color: #f97316; margin-bottom: 12px; font-weight: 900; display:flex; align-items:center; gap:8px;">
-                <span style="font-size:20px;">📦</span> Talão Trancado/Fechado
+                <span style="font-size:20px;">📦</span> Retrabalho - Talão Fechado
             </h3>
             <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">Insira as Ordens (8 dígitos) e Pacotes do talão fechado.</p>
            
@@ -5432,27 +5438,19 @@ rx="1.5" fill="#f59e0b"/>
             localStorage.setItem('temaEscuroMonitor', isDark); document.getElementById('btnTema').innerText = isDark ? '☀️' : '🌒';
         }
        
-               window.showToast = function(msg, duration = 3800, sticky = false) {
+                    window.showToast = function(msg, duration = 3800) {
                 const el = document.getElementById('toastGlobal');
                 if (!el) return;
                 el.innerHTML = msg;
                 el.classList.add('show');
                 clearTimeout(window._toastTimeout);
-                
-                if (!sticky) {
-                    window._toastTimeout = setTimeout(() => { el.classList.remove('show'); }, duration);
-                }
+                window._toastTimeout = setTimeout(() => { el.classList.remove('show'); }, duration);
             };
 
-            window.fecharToast = function() {
-                const el = document.getElementById('toastGlobal');
-                if (el) el.classList.remove('show');
-            };
-
-            function customAlert(msg, sticky = false) {
+            function customAlert(msg) {
                 return new Promise(resolve => {
-                    showToast(msg, sticky ? 0 : 3800, sticky);
-                    resolve(true);
+                    showToast(msg);
+                    resolve(true); // Resolve a promessa imediatamente para não travar o fluxo
                 });
             }
                    
@@ -5943,9 +5941,53 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             }).join('') + '</span>';
         }
 
+        // Variável global para saber se a base completa foi baixada
+        let _historicoCompletoCarregado = false;
+
+        // Função exclusiva da Análise Gerencial para puxar a base inteira
+        window.puxarHistoricoCompletoGerente = async function() {
+            const btn = document.getElementById('btnPuxarTudoGerente');
+            if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Baixando...'; }
+
+            try {
+                if (typeof showToast === 'function') showToast('Baixando histórico completo do servidor...', 4000);
+
+                const snap = await db.ref('/reimpressoes').once('value');
+                const data = snap.val() || {};
+
+                _reprintData = Object.keys(data)
+                    .map(id => normalizarRequisicaoReimpressao(id, data[id]))
+                    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                _historicoCompletoCarregado = true;
+                window._mostrarTodasReimpressoesFeed = true;
+
+                const filtroPeriodo = document.getElementById('gerenteFiltroPeriodo');
+                if(filtroPeriodo) filtroPeriodo.value = 'tudo';
+
+                atualizarAnalisesGerente();
+                renderGerenteReimpressoes(true);
+
+                if (typeof showToast === 'function') showToast('✅ Histórico completo carregado!');
+            } catch (e) {
+                if (typeof showToast === 'function') showToast('❌ Erro ao baixar histórico completo.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '📥 Base Completa Carregada';
+                    btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                    btn.style.boxShadow = '0 4px 15px rgba(16,185,129,0.4)';
+                }
+            }
+        };
+
         async function carregarReimpressoes(renderModal = true) {
-    try {
-        const snap = await db.ref('/reimpressoes').orderByKey().limitToLast(200).once('value');
+            try {
+                let ref = db.ref('/reimpressoes');
+                if (!_historicoCompletoCarregado) {
+                    ref = ref.orderByKey().limitToLast(150);
+                }
+                const snap = await ref.once('value');
                 const data = snap.val() || {};
                 _reprintData = Object.keys(data).map(id => normalizarRequisicaoReimpressao(id, data[id])).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 if (renderModal) renderReimpressoes();
@@ -5956,23 +5998,30 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             }
         }
 
+        // OUVINTE EM TEMPO REAL ROBUSTO (Lida com quedas de conexão)
+        db.ref('/reimpressoes').orderByKey().limitToLast(150).on('value', (snap) => {
+            if (snap.val() === null && navigator.onLine === false) return;
 
-        // OUVINTE EM TEMPO REAL ROBUSTO COM LIMITE
-db.ref('/reimpressoes').orderByKey().limitToLast(200).on('value', (snap) => {
-        if (snap.val() === null && navigator.onLine === false) return;
-
-        const data = snap.val() || {};
-       
-        _reprintData = Object.keys(data)
-            .map(id => normalizarRequisicaoReimpressao(id, data[id]))
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-           
-        if (userRole === 'gerente') {
-            renderGerenteReimpressoes();
-        } else if (userRole === 'editor' && document.getElementById('reprintModalOverlay').classList.contains('open')) {
-            renderReimpressoes();
-        }
-    });
+            const data = snap.val() || {};
+            const novosItens = Object.keys(data).map(id => normalizarRequisicaoReimpressao(id, data[id]));
+            
+            if (_historicoCompletoCarregado) {
+                novosItens.forEach(novo => {
+                    const idx = _reprintData.findIndex(r => r.id === novo.id);
+                    if (idx !== -1) _reprintData[idx] = novo;
+                    else _reprintData.push(novo);
+                });
+                _reprintData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            } else {
+                _reprintData = novosItens.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            }
+                
+            if (userRole === 'gerente') {
+                renderGerenteReimpressoes(window._mostrarTodasReimpressoesFeed);
+            } else if (userRole === 'editor' && document.getElementById('reprintModalOverlay').classList.contains('open')) {
+                renderReimpressoes();
+            }
+        });
 
 
         // =====================================================================
@@ -6002,43 +6051,31 @@ db.ref('/reimpressoes').orderByKey().limitToLast(200).on('value', (snap) => {
         }
 
        // Função para preencher automaticamente as opções dos selects com base no que está no banco
-       function _popularFiltrosEditor() {
-    const gruposSet = new Set();
-    const coordsSet = new Set();
-    const modelosSet = new Set();
+        function _popularFiltrosEditor() {
+            const grupos = [...new Set(_reprintData.map(r => r.grupo).filter(Boolean))].sort();
+            const grupoSelect = document.getElementById('editorFiltroGrupo');
+            if (grupoSelect) {
+                const val = grupoSelect.value || 'todos';
+                grupoSelect.innerHTML = '<option value="todos">📦 Todos os Grupos</option>' +
+                    grupos.map(g => `<option value="${htmlSafe(g)}" ${val === g ? 'selected' : ''}>📦 ${htmlSafe(g)}</option>`).join('');
+            }
 
-    // Loop único de alta performance
-    _reprintData.forEach(r => {
-        if (r.grupo) gruposSet.add(r.grupo);
-        if (r.solicitante) coordsSet.add(r.solicitante);
-        if (r.modelo) modelosSet.add(r.modelo);
-    });
+            const coords = [...new Set(_reprintData.map(r => r.solicitante).filter(Boolean))].sort();
+            const coordSelect = document.getElementById('editorFiltroCoord');
+            if (coordSelect) {
+                const val = coordSelect.value || 'todos';
+                coordSelect.innerHTML = '<option value="todos">👤 Todos os Coordenadores</option>' +
+                    coords.map(c => `<option value="${htmlSafe(c)}" ${val === c ? 'selected' : ''}>👤 ${htmlSafe(c)}</option>`).join('');
+            }
 
-    const grupos = [...gruposSet].sort();
-    const coords = [...coordsSet].sort();
-    const modelos = [...modelosSet].sort();
-
-    const grupoSelect = document.getElementById('editorFiltroGrupo');
-    if (grupoSelect) {
-        const val = grupoSelect.value || 'todos';
-        grupoSelect.innerHTML = '<option value="todos">📦 Todos os Grupos</option>' +
-            grupos.map(g => `<option value="${htmlSafe(g)}" ${val === g ? 'selected' : ''}>📦 ${htmlSafe(g)}</option>`).join('');
-    }
-
-    const coordSelect = document.getElementById('editorFiltroCoord');
-    if (coordSelect) {
-        const val = coordSelect.value || 'todos';
-        coordSelect.innerHTML = '<option value="todos">👤 Todos os Coordenadores</option>' +
-            coords.map(c => `<option value="${htmlSafe(c)}" ${val === c ? 'selected' : ''}>👤 ${htmlSafe(c)}</option>`).join('');
-    }
-
-    const modeloSelect = document.getElementById('editorFiltroModelo');
-    if (modeloSelect) {
-        const val = modeloSelect.value || 'todos';
-        modeloSelect.innerHTML = '<option value="todos">👟 Todos os Modelos</option>' +
-            modelos.map(m => `<option value="${htmlSafe(m)}" ${val === m ? 'selected' : ''}>👟 ${htmlSafe(m)}</option>`).join('');
-    }
-}
+            const modelos = [...new Set(_reprintData.map(r => r.modelo).filter(Boolean))].sort();
+            const modeloSelect = document.getElementById('editorFiltroModelo');
+            if (modeloSelect) {
+                const val = modeloSelect.value || 'todos';
+                modeloSelect.innerHTML = '<option value="todos">👟 Todos os Modelos</option>' +
+                    modelos.map(m => `<option value="${htmlSafe(m)}" ${val === m ? 'selected' : ''}>👟 ${htmlSafe(m)}</option>`).join('');
+            }
+        }
 
         // Função de renderização com a aplicação dos filtros
     function renderReimpressoes() {
@@ -6087,24 +6124,9 @@ db.ref('/reimpressoes').orderByKey().limitToLast(200).on('value', (snap) => {
             return;
         }
 
-        // Monta os cards filtrados na tela (Limitado a 50 para não travar o navegador)
+        // Monta os cards filtrados na tela
         const mapaVias = obterMapaViasReimpressao();
-        
-        // Limita a renderização inicial para manter a UI fluida
-        const limiteRenderizacao = 50;
-        const dadosParaRenderizar = filtrado.slice(0, limiteRenderizacao);
-        
-        let htmlCards = dadosParaRenderizar.map(req => templateRequisicao(req, false, mapaVias)).join('');
-        
-        // Adiciona botão "Carregar Mais" se houver mais itens
-        if (filtrado.length > limiteRenderizacao) {
-            htmlCards += `
-                <div style="text-align: center; margin: 20px 0;">
-                    <p style="font-size: 11px; color: var(--text-muted);">Mostrando ${limiteRenderizacao} de ${filtrado.length} requisições recentes.</p>
-                </div>`;
-        }
-        
-        body.innerHTML = htmlCards;
+        body.innerHTML = filtrado.map(req => templateRequisicao(req, false, mapaVias)).join('');
     }
 
         async function autenticarDevReimpressao(titulo) {
@@ -7768,7 +7790,7 @@ function fecharHistoricoModal() {
 
                 if (!hasData) { body.innerHTML = `<p style="text-align:center;color:var(--text-muted);font-weight:700;padding:40px;">Nenhum dado WIP registrado na rede ativa.</p>`; return; }
 
-              body.innerHTML = `<table class="wip-table"><thead><tr><th style="width:20%;">Modelo<br><select id="fw-modelo" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:10%;">Tamanho<br><select id="fw-tamanho" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Cor Variante<br><select id="fw-cor" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Documento (Ordem)<br><input type="text" id="fw-ordem" onkeyup="renderTabelaWIP()" class="wip-filter-select" placeholder="🔍 Buscar Ordem..." autocomplete="off"></th><th style="width:12%;">Lote/Pacote<br><input type="text" id="fw-pacote" onkeyup="renderTabelaWIP()" class="wip-filter-select" placeholder="🔍 Buscar Pct..." autocomplete="off"></th><th style="width:14%;">Alocação<br><select id="fw-aloc" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:8%;text-align:center;">Ação</th></tr></thead><tbody id="wipTableBody"></tbody></table>`;
+               body.innerHTML = `<table class="wip-table"><thead><tr><th style="width:20%;">Modelo<br><select id="fw-modelo" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:10%;">Tamanho<br><select id="fw-tamanho" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Cor Variante<br><select id="fw-cor" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:18%;">Documento (Ordem)<br><select id="fw-ordem" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:12%;">Lote/Pacote<br><select id="fw-pacote" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:14%;">Alocação<br><select id="fw-aloc" onchange="renderTabelaWIP()" class="wip-filter-select"></select></th><th style="width:8%;text-align:center;">Ação</th></tr></thead><tbody id="wipTableBody"></tbody></table>`;
                 fillWIPSelects(); collapsedModels.clear(); renderTabelaWIP();
             } catch (err) {
                 console.error("Erro no WIP:", err);
@@ -7777,11 +7799,12 @@ function fecharHistoricoModal() {
         }
 
         function fillWIPSelects() {
-            const selects = { mod: new Set(), tam: new Set(), cor: new Set(), aloc: new Set() };
-            wipRawData.forEach(d => { selects.mod.add(d.modelo); selects.tam.add(d.tamanho); selects.cor.add(d.cor); selects.aloc.add(d.alocacao); });
+            const selects = { mod: new Set(), tam: new Set(), cor: new Set(), ord: new Set(), pac: new Set(), aloc: new Set() };
+            wipRawData.forEach(d => { selects.mod.add(d.modelo); selects.tam.add(d.tamanho); selects.cor.add(d.cor); selects.ord.add(d.ordem); selects.pac.add(d.pacote); selects.aloc.add(d.alocacao); });
             const populate = (id, set) => { const el = document.getElementById(id); if(!el) return; let html = '<option value="">Todos</option>'; [...set].sort().forEach(val => html += `<option value="${val}">${val}</option>`); el.innerHTML = html; };
-            populate('fw-modelo', selects.mod); populate('fw-tamanho', selects.tam); populate('fw-cor', selects.cor); populate('fw-aloc', selects.aloc);
+            populate('fw-modelo', selects.mod); populate('fw-tamanho', selects.tam); populate('fw-cor', selects.cor); populate('fw-ordem', selects.ord); populate('fw-pacote', selects.pac); populate('fw-aloc', selects.aloc);
         }
+
         function toggleWipModel(mod) { if(collapsedModels.has(mod)) collapsedModels.delete(mod); else collapsedModels.add(mod); renderTabelaWIP(); }
         function toggleAllWip(collapse) {
             if (collapse) {
@@ -7791,15 +7814,8 @@ function fecharHistoricoModal() {
         }
 
         function renderTabelaWIP() {
-            const fMod = document.getElementById('fw-modelo')?.value || ""; const fTam = document.getElementById('fw-tamanho')?.value || ""; const fCor = document.getElementById('fw-cor')?.value || ""; const fOrd = (document.getElementById('fw-ordem')?.value || "").toLowerCase(); const fPac = (document.getElementById('fw-pacote')?.value || "").toLowerCase(); const fAloc = document.getElementById('fw-aloc')?.value || "";
-            const filtered = wipRawData.filter(d => { 
-                return (fMod === "" || d.modelo === fMod) && 
-                       (fTam === "" || d.tamanho === fTam) && 
-                       (fCor === "" || d.cor === fCor) && 
-                       (fOrd === "" || d.ordem.toLowerCase().includes(fOrd)) && 
-                       (fPac === "" || d.pacote.toLowerCase().includes(fPac)) && 
-                       (fAloc === "" || d.alocacao === fAloc); 
-            });
+            const fMod = document.getElementById('fw-modelo')?.value || ""; const fTam = document.getElementById('fw-tamanho')?.value || ""; const fCor = document.getElementById('fw-cor')?.value || ""; const fOrd = document.getElementById('fw-ordem')?.value || ""; const fPac = document.getElementById('fw-pacote')?.value || ""; const fAloc = document.getElementById('fw-aloc')?.value || "";
+            const filtered = wipRawData.filter(d => { return (fMod === "" || d.modelo === fMod) && (fTam === "" || d.tamanho === fTam) && (fCor === "" || d.cor === fCor) && (fOrd === "" || d.ordem === fOrd) && (fPac === "" || d.pacote === fPac) && (fAloc === "" || d.alocacao === fAloc); });
             const tbody = document.getElementById('wipTableBody'); if(!tbody) return;
             if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; font-weight: 700; color: var(--text-muted);">Nenhuma peça corresponde aos filtros.</td></tr>`; return; }
 
@@ -10876,7 +10892,7 @@ function handleChatTyping() {
         function adicionarLinhaRet() {
             const container = document.getElementById('retRowsContainer');
             const index = container.children.length;
-            
+           
             const row = document.createElement('div');
             row.className = 'ret-row';
             row.innerHTML = `
@@ -10885,29 +10901,25 @@ function handleChatTyping() {
                     <input type="text" class="profile-input ret-ordem-inp" placeholder="Ex: 15872253" maxlength="8" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" oninput="this.value = this.value.replace(/[^0-9]/g, '');" autocomplete="off">
                 </div>
                 <div style="flex:1;">
-                    ${index === 0 ? '<label style="font-size:9px; font-weight:900; color:var(--text-muted); text-transform:uppercase;">Pacote (Máx 3)</label>' : ''}
-                    <input type="text" class="profile-input ret-pacote-inp" placeholder="Ex: 001" maxlength="3" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" autocomplete="off">
+                    ${index === 0 ? '<label style="font-size:9px; font-weight:900; color:var(--text-muted); text-transform:uppercase;">Pacotes</label>' : ''}
+                    <input type="text" class="profile-input ret-pacote-inp" placeholder="Ex: 1 ou 1/2/3" style="margin-top:2px; font-family:'JetBrains Mono', monospace;" autocomplete="off">
                 </div>
                 <button type="button" class="btn-ret-del" onclick="removerLinhaRet(this)" title="Remover ordem" style="${index === 0 ? 'margin-top:14px;' : ''}">-</button>
             `;
             container.appendChild(row);
-            
+           
+            // Foco na ordem recém-adicionada
             const newInp = row.querySelector('.ret-ordem-inp');
             if (newInp) setTimeout(() => newInp.focus(), 50);
         }
 
         function removerLinhaRet(btn) {
             const container = document.getElementById('retRowsContainer');
-            const row = btn.closest('.ret-row');
-            
-            if (row) {
-                row.remove();
+            if (container.children.length <= 1) {
+                customAlert('É necessário informar ao menos uma Ordem e Pacote.');
+                return;
             }
-            
-            // Se o usuário apagar todas as linhas, adiciona uma vazia automaticamente para não quebrar a tela
-            if (container.children.length === 0) {
-                adicionarLinhaRet();
-            }
+            btn.closest('.ret-row').remove();
         }
 
         async function solicitarRet() {
@@ -10915,7 +10927,6 @@ function handleChatTyping() {
             const ordens = [];
             let erroValida = false;
 
-            // 1. Validação Visual dos Inputs
             rows.forEach((row, i) => {
                 const oInp = row.querySelector('.ret-ordem-inp');
                 const pInp = row.querySelector('.ret-pacote-inp');
@@ -10927,11 +10938,7 @@ function handleChatTyping() {
                     return;
                 }
                 if (ordemVal.length !== 8) {
-                    erroValida = `A Ordem da linha ${i + 1} precisa ter exatamente 8 dígitos.`;
-                    return;
-                }
-                if (pacoteVal.length > 3) {
-                    erroValida = `O Pacote da linha ${i + 1} aceita no máximo 3 caracteres.`;
+                    erroValida = `A Ordem da linha ${i + 1} precisa ter exatamente 8 dígitos (digitado: ${ordemVal.length}).`;
                     return;
                 }
                 ordens.push({ cor: 'Múltiplas / Fechado', ordem: ordemVal, pacote: pacoteVal });
@@ -10942,118 +10949,21 @@ function handleChatTyping() {
                 return;
             }
 
-            // 2. Criação da UI de Carregamento Dinâmico
-            const retRows = document.getElementById('retRowsContainer');
-            const btnAdd = document.querySelector('.btn-ret-add');
-            const btnActions = document.querySelector('#retModalOverlay .custom-modal-actions');
-            
-            let loaderObj = document.getElementById('retDynamicLoader');
-            if (!loaderObj) {
-                loaderObj = document.createElement('div');
-                loaderObj.id = 'retDynamicLoader';
-                loaderObj.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 0; animation: fadeIn 0.3s;';
-                loaderObj.innerHTML = `
-                    <div class="gerente-loader-spinner" style="border-top-color:#f97316; border-right-color:rgba(249,115,22,0.15); border-bottom-color:rgba(249,115,22,0.15); border-left-color:rgba(249,115,22,0.15); width: 44px; height: 44px; margin-bottom: 18px;"></div>
-                    <div style="font-size: 13px; font-weight: 900; color: #f97316; text-transform: uppercase; letter-spacing: 1px;">Consultando Base de Dados</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Verificando fechamento de talões nas células...</div>
-                `;
-                retRows.parentElement.insertBefore(loaderObj, btnActions);
-            }
-
-            // Oculta form, exibe Loader
-            retRows.style.display = 'none';
-            btnAdd.style.display = 'none';
-            btnActions.style.display = 'none';
-            loaderObj.style.display = 'flex';
-
-            // Força o navegador a renderizar o loader na tela ANTES de iniciar a requisição pesada
-            await new Promise(resolve => setTimeout(resolve, 150));
-
-            // 3. Consulta as referências no Banco de Dados
-            try {
-                // Buscamos as estações alocadas e as ordens dentro da referência de modelos ao mesmo tempo
-                const [alocResp, refResp] = await Promise.all([
-                    fetch(`${FIREBASE_URL}/alocacao.json${AUTH}`),
-                    fetch(`${FIREBASE_URL}/referencia.json${AUTH}`)
-                ]);
-                const alocAll = await alocResp.json() || {};
-                const refData = await refResp.json() || {};
-                
-                let conflitos = [];
-
-                for (let req of ordens) {
-                    let encontrado = false;
-                    for (let grupo in alocAll) {
-                        for (let estacao in alocAll[grupo]) {
-                            let item = alocAll[grupo][estacao];
-                            // Se a estação tem modelo alocado
-                            if (item && item.modelo && item.modelo !== 'Não Alocado' && item.modelo !== 'VAZIO') {
-                                // Cria a mesma chave usada para buscar os detalhes
-                                let chaveRef = item.modelo.trim().toUpperCase() + "|" + String(item.tamanho || '').trim().toUpperCase().replace(/[.\/]/g, ',');
-                                let prod = refData[chaveRef];
-                                
-                                // Agora sim verifica dentro dos detalhes dessa referência
-                                if (prod && prod.detalhes) {
-                                    let detalhesArr = Array.isArray(prod.detalhes) ? prod.detalhes : Object.values(prod.detalhes);
-                                    for (let det of detalhesArr) {
-                                        if (det && String(det.ordem).trim() === req.ordem && String(det.pacote).trim() === req.pacote) {
-                                            conflitos.push(`<b>Ordem:</b> <span style="color:#007AFF;">${req.ordem}</span> | <b>Pct:</b> ${req.pacote} <br>➔ Aberta no <b>${grupo} (EST ${String(estacao).padStart(2,'0')})</b>`);
-                                            encontrado = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            if(encontrado) break;
-                        }
-                        if(encontrado) break;
-                    }
-                }
-
-                // Restaura o modal para o estado original caso encontre erro
-                retRows.style.display = '';
-                btnAdd.style.display = '';
-                btnActions.style.display = 'flex';
-                loaderObj.style.display = 'none';
-
-                // 4. Bloqueia a execução se houver ordens abertas na linha
-                if (conflitos.length > 0) {
-                    if (typeof tocarSomErro === 'function') tocarSomErro();
-                    const htmlMensagemFixa = `
-                        <div style="position:relative; text-align:left; font-size:12px; line-height:1.5; padding-right: 15px;">
-                            <button onclick="window.fecharToast()" style="position:absolute; top:-8px; right:-15px; background:none; border:none; color:rgba(255,255,255,0.7); font-size:18px; cursor:pointer; font-weight:900; transition:0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">✕</button>
-                            <span style="color:#ef4444; font-size:14px; font-weight:900;">❌ OPERAÇÃO BLOQUEADA</span><br><br>
-                            As ordens abaixo ainda constam abertas em produção: Essa função é Destinada a Ordens Trancadas ou Finalizadas<br><br>
-                            ${conflitos.join('<br><br>')}<br><br>
-                            Por favor, remova-as da respectiva estação antes de solicitar este pacote como talão fechado.
-                        </div>
-                    `;
-                    await customAlert(htmlMensagemFixa, true);
-                    return;
-                }
-
-            } catch(e) {
-                console.error(e);
-                retRows.style.display = '';
-                btnAdd.style.display = '';
-                btnActions.style.display = 'flex';
-                loaderObj.style.display = 'none';
-                await customAlert("Falha ao consultar a base de dados em tempo real. Verifique a conexão.");
-                return;
-            }
-
-            // 5. Se passou pela varredura sem conflitos, segue o fluxo normal (Autorização)
+            // OCORRIA O PROBLEMA DO POPUP FICAR ATRÁS:
+            // Escondemos o modal de Retrabalho antes de chamar os prompts do Crachá e Gerente
             fecharModalRet();
 
+            // Exige crachá do coordenador
             const solicitanteObj = await obterSolicitanteReimpressao();
             if (!solicitanteObj) {
                 await customAlert('Solicitação cancelada.');
-                document.getElementById('retModalOverlay').style.display = 'flex'; 
+                document.getElementById('retModalOverlay').style.display = 'flex'; // Reabre se cancelar
                 return;
             }
             const solicitanteNome = solicitanteObj.nome;
             const solicitanteCracha = solicitanteObj.id;
 
+            // Busca gerentes cadastrados
             const listaGerentes = Object.values(credenciaisGerente).map(g => ({ value: g.nome, label: g.nome }));
             if (listaGerentes.length === 0) {
                 await customAlert('Nenhum Gerente cadastrado no banco para aprovação.');
@@ -11063,7 +10973,7 @@ function handleChatTyping() {
             const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', listaGerentes);
             if (!aprovador) {
                 await customAlert('Solicitação cancelada.');
-                document.getElementById('retModalOverlay').style.display = 'flex'; 
+                document.getElementById('retModalOverlay').style.display = 'flex'; // Reabre se cancelar
                 return;
             }
 
