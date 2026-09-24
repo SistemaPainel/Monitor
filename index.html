@@ -7237,22 +7237,39 @@ function fecharHistoricoModal() {
                             _nReprov = parseInt(prod.reprovado || 0);
                         }
 
-                        // Decide limites: se contadores > nº de entradas, são contagens de pares
-                        // e precisamos distribuir proporcionalmente; caso contrário usa posição direta.
                         const _totalEntradas  = _todosDetalhes.length;
                         const _totalContadores = _nGiro + _nRefil + _nReprov;
+                        
+                        let _detalhesParaUsar = _todosDetalhes;
+
+                        // Se NÃO for 11337, fatiamos os pacotes proporcionalmente à produção da célula
+                        if (grupoAtual !== "11337") {
+                            const _totalInjetado = parseInt(prod.giroInj || 0);
+                            
+                            if (_totalContadores === 0) {
+                                _detalhesParaUsar = []; // Sem produção = sem pacotes
+                            } else if (_totalInjetado > 0 && _totalEntradas > 0) {
+                                // Ex: (31 pares na célula / 216 injetados total) * 18 pacotes totais = ~3 pacotes reais
+                                let pacotesParaMostrar = Math.ceil((_totalContadores / _totalInjetado) * _totalEntradas);
+                                if (pacotesParaMostrar > _totalEntradas) pacotesParaMostrar = _totalEntradas;
+                                _detalhesParaUsar = _todosDetalhes.slice(0, pacotesParaMostrar);
+                            }
+                        }
+
+                        const _totalExibido = _detalhesParaUsar.length;
                         let _limGiro, _limRefil;
-                        if (_totalContadores === 0 || _totalContadores === _totalEntradas) {
+
+                        if (_totalContadores === 0 || _totalContadores === _totalExibido) {
                             _limGiro  = _nGiro;
                             _limRefil = _nGiro + _nRefil;
                         } else {
-                            // Pares > entradas: distribui proporcionalmente
-                            const ratio = _totalEntradas / _totalContadores;
+                            // Distribui os pacotes fatiados entre giro, refil e reprovado
+                            const ratio = _totalExibido / _totalContadores;
                             _limGiro  = Math.round(_nGiro  * ratio);
                             _limRefil = _limGiro + Math.round(_nRefil * ratio);
                         }
 
-                        const _detalhesComTipo = _todosDetalhes.map(function(d, idx) {
+                        const _detalhesComTipo = _detalhesParaUsar.map(function(d, idx) {
                             // Prioridade 1: campos explícitos na entrada do Firebase
                             const _tExpl   = String(d.tipo || d.categoria || d.local || '').toLowerCase();
                             const _stExpl  = String(d.status || '').toLowerCase();
@@ -7262,7 +7279,8 @@ function fecharHistoricoModal() {
                                 return Object.assign({}, d, {_tipo: 'refil'});
                             if (/^giro$/.test(_tExpl))
                                 return Object.assign({}, d, {_tipo: 'giro'});
-                            // Prioridade 2: posição proporcional
+                            
+                            // Prioridade 2: Posição proporcional no array fatiado
                             if (_totalContadores === 0) return Object.assign({}, d, {_tipo: 'giro'});
                             if (idx < _limGiro)  return Object.assign({}, d, {_tipo: 'giro'});
                             if (idx < _limRefil) return Object.assign({}, d, {_tipo: 'refil'});
