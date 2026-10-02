@@ -2218,41 +2218,6 @@
         .chat-opts-menu button:hover { background: rgba(0,122,255,0.1); color: #007AFF; }
         .chat-opts-menu button.danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
 
-        /* === CHAT — DESTAQUE VISUAL DE MENÇÕES (@NOME) === */
-        /* Estilo da bolha de marcação - TEMA VERMELHO (ALERTA) */
-        .chat-mention-highlight {
-            color: #ef4444;
-            font-weight: 900;
-            background: rgba(239, 68, 68, 0.12);
-            padding: 2px 8px;
-            border-radius: 10px;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            display: inline-block;
-            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
-            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-            cursor: pointer;
-            margin: 0 2px;
-        }
-        .chat-mention-highlight:hover {
-            background: rgba(239, 68, 68, 0.25);
-            border-color: rgba(239, 68, 68, 0.6);
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 6px 15px rgba(239, 68, 68, 0.35);
-        }
-       
-        /* Ajuste para quando o Modo Escuro estiver ativado */
-        body.dark-mode .chat-mention-highlight {
-            color: #f87171;
-            background: rgba(248, 113, 113, 0.15);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            box-shadow: 0 4px 10px rgba(248, 113, 113, 0.15);
-        }
-        body.dark-mode .chat-mention-highlight:hover {
-            background: rgba(248, 113, 113, 0.25);
-            border-color: rgba(248, 113, 113, 0.6);
-            box-shadow: 0 6px 15px rgba(248, 113, 113, 0.35);
-        }
-
         /* === CHAT — CORREÇÃO DE ALINHAMENTO DAS OPÇÕES DE MENSAGEM === */
         .chat-msg-wrap {
             position: relative !important;
@@ -9574,19 +9539,6 @@ window.abrirImagemChatNova = function(mediaId, thumbBase64) {
             setTimeout(() => { document.getElementById('chatImageModalImg').src = ''; }, 300);
         };
 
-// --- FORMATADOR ESTILO WHATSAPP ---
-function formatarTextoWhatsApp(texto) {
-    if (!texto) return '';
-    let txt = htmlSafe(texto);
-    // Negrito (*texto*)
-    txt = txt.replace(/\*(.*?)\*/g, '<strong style="font-weight: 900;">$1</strong>');
-    // Itálico (_texto_)
-    txt = txt.replace(/_(.*?)_/g, '<em style="font-style: italic;">$1</em>');
-    // Riscado (~texto~)
-    txt = txt.replace(/~(.*?)~/g, '<del style="text-decoration: line-through; opacity: 0.8;">$1</del>');
-    // Quebras de linha
-    return txt.replace(/\n/g, '<br>');
-}
 
         // --- RENDERIZADOR UNIVERSAL DE MENSAGENS ---
         function _buildMsgHtml(id, m, isMine, perfil, alvoId) {
@@ -9751,24 +9703,6 @@ conteudoImagem = `
             fetch(`${FIREBASE_URL}/chat/users/${myId}.json${AUTH}`, { method: 'PATCH', body: JSON.stringify({ typingIn: null }) });
         }
 
-        // --- FUNÇÕES DE EDITAR E APAGAR ---
-               async function editarMensagemChat(msgId, btnEl) {
-    const textEl = btnEl.closest('.chat-bubble').querySelector('.msg-text-content');
-   
-    // Recupera o texto exatamente como foi digitado usando decodificação URI
-    const textoAtual = decodeURIComponent(textEl.getAttribute('data-raw') || '');
-   
-    // Chama o novo modal multiline, que preserva as quebras de linha
-    const novoTexto = await customPromptMultiline('Editar mensagem:', textoAtual);
-   
-    if (novoTexto === null || novoTexto.trim() === '' || novoTexto === textoAtual) return;
-   
-    const channel = getChatChannelPath(_chatAtivo);
-    await fetch(`${FIREBASE_URL}/chat/messages/${channel}/${msgId}.json${AUTH}`, {
-        method: 'PATCH', body: JSON.stringify({ text: novoTexto.trim(), edited: true })
-    });
-    // O listener do chat irá atualizar a interface automaticamente
-}
 
         async function deletarMensagemChat(msgId) {
             if (!await customConfirm('Deseja apagar esta mensagem para todos?', 'Apagar', 'Cancelar')) return;
@@ -10048,34 +9982,6 @@ function handleChatTyping() {
             };
         }
 
-       function prepararResposta(nomeUsuario, idMensagem, botaoClicado) {
-            mensagemSendoRespondidaId = idMensagem;
-           
-            // 1. Coloca o nome do usuário
-            document.getElementById('chatReplyUser').textContent = nomeUsuario;
-           
-            // 2. Busca o texto da mensagem clicada navegando pelo HTML
-            let textoOriginal = "Mídia...";
-            if (botaoClicado) {
-                const bubbleDaMensagem = botaoClicado.closest('.chat-msg-wrap').querySelector('.chat-bubble');
-                if (bubbleDaMensagem) {
-                    // Pega o texto e remove todas as quebras de linha para ficar reto
-                    textoOriginal = (bubbleDaMensagem.innerText || bubbleDaMensagem.textContent).replace(/\n/g, ' ').trim();
-                }
-            }
-           
-            // TRAVA DE SEGURANÇA: Corta o texto se passar de 60 caracteres
-            if (textoOriginal.length > 60) {
-                textoOriginal = textoOriginal.substring(0, 60) + '...';
-            }
-           
-            // 3. Coloca o texto limpo e curto na caixinha de prévia
-            document.getElementById('chatReplyTextSnippet').textContent = textoOriginal;
-           
-            // 4. Mostra a caixinha e foca no input
-            document.getElementById('chatReplyPreview').classList.add('active');
-            document.getElementById('chatInputMsg').focus();
-        }
 
         function cancelarResposta() {
             mensagemSendoRespondidaId = null;
@@ -10088,85 +9994,12 @@ function handleChatTyping() {
             input.focus();
         }
 
-        function fixarMensagem(idMensagem) {
-            alert("Sinalizando a mensagem " + idMensagem + " como fixada!\nAqui você pode salvar uma flag 'fixada: true' no Firebase para ela aparecer no topo.");
-        }
 // --- LÓGICA DE MARCAÇÃO (@) NO CHAT ---
-        let _indiceInicioMarcacao = -1;
 
 
-        function rastrearMarcacao(event) {
-            // Mantém a função antiga rodando
-            if (typeof handleChatTyping === 'function') handleChatTyping();
 
-            const textarea = document.getElementById('chatInputMsg');
-            const posicaoCursor = textarea.selectionStart;
-            const textoAteCursor = textarea.value.substring(0, posicaoCursor);
-           
-            // Busca um '@' seguido de letras/números/espaços no fim da string onde está o cursor
-            const match = textoAteCursor.match(/@([a-zA-Z0-9\s]*)$/);
-           
-            if (match) {
-                _indiceInicioMarcacao = match.index;
-                const termoBusca = match[1].toLowerCase();
-                mostrarListaMarcacao(termoBusca);
-            } else {
-                fecharListaMarcacao();
-            }
-        }
 
-        function mostrarListaMarcacao(busca) {
-            const listaEl = document.getElementById('chatMentionList');
-           
-            // Reúne todos os nomes do sistema (evitando duplicatas usando Set)
-            const nomesUnicos = new Set();
-            if (typeof defaultUsuarios !== 'undefined') Object.values(defaultUsuarios).forEach(n => nomesUnicos.add(n));
-            if (typeof credenciaisEditor !== 'undefined') Object.values(credenciaisEditor).forEach(c => nomesUnicos.add(c.nome || c));
-            if (typeof credenciaisGerente !== 'undefined') Object.values(credenciaisGerente).forEach(c => nomesUnicos.add(c.nome || c));
-            if (typeof credenciaisDev !== 'undefined') Object.values(credenciaisDev).forEach(c => nomesUnicos.add(c.nome || c));
-            if (typeof coordenadoresAutorizados !== 'undefined') Object.values(coordenadoresAutorizados).forEach(n => nomesUnicos.add(n));
 
-            // Filtra de acordo com o que o usuário digitou depois do @
-            const filtrados = Array.from(nomesUnicos)
-                .filter(nome => typeof nome === 'string' && nome.toLowerCase().includes(busca))
-                .slice(0, 8); // Limita a 8 resultados na tela
-
-            if (filtrados.length === 0) {
-                fecharListaMarcacao();
-                return;
-            }
-
-            // Desenha a lista
-            listaEl.innerHTML = filtrados.map(nome => `
-                <div class="chat-mention-item" onclick="inserirMarcacao('${nome.replace(/'/g, "\\'")}')">
-                    <div class="chat-mention-avatar">${nome.charAt(0).toUpperCase()}</div>
-                    ${nome}
-                </div>
-            `).join('');
-           
-            listaEl.style.display = 'block';
-        }
-
-        function fecharListaMarcacao() {
-            document.getElementById('chatMentionList').style.display = 'none';
-            _indiceInicioMarcacao = -1;
-        }
-
-        function inserirMarcacao(nome) {
-            const textarea = document.getElementById('chatInputMsg');
-            const textoOriginal = textarea.value;
-            const textoAntes = textoOriginal.substring(0, _indiceInicioMarcacao);
-            const textoDepois = textoOriginal.substring(textarea.selectionStart);
-           
-            // Substitui o trecho que tinha "@..." pelo nome selecionado com o @
-            textarea.value = textoAntes + '@' + nome + ' ' + textoDepois;
-            fecharListaMarcacao();
-            textarea.focus();
-           
-            // Move o cursor para o final do nome inserido
-            const novaPosicaoCursor = textoAntes.length + nome.length + 2;
-            textarea.setSelectionRange(novaPosicaoCursor, novaPosicaoCursor);
-        }
 
 // =========================================================================
         // MOTOR DE CHAT: BUSCA, EMOJIS E MÍDIA INLINE
@@ -10773,58 +10606,6 @@ function handleChatTyping() {
 
         // Aplica filtro de Mudo no canal ativo (Foreground)
         if (window._pollMsgInterval) clearInterval(window._pollMsgInterval);
-        window.iniciarListenerDeMensagens = function(channel) {
-    // 1. Limpa ouvintes antigos para não duplicar tráfego
-    if (window._chatMsgRef) window._chatMsgRef.off();
-
-    const blocked = JSON.parse(localStorage.getItem('chatBlocked') || '{}');
-    if (blocked[channel]) return;
-
-    // 2. Conecta via WebSocket (SDK) pedindo só as últimas 8 mensagens
-    window._chatMsgRef = db.ref(`/chat/messages/${channel}`).orderByKey().limitToLast(8);
-
-    // 3. O Firebase só roda isso aqui quando o banco realmente for alterado!
-    window._chatMsgRef.on('value', (snapshot) => {
-        if(!document.getElementById('chatWindow').classList.contains('open')) return;
-       
-        const data = snapshot.val() || {};
-        const msgs = Object.entries(data).sort((a,b) => a[0].localeCompare(b[0]));
-
-        if(msgs.length > 0) {
-            let tocou = false;
-            const myId = _usuarioAtual.user.replace(/\./g, '_');
-            const area = document.getElementById('chatMessagesArea');
-            const muted = JSON.parse(localStorage.getItem('chatMuted') || '{}');
-
-            msgs.forEach(([id, m]) => {
-                const isMine = m.sender === myId;
-                const perfil = perfilDoUsuario(m.sender.replace(/_/g, '.')) || { nome: m.sender, avatar: 'masculino' };
-                const existing = document.getElementById('msg_' + id);
-
-                if (existing) {
-                    const textEl = existing.querySelector('.msg-text-content');
-                    if (textEl && decodeURIComponent(textEl.getAttribute('data-raw') || '') !== m.text) {
-                        existing.outerHTML = _buildMsgHtml(id, m, isMine, perfil, _chatAtivo);
-                    }
-                }
-                else if (typeof _lastMsgId !== 'undefined' && _lastMsgId === null) {
-                    _lastMsgId = id;
-                    if (!isMine && !muted[channel]) tocou = true;
-                } else if (typeof _lastMsgId !== 'undefined' && id > _lastMsgId) {
-                    _lastMsgId = id;
-                    if (!isMine) {
-                        if(area.innerHTML.includes('Nenhuma mensagem neste chat')) area.innerHTML = '';
-                        area.insertAdjacentHTML('beforeend', _buildMsgHtml(id, m, isMine, perfil, _chatAtivo));
-                        area.scrollTop = area.scrollHeight;
-                        if (!muted[channel]) tocou = true;
-                    }
-                }
-            });
-
-            if (tocou && typeof tocarSomNotificacao === 'function') tocarSomNotificacao();
-        }
-    });
-};
         window._iniciarNotificacoesBackground();
 
 
@@ -11056,62 +10837,10 @@ function handleChatTyping() {
     <!-- ========================================================================= -->
 
     <script>
-        // 1. Função que pinta o texto (Corrigida para Nomes Compostos)
-        window.destacarMarcacoesHTML = function(textEl) {
-            if (!textEl || textEl.dataset.parsedMention === 'true') return;
-           
-            textEl.dataset.parsedMention = 'true';
-            var html = textEl.innerHTML;
-           
-            // INTELIGÊNCIA: Captura o @ + Nome + Qualquer palavra seguinte que comece com Letra Maiúscula
-            var regex = /(^|\s)(@[a-zA-ZÀ-ÿ0-9_.\-]+(?:\s[A-ZÀ-Ÿ][a-zA-ZÀ-ÿ0-9_.\-]*)*)/g;
-           
-            textEl.innerHTML = html.replace(regex, '$1<span class="chat-mention-highlight">$2</span>');
-        };
 
-        // 2. Observador: Fica olhando a área de chat em tempo real
-        var chatObserver = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                mutation.addedNodes.forEach(function(node) {
-                    if (node.nodeType === 1) {
-                        var msgs = node.classList && node.classList.contains('chat-msg-wrap')
-                                   ? [node]
-                                   : node.querySelectorAll ? node.querySelectorAll('.chat-msg-wrap') : [];
-                       
-                        msgs.forEach(function(msgWrap) {
-                            var textEl = msgWrap.querySelector('.msg-text-content');
-                            window.destacarMarcacoesHTML(textEl);
-                        });
-                    }
-                });
-            });
-        });
 
-        // 3. Ativa o observador assim que o site carrega
-        window.addEventListener('load', function() {
-            var area = document.getElementById('chatMessagesArea');
-            if (area) {
-                chatObserver.observe(area, { childList: true, subtree: true });
-            }
-        });
 
-        // 4. Varredura para mensagens antigas ao carregar um chat da barra lateral
-        window.aplicarDestaqueMarcacoesExistentes = function() {
-            var msgs = document.querySelectorAll('.chat-msg-wrap');
-            msgs.forEach(function(msgWrap) {
-                var textEl = msgWrap.querySelector('.msg-text-content');
-                window.destacarMarcacoesHTML(textEl);
-            });
-        };
 
-        // Injeta a varredura no carregador de mensagens original
-        if (typeof window.carregarMensagensChat === 'function') {
-            var _oldCarregarMsgsParaMarcacao = window.carregarMensagensChat;
-            window.carregarMensagensChat = async function(alvoId) {
-                await _oldCarregarMsgsParaMarcacao(alvoId);
-                setTimeout(window.aplicarDestaqueMarcacoesExistentes, 100);
-            };
-        }
 // =========================================================================
         // CORREÇÃO: SISTEMA DE RESPOSTAS (WHATSAPP STYLE VISUAL E ENVIO)
         // =========================================================================
@@ -11426,5 +11155,469 @@ function handleChatTyping() {
 
 
 <div id="toastGlobal"></div>
+<!-- ===================== CHAT PRO (WhatsApp/Telegram/Gmail Chat style) ===================== -->
+<style id="chatProCss">
+#chatWindow{--cp-mine:#d9fdd3;--cp-theirs:#fff;--cp-txt:#111b21;--cp-meta:rgba(17,27,33,.55);--cp-bg:#efeae2;--cp-accent:#00a884;--cp-chip:rgba(17,27,33,.07)}
+body.dark-mode #chatWindow{--cp-mine:#005c4b;--cp-theirs:#202c33;--cp-txt:#e9edef;--cp-meta:rgba(233,237,239,.6);--cp-bg:#0b141a;--cp-accent:#00a884;--cp-chip:rgba(255,255,255,.1)}
+#chatWindow .chat-messages{background-color:var(--cp-bg);background-image:radial-gradient(rgba(127,127,127,.12) 1px,transparent 1px);background-size:22px 22px;gap:0;padding:16px 18px;position:relative}
+#chatWindow .chat-msg-wrap{max-width:min(560px,82%);margin:6px 0 0;animation:none}
+#chatWindow .chat-msg-wrap.cp-cont{margin-top:2px}
+#chatWindow .chat-msg-wrap .chat-bubble{padding:6px 9px 5px;white-space:normal;color:var(--cp-txt);font-size:13.5px;line-height:1.4;border:none;box-shadow:0 1px .5px rgba(11,20,26,.18);min-width:70px}
+#chatWindow .chat-msg-wrap.mine .chat-bubble{background:var(--cp-mine);border-radius:12px 0 12px 12px}
+#chatWindow .chat-msg-wrap.theirs .chat-bubble{background:var(--cp-theirs);border-radius:0 12px 12px 12px}
+#chatWindow .chat-msg-wrap.cp-cont .chat-bubble{border-radius:12px}
+#chatWindow .chat-msg-wrap:not(.cp-cont) .chat-bubble::before{content:'';position:absolute;top:0;width:9px;height:12px;background:inherit}
+#chatWindow .chat-msg-wrap.mine:not(.cp-cont) .chat-bubble::before{right:-8px;clip-path:polygon(0 0,100% 0,0 100%)}
+#chatWindow .chat-msg-wrap.theirs:not(.cp-cont) .chat-bubble::before{left:-8px;clip-path:polygon(0 0,100% 0,100% 100%)}
+#chatWindow .chat-msg-wrap.cp-mentioned .chat-bubble{box-shadow:0 0 0 2px rgba(245,158,11,.75)}
+#chatWindow .chat-msg-wrap.cp-flash .chat-bubble{animation:cpFlash 1.4s ease}
+@keyframes cpFlash{0%,60%{box-shadow:0 0 0 3px var(--cp-accent)}100%{box-shadow:0 1px .5px rgba(11,20,26,.18)}}
+.cp-name{font-size:12px;font-weight:800;margin-bottom:2px;cursor:pointer}
+.cp-wrap-cont .cp-name,.cp-cont .cp-name{display:none}
+.cp-text{white-space:pre-wrap;word-break:break-word;color:var(--cp-txt)}
+.cp-text a{color:#53bdeb;text-decoration:underline}
+.cp-text code{background:var(--cp-chip);padding:1px 5px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:12px}
+.cp-mention{color:#00a884;font-weight:800;background:rgba(0,168,132,.12);border-radius:5px;padding:0 3px}
+.cp-mention.me{background:rgba(245,158,11,.25);color:#d97706}
+.cp-quote{border-left:3px solid var(--cp-accent);background:var(--cp-chip);border-radius:6px;padding:4px 8px;margin-bottom:4px;font-size:11.5px;color:var(--cp-meta);cursor:pointer;max-height:48px;overflow:hidden}
+.cp-quote b{display:block;color:var(--cp-accent);font-size:11.5px}
+.cp-deleted{font-style:italic;opacity:.65}
+.cp-meta{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:1px;font-size:10.5px;color:var(--cp-meta);user-select:none}
+.cp-ticks{font-size:13px;letter-spacing:-3px;line-height:1;margin-right:3px}
+.cp-ticks.read{color:#53bdeb}
+.cp-chev{position:absolute;top:2px;right:3px;width:22px;height:22px;border:none;border-radius:50%;background:inherit;color:var(--cp-meta);cursor:pointer;font-size:14px;line-height:1;opacity:0;transition:.15s;z-index:2;padding:0}
+#chatWindow .chat-bubble:hover .cp-chev{opacity:1}
+@media (hover:none){.cp-chev{opacity:.55}}
+.cp-reacts{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.cp-react{border:1px solid var(--cp-chip);background:var(--cp-chip);border-radius:12px;padding:1px 7px;font-size:12px;cursor:pointer;color:var(--cp-txt);display:flex;gap:3px;align-items:center}
+.cp-react.mine{border-color:var(--cp-accent);background:rgba(0,168,132,.18)}
+.cp-react span{font-size:11px;font-weight:700}
+.cp-day{align-self:center;background:var(--cp-theirs);color:var(--cp-meta);font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px;margin:12px 0 6px;box-shadow:0 1px .5px rgba(11,20,26,.15)}
+#chatWindow .chat-msg-time,#chatWindow .chat-msg-actions{display:none!important}
+.cp-edit textarea{width:100%;min-width:230px;box-sizing:border-box;background:var(--cp-chip);color:var(--cp-txt);border:1px solid var(--cp-accent);border-radius:8px;padding:6px 8px;font:inherit;resize:none;outline:none}
+.cp-edit div{display:flex;justify-content:flex-end;gap:6px;margin-top:5px}
+.cp-edit button,.cp-btn{border:none;border-radius:8px;padding:5px 12px;font-weight:800;font-size:12px;cursor:pointer;background:var(--cp-chip);color:var(--cp-txt)}
+.cp-edit button.ok,.cp-btn.ok{background:var(--cp-accent);color:#fff}
+#cpMenu{position:fixed;z-index:100030;background:var(--stat-box,#fff);border:1px solid var(--glass-border,#ddd);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.3);padding:6px;min-width:200px;display:none;flex-direction:column;color:var(--text-main,#111)}
+#cpMenu.open{display:flex;animation:chatPopIn .15s ease-out}
+.cp-rbar{display:flex;gap:2px;padding:4px 4px 8px;border-bottom:1px solid var(--glass-border,#ddd);margin-bottom:4px}
+.cp-rbar button{border:none;background:none;font-size:22px;cursor:pointer;border-radius:50%;width:34px;height:34px;transition:.12s}
+.cp-rbar button:hover{transform:scale(1.25);background:rgba(127,127,127,.15)}
+.cp-it{display:flex;align-items:center;gap:10px;border:none;background:none;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:inherit;text-align:left}
+.cp-it:hover{background:rgba(0,168,132,.13)}
+.cp-it.danger{color:#ef4444}.cp-it.danger:hover{background:rgba(239,68,68,.12)}
+#cpPill{position:absolute;right:20px;bottom:96px;z-index:20;width:40px;height:40px;border-radius:50%;border:1px solid var(--glass-border);background:var(--stat-box);color:var(--text-main);font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#cpPill.show{display:flex}
+#cpPill i{position:absolute;top:-7px;right:-4px;background:var(--cp-accent,#00a884);color:#fff;font-style:normal;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px}
+#cpPill i.show{display:flex}
+#cpPinBar{display:none;align-items:center;gap:8px;padding:7px 16px;border-bottom:1px solid var(--glass-border);background:var(--stat-box);font-size:12px;cursor:pointer;color:var(--text-main)}
+#cpPinBar.show{display:flex}
+#cpPinBar span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cpPinBar button{border:none;background:none;color:var(--text-muted);cursor:pointer;font-size:14px}
+#cpModal{position:fixed;inset:0;z-index:100040;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+#cpModal.show{display:flex}
+.cp-card{position:relative;background:var(--stat-box,#fff);color:var(--text-main,#111);border:1px solid var(--glass-border,#ddd);border-radius:20px;padding:24px;width:min(360px,100%);max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;animation:chatPopIn .2s ease-out}
+.cp-card h3{margin:10px 0 2px;font-size:18px;font-weight:900}
+.cp-card p{font-size:12.5px;margin:6px 0;text-align:left}
+.cp-x{position:absolute;top:10px;right:10px;border:none;background:rgba(127,127,127,.15);width:28px;height:28px;border-radius:50%;cursor:pointer;color:inherit}
+.cp-pf-av{width:110px;height:110px;border-radius:50%;overflow:hidden;margin:0 auto;background:linear-gradient(135deg,#007AFF,#5E5CE6)}
+.cp-pf-av img,.cp-pf-av svg{width:100%;height:100%;object-fit:cover}
+.cp-st{font-size:12px;color:var(--text-muted);font-weight:700}.cp-st.on{color:#10b981}
+.cp-acts{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.cp-mem{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;text-align:left}
+.cp-mem:hover{background:rgba(127,127,127,.12)}
+.cp-mem .av{width:34px;height:34px;border-radius:50%;overflow:hidden;position:relative;flex-shrink:0;background:#64748b}
+.cp-mem .av img,.cp-mem .av svg{width:100%;height:100%}
+.cp-mem .dot{position:absolute;right:0;bottom:0;width:10px;height:10px;border-radius:50%;background:#10b981;border:2px solid var(--stat-box)}
+.cp-mem small{display:block;color:var(--text-muted);font-size:10.5px}
+.cp-me{display:flex;align-items:center;gap:10px;width:100%;border:none;background:var(--input-bg);border-radius:12px;padding:8px 10px;margin-top:10px;cursor:pointer;color:var(--text-main);text-align:left}
+.cp-me-av{width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#64748b}
+.cp-me-av img,.cp-me-av svg{width:100%;height:100%;object-fit:cover}
+.cp-me b{display:block;font-size:13px}.cp-me small{font-size:10px;color:var(--text-muted)}
+.cp-csearch{width:100%;box-sizing:border-box;margin-top:10px;background:var(--input-bg);border:1px solid var(--glass-border);border-radius:12px;padding:9px 12px;font-size:12px;color:var(--text-main);outline:none;font-family:inherit}
+#chatActiveHeader{cursor:pointer}
+#chatWindow .chat-send-btn{background:var(--cp-accent);box-shadow:0 4px 12px rgba(0,168,132,.35)}
+#chatWindow .chat-input{border-radius:22px}
+.chat-mention-item.sel{background:rgba(0,168,132,.16)}
+.chat-mention-item .av{width:26px;height:26px;border-radius:50%;overflow:hidden;background:#64748b;flex-shrink:0}
+.chat-mention-item .av img,.chat-mention-item .av svg{width:100%;height:100%}
+@media (max-width:768px){#chatWindow .chat-msg-wrap{max-width:90%}#chatWindow .chat-messages{padding:12px 10px}}
+
+/* ---- expandir chat (estilo Hangouts) ---- */
+#chatWindow{transition:transform .5s cubic-bezier(.22,1,.36,1),width .35s ease,height .35s ease,right .35s ease,bottom .35s ease,border-radius .35s ease}
+#chatWindow.cp-big{width:96vw;max-width:1680px;height:94vh;right:max(2vw,calc((100vw - 1680px)/2));bottom:3vh}
+#chatWindow.cp-big .chat-sidebar{width:340px}
+#chatWindow.cp-big .chat-msg-wrap{max-width:min(760px,68%)}
+#chatWindow.cp-big .chat-messages{padding:20px 6%}
+#chatWindow.cp-big .chat-bubble{font-size:14.5px}
+#chatWindow.cp-big .chat-input-area{padding-left:6%!important;padding-right:6%!important}
+#chatWindow.cp-big #chatSearchInput{width:220px!important}
+#cpExpand{background:rgba(127,127,127,.12);color:var(--text-main);border:1px solid var(--glass-border);width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:900;transition:.2s;padding:0}
+#cpExpand:hover{background:var(--cp-accent,#00a884);color:#fff}
+@media (max-width:768px){#cpExpand{display:none}}
+</style>
+<script id="chatProJs">
+(function(){
+'use strict';
+if(window.__chatPro) return; window.__chatPro=true;
+var $=function(id){return document.getElementById(id);};
+var EMOJIS=['👍','❤️','😂','😮','😢','🙏'];
+var MSGS={}, READS={}, PIN=null, CUR={channel:null}, LASTW={}, DRAFTS={}, pillN=0, mIdx=-1, mSel=0, mList=[];
+var readsRef=null, pinRef=null;
+var _origBuild=window._buildMsgHtml;
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function myId(){return (typeof _usuarioAtual!=='undefined'&&_usuarioAtual)?_usuarioAtual.user.replace(/\./g,'_'):'';}
+function perfilDe(uid){return perfilDoUsuario(String(uid).replace(/_/g,'.'))||{nome:uid,avatar:'masculino'};}
+function meuNome(){return (perfilDe(myId())||{}).nome||'';}
+function aberto(){var w=$('chatWindow');return !!(w&&w.classList.contains('open'));}
+function isGroup(a){return a==='global'||a==='geral';}
+function canal(){return getChatChannelPath(_chatAtivo);}
+function hash(s){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h;}
+function cor(nome){return 'hsl('+(Math.abs(hash(nome))%360)+',60%,48%)';}
+function hhmm(ts){return new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function dt(ts){return new Date(ts).toLocaleDateString('pt-BR')+' '+hhmm(ts);}
+function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function ultimoVisto(ts){
+  if(!ts) return 'Offline';
+  var d=new Date(ts),h=new Date(),ont=new Date(Date.now()-864e5);
+  if(d.toDateString()===h.toDateString()) return 'visto hoje às '+hhmm(ts);
+  if(d.toDateString()===ont.toDateString()) return 'visto ontem às '+hhmm(ts);
+  return 'visto em '+dt(ts);
+}
+function online(uid){var p=(typeof _chatOnlineUsers!=='undefined'&&_chatOnlineUsers[uid])||{};return !!(p.online&&Date.now()-p.lastSeen<120000);}
+
+/* ---------- pessoas / menções ---------- */
+function pessoas(){
+  var out={};
+  try{Object.keys(credenciaisEditor||{}).forEach(function(u){var p=perfilDoUsuario(u);if(p&&p.nome)out[p.nome]={nome:p.nome,uid:u.replace(/\./g,'_')};});}catch(e){}
+  var srcs=[typeof defaultUsuarios!=='undefined'&&defaultUsuarios,typeof credenciaisGerente!=='undefined'&&credenciaisGerente,typeof credenciaisDev!=='undefined'&&credenciaisDev,typeof coordenadoresAutorizados!=='undefined'&&coordenadoresAutorizados];
+  srcs.forEach(function(s){if(!s)return;Object.keys(s).forEach(function(k){var v=s[k],n=typeof v==='string'?v:(v&&v.nome);if(n&&!out[n])out[n]={nome:n};});});
+  return Object.keys(out).map(function(k){return out[k];});
+}
+var _reKey='',_re=null;
+function mentionRe(){
+  var ns=pessoas().map(function(p){return p.nome;}).sort(function(a,b){return b.length-a.length;});
+  var key=ns.join('|'); if(key!==_reKey){_reKey=key;_re=ns.length?new RegExp('(^|[\\s>(])@('+ns.map(function(n){return esc(n).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}).join('|')+')(?![\\p{L}\\p{N}_])','giu'):null;}
+  return _re;
+}
+function fmt(text){
+  var urls=[],t=esc(text||'');
+  t=t.replace(/https?:\/\/[^\s<]+/g,function(u){urls.push(u);return '\u0001'+(urls.length-1)+'\u0002';});
+  t=t.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  t=t.replace(/(^|[\s(>])\*([^*\n]+)\*(?=$|[\s.,!?;:)<])/g,'$1<b>$2</b>');
+  t=t.replace(/(^|[\s(>])_([^_\n]+)_(?=$|[\s.,!?;:)<])/g,'$1<i>$2</i>');
+  t=t.replace(/(^|[\s(>])~([^~\n]+)~(?=$|[\s.,!?;:)<])/g,'$1<s>$2</s>');
+  var re=mentionRe(),me=norm(meuNome());
+  if(re) t=t.replace(re,function(x,pre,n){return pre+'<span class="cp-mention'+(norm(n)===me?' me':'')+'">@'+n+'</span>';});
+  return t.replace(/\u0001(\d+)\u0002/g,function(x,i){return '<a href="'+urls[i]+'" target="_blank" rel="noopener noreferrer">'+urls[i]+'</a>';});
+}
+function mencionaMe(text){var n=meuNome();return !!(n&&text&&norm(text).indexOf('@'+norm(n))>-1);}
+
+/* ---------- leitura / ticks ---------- */
+function lidoPor(m){return Object.keys(READS).filter(function(u){var r=READS[u];return u!==myId()&&u!==m.sender&&r&&r.msgTs>=m.ts;});}
+function ticksHtml(id,m){
+  var lido=lidoPor(m).length>0,cls='',sym='✓';
+  if(lido){cls='read';sym='✓✓';}
+  else if(!isGroup(_chatAtivo)&&online(_chatAtivo)){sym='✓✓';}
+  return '<span class="cp-ticks '+cls+'" data-id="'+id+'" title="'+(lido?'Visto':'Enviado')+'">'+sym+'</span>';
+}
+function refreshTicks(){
+  document.querySelectorAll('#chatMessagesArea .cp-ticks').forEach(function(el){
+    var m=MSGS[el.dataset.id];if(!m)return;var lido=lidoPor(m).length>0;
+    el.className='cp-ticks'+(lido?' read':'');
+    el.textContent=(lido||(!isGroup(_chatAtivo)&&online(_chatAtivo)))?'✓✓':'✓';
+  });
+}
+function marcarLido(){
+  try{
+    if(!aberto()||document.hidden||!_usuarioAtual||!CUR.channel) return;
+    var bl=JSON.parse(localStorage.getItem('chatBlocked')||'{}'); if(bl[CUR.channel]) return;
+    var ws=$('chatMessagesArea').querySelectorAll('.chat-msg-wrap'); if(!ws.length) return;
+    var ts=+ws[ws.length-1].dataset.ts; if(!ts||ts<=(LASTW[CUR.channel]||0)) return;
+    LASTW[CUR.channel]=ts;
+    fetch(FIREBASE_URL+'/chat/reads/'+CUR.channel+'/'+myId()+'.json'+AUTH,{method:'PUT',body:JSON.stringify({ts:Date.now(),msgTs:ts})});
+  }catch(e){}
+}
+
+/* ---------- renderização da mensagem ---------- */
+function reactsHtml(id,m){
+  var r=m.reactions; if(!r||m.deleted) return '';
+  var g={}; Object.keys(r).forEach(function(u){var e=r[u];if(EMOJIS.indexOf(e)>-1)(g[e]=g[e]||[]).push(u);});
+  var ks=Object.keys(g); if(!ks.length) return '';
+  return '<div class="cp-reacts">'+ks.map(function(e){var us=g[e];
+    return '<button class="cp-react'+(us.indexOf(myId())>-1?' mine':'')+'" title="'+esc(us.map(function(u){return perfilDe(u).nome;}).join(', '))+'" onclick="cpReagir(\''+id+'\',\''+e+'\')">'+e+(us.length>1?'<span>'+us.length+'</span>':'')+'</button>';}).join('')+'</div>';
+}
+function sigOf(m){return String(hash(JSON.stringify([m.text||'',!!m.edited,!!m.deleted,m.reactions||null,m.replyText||'',m.thumbBase64?1:0])));}
+window._buildMsgHtml=function(id,m,isMine,perfil,alvoId){
+  MSGS[id]=m;
+  var grp=isGroup(alvoId),del=!!m.deleted,media='';
+  if(!del&&_origBuild){
+    try{var tmp=document.createElement('div');tmp.innerHTML=_origBuild(id,m,isMine,perfil,alvoId);
+      var el=tmp.querySelector('.chat-bubble > div[onclick*="abrirImagemChat"], .chat-bubble > img'); if(el) media=el.outerHTML;}catch(e){}
+  }
+  var rid=m.replyId||m.replyToId||m.replyMsgId||'';
+  var quote=(m.replyTo&&m.replyText&&!del)?'<div class="cp-quote" '+(rid?'onclick="cpIr(\''+esc(rid)+'\')"':'')+'><b>'+esc(m.replyTo)+'</b>'+esc(m.replyText)+'</div>':'';
+  var corpo=del?'<div class="cp-text cp-deleted">🚫 Mensagem apagada</div>':(m.text?'<div class="msg-text-content cp-text" data-raw="'+encodeURIComponent(m.text)+'">'+fmt(m.text)+'</div>':'');
+  var nome=(!isMine&&grp)?'<div class="cp-name" style="color:'+cor(perfil.nome)+'" onclick="cpPerfil(\''+esc(m.sender)+'\')">'+esc(perfil.nome)+'</div>':'';
+  var chev=del?'':'<button class="cp-chev" onclick="cpMenu(event,\''+id+'\')" title="Opções">⌄</button>';
+  var meta='<div class="cp-meta">'+(m.edited&&!del?'<span>editada</span>':'')+'<span>'+hhmm(m.ts||Date.now())+'</span>'+(isMine&&!del?ticksHtml(id,m):'')+'</div>';
+  return '<div class="chat-msg-wrap '+(isMine?'mine':'theirs')+(!del&&mencionaMe(m.text)&&!isMine?' cp-mentioned':'')+'" id="msg_'+id+'" data-ts="'+(m.ts||0)+'" data-sender="'+esc(m.sender)+'" data-sig="'+sigOf(m)+'">'
+    +'<div class="chat-bubble">'+chev+nome+quote+corpo+media+(del?'':reactsHtml(id,m))+meta+'</div></div>';
+};
+
+/* ---------- decoração: separadores de dia + agrupamento ---------- */
+var obs=null,sched=0;
+function rotuloDia(ts){
+  var d=new Date(ts),h=new Date(),o=new Date(Date.now()-864e5);
+  if(d.toDateString()===h.toDateString())return 'Hoje';
+  if(d.toDateString()===o.toDateString())return 'Ontem';
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+}
+function decorar(){
+  var area=$('chatMessagesArea'); if(!area) return;
+  if(obs) obs.disconnect();
+  var dist=area.scrollHeight-area.scrollTop;
+  area.querySelectorAll('.cp-day').forEach(function(e){e.remove();});
+  var prev=null,prevDay='';
+  area.querySelectorAll('.chat-msg-wrap').forEach(function(w){
+    var ts=+w.dataset.ts||0,day=new Date(ts).toDateString();
+    if(day!==prevDay){var s=document.createElement('div');s.className='cp-day';s.textContent=rotuloDia(ts);area.insertBefore(s,w);prev=null;prevDay=day;}
+    w.classList.toggle('cp-cont',!!(prev&&prev.dataset.sender===w.dataset.sender&&ts-(+prev.dataset.ts)<300000));
+    prev=w;
+  });
+  area.scrollTop=area.scrollHeight-dist;
+  if(obs) obs.observe(area,{childList:true});
+  marcarLido(); atualizarPill();
+}
+function agendarDecor(){if(sched)return;sched=requestAnimationFrame(function(){sched=0;decorar();});}
+function perto(a){return a.scrollHeight-a.scrollTop-a.clientHeight<140;}
+function atualizarPill(){
+  var a=$('chatMessagesArea'),p=$('cpPill'); if(!a||!p) return;
+  var longe=!perto(a); p.classList.toggle('show',longe);
+  if(!longe) pillN=0;
+  var i=p.querySelector('i'); i.textContent=pillN>9?'9+':pillN; i.classList.toggle('show',pillN>0);
+}
+
+/* ---------- listener realtime (Firebase) ---------- */
+window.iniciarListenerDeMensagens=function(channel){
+  if(window._chatMsgRef){try{window._chatMsgRef.off();}catch(e){}}
+  if(readsRef){try{readsRef.off();}catch(e){}} if(pinRef){try{pinRef.off();}catch(e){}}
+  CUR.channel=channel; READS={}; PIN=null; renderPin(); pillN=0;
+  var bl=JSON.parse(localStorage.getItem('chatBlocked')||'{}'); if(bl[channel]) return;
+  var ref=db.ref('/chat/messages/'+channel).orderByKey().limitToLast(60);
+  window._chatMsgRef=ref;
+  readsRef=db.ref('/chat/reads/'+channel); readsRef.on('value',function(s){READS=s.val()||{};refreshTicks();});
+  pinRef=db.ref('/chat/pins/'+channel); pinRef.on('value',function(s){PIN=s.val();renderPin();});
+  var handle=function(snap){
+    var id=snap.key,m=snap.val(); if(!m||CUR.channel!==channel||!aberto()) return;
+    var area=$('chatMessagesArea'),my=myId(),isMine=m.sender===my,perfil=perfilDe(m.sender),ex=$('msg_'+id);
+    MSGS[id]=m;
+    if(ex){
+      if(ex.dataset.editing) return;
+      if(ex.dataset.sig!==sigOf(m)){ex.outerHTML=window._buildMsgHtml(id,m,isMine,perfil,_chatAtivo);}
+      return;
+    }
+    if(_lastMsgId!==null&&id<=_lastMsgId) return;
+    var add=function(){
+      if($('msg_'+id)||CUR.channel!==channel) return;
+      _lastMsgId=id;
+      if(area.innerHTML.indexOf('Nenhuma mensagem neste chat')>-1) area.innerHTML='';
+      var bottom=perto(area);
+      area.insertAdjacentHTML('beforeend',window._buildMsgHtml(id,m,isMine,perfil,_chatAtivo));
+      if(isMine||bottom) area.scrollTop=area.scrollHeight; else {pillN++;}
+      var muted=JSON.parse(localStorage.getItem('chatMuted')||'{}');
+      if(!isMine&&!muted[channel]&&typeof tocarSomNotificacao==='function') tocarSomNotificacao();
+    };
+    if(isMine) setTimeout(add,1500); else add();
+  };
+  ref.on('child_added',handle); ref.on('child_changed',handle);
+};
+
+/* ---------- ações nas mensagens ---------- */
+function fecharMenu(){var m=$('cpMenu');if(m)m.classList.remove('open');}
+window.cpMenu=function(ev,id){
+  ev.stopPropagation();
+  var m=MSGS[id]; if(!m) return;
+  var mine=m.sender===myId(),nome=perfilDe(m.sender).nome,menu=$('cpMenu');
+  if(!menu){menu=document.createElement('div');menu.id='cpMenu';document.body.appendChild(menu);}
+  var it=function(ic,t,fn,c){return '<button class="cp-it '+(c||'')+'" onclick="'+fn+'">'+ic+'<span>'+t+'</span></button>';};
+  var h='<div class="cp-rbar">'+EMOJIS.map(function(e){return '<button onclick="cpReagir(\''+id+'\',\''+e+'\')">'+e+'</button>';}).join('')+'</div>';
+  h+=it('↩️','Responder','cpResponder(\''+id+'\')');
+  if(m.text) h+=it('📋','Copiar','cpCopiar(\''+id+'\')');
+  if(!mine) h+=it('@','Marcar '+esc(nome.split(' ')[0]),'cpMarcar(\''+id+'\')');
+  h+=it('📌',(PIN&&PIN.id===id)?'Desafixar':'Fixar','cpFixar(\''+id+'\')');
+  if(mine){h+=it('ℹ️','Dados da mensagem','cpInfo(\''+id+'\')');
+    if(m.text) h+=it('✏️','Editar','editarMensagemChat(\''+id+'\')');
+    h+=it('🗑️','Apagar para todos','deletarMensagemChat(\''+id+'\')','danger');}
+  menu.innerHTML=h; menu.classList.add('open');
+  var r=ev.currentTarget.getBoundingClientRect(),w=menu.offsetWidth,hh=menu.offsetHeight;
+  menu.style.left=Math.max(8,Math.min(r.right-w,innerWidth-w-8))+'px';
+  menu.style.top=Math.max(8,Math.min(r.bottom+4,innerHeight-hh-8))+'px';
+};
+window.cpReagir=function(id,e){
+  fecharMenu(); var m=MSGS[id]; if(!m) return; var my=myId(),cur=m.reactions&&m.reactions[my];
+  var url=FIREBASE_URL+'/chat/messages/'+canal()+'/'+id+'/reactions/'+my+'.json'+AUTH;
+  fetch(url,cur===e?{method:'DELETE'}:{method:'PUT',body:JSON.stringify(e)});
+};
+window.cpResponder=function(id){
+  fecharMenu(); var m=MSGS[id]; if(!m) return;
+  window.mensagemSendoRespondidaId=id;
+  $('chatReplyUser').textContent=perfilDe(m.sender).nome;
+  var t=(m.text||'📷 Imagem').replace(/\s+/g,' ').trim(); if(t.length>60)t=t.slice(0,60)+'...';
+  $('chatReplyTextSnippet').textContent=t;
+  $('chatReplyPreview').classList.add('active'); $('chatInputMsg').focus();
+};
+window.cpCopiar=function(id){fecharMenu();var m=MSGS[id];if(m&&m.text&&navigator.clipboard)navigator.clipboard.writeText(m.text);};
+window.cpMarcar=function(id){fecharMenu();var m=MSGS[id];if(m)marcarNoInput(perfilDe(m.sender).nome);};
+window.cpIr=function(id){
+  var el=$('msg_'+id); if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('cp-flash'); setTimeout(function(){el.classList.remove('cp-flash');},1500);
+};
+window.cpFixar=function(id){
+  fecharMenu(); var m=MSGS[id]; if(!m) return; var url=FIREBASE_URL+'/chat/pins/'+canal()+'.json'+AUTH;
+  if(PIN&&PIN.id===id) return fetch(url,{method:'DELETE'});
+  fetch(url,{method:'PUT',body:JSON.stringify({id:id,text:(m.text||'📷 Imagem').slice(0,120),name:perfilDe(m.sender).nome,by:myId(),ts:Date.now()})});
+};
+window.fixarMensagem=window.cpFixar;
+function renderPin(){
+  var b=$('cpPinBar'); if(!b) return;
+  if(!PIN){b.classList.remove('show');return;}
+  b.innerHTML='<span>📌 <b>'+esc(PIN.name)+'</b>: '+esc(PIN.text)+'</span><button title="Desafixar" onclick="event.stopPropagation();cpFixar(\''+esc(PIN.id)+'\')">✕</button>';
+  b.onclick=function(){cpIr(PIN.id);}; b.classList.add('show');
+}
+window.cpInfo=function(id){
+  fecharMenu(); var m=MSGS[id]; if(!m) return;
+  var l=lidoPor(m).map(function(u){return '<div class="cp-mem" style="cursor:default"><div class="av">'+htmlAvatarPerfil(perfilDe(u))+'</div><div>'+esc(perfilDe(u).nome)+'</div></div>';}).join('');
+  modal('<h3>Dados da mensagem</h3><p>📤 Enviada: <b>'+dt(m.ts)+'</b></p>'+(m.edited?'<p>✏️ Editada'+(m.editedTs?': <b>'+dt(m.editedTs)+'</b>':'')+'</p>':'')+'<p><b>👁️ Visto por</b></p>'+(l||'<p style="color:var(--text-muted)">Ninguém ainda.</p>'));
+};
+/* edição inline (sem modal) */
+window.editarMensagemChat=function(id){
+  fecharMenu(); var m=MSGS[id],w=$('msg_'+id); if(!m||!w||w.dataset.editing) return;
+  w.dataset.editing='1'; var b=w.querySelector('.chat-bubble'),old=m.text||'';
+  var box=document.createElement('div'); box.className='cp-edit';
+  box.innerHTML='<textarea rows="2"></textarea><div><button class="no">Cancelar</button><button class="ok">Salvar</button></div>';
+  var ta=box.querySelector('textarea'); ta.value=old;
+  var tx=b.querySelector('.cp-text'); if(tx) tx.style.display='none';
+  b.insertBefore(box,tx||b.querySelector('.cp-meta'));
+  var fim=function(){delete w.dataset.editing;box.remove();if(tx)tx.style.display='';};
+  var salvar=function(){
+    var nv=ta.value.trim(); if(!nv||nv===old){fim();return;}
+    fim(); fetch(FIREBASE_URL+'/chat/messages/'+canal()+'/'+id+'.json'+AUTH,{method:'PATCH',body:JSON.stringify({text:nv,edited:true,editedTs:Date.now()})});
+  };
+  box.querySelector('.ok').onclick=salvar; box.querySelector('.no').onclick=fim;
+  ta.onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();salvar();}else if(e.key==='Escape')fim();};
+  ta.focus(); ta.setSelectionRange(old.length,old.length);
+};
+
+/* ---------- modais: perfil / grupo ---------- */
+function modal(html){
+  var o=$('cpModal'); if(!o){o=document.createElement('div');o.id='cpModal';o.onclick=function(e){if(e.target===o)cpFechar();};document.body.appendChild(o);}
+  o.innerHTML='<div class="cp-card">'+html+'<button class="cp-x" onclick="cpFechar()">✕</button></div>'; o.classList.add('show');
+}
+window.cpFechar=function(){var o=$('cpModal');if(o)o.classList.remove('show');};
+window.cpMyId=myId;
+window.cpPerfil=function(uid){
+  var u=uid||_chatAtivo;
+  if(!uid&&isGroup(u)){
+    var rows=pessoas().filter(function(p){return p.uid;}).sort(function(a,b){return (online(b.uid)?1:0)-(online(a.uid)?1:0)||a.nome.localeCompare(b.nome);}).map(function(p){
+      var pr=_chatOnlineUsers[p.uid]||{};
+      return '<div class="cp-mem" onclick="cpPerfil(\''+p.uid+'\')"><div class="av">'+htmlAvatarPerfil(perfilDe(p.uid))+(online(p.uid)?'<span class="dot"></span>':'')+'</div><div>'+esc(p.nome)+(p.uid===myId()?' (você)':'')+'<small>'+(online(p.uid)?'Online':ultimoVisto(pr.lastSeen))+'</small></div></div>';}).join('');
+    var n=u==='geral'?'Talonário Fab-2':'Talonário Fab-1';
+    return modal('<div class="cp-pf-av" style="font-size:54px;display:flex;align-items:center;justify-content:center">🌍</div><h3>'+n+'</h3><div class="cp-st">Canal público</div><p style="margin-top:14px"><b>Membros</b></p>'+rows);
+  }
+  var p=perfilDe(u),pr=_chatOnlineUsers[u]||{},on=online(u),eu=u===myId(),mutado=JSON.parse(localStorage.getItem('chatMuted')||'{}')[getChatChannelPath(u)];
+  var acts=eu?'<button class="cp-btn ok" onclick="cpFechar();abrirPerfil()">✏️ Editar meu perfil</button>':
+    (_chatAtivo!==u?'<button class="cp-btn ok" onclick="cpFechar();mudarCanalChat(\''+u+'\')">💬 Conversar</button>':'')+'<button class="cp-btn" onclick="cpSilenciar(\''+u+'\')">'+(mutado?'🔔 Reativar notificações':'🔕 Silenciar')+'</button>';
+  modal('<div class="cp-pf-av">'+htmlAvatarPerfil(p)+'</div><h3>'+esc(p.nome)+'</h3><div class="cp-st '+(on?'on':'')+'">'+(on?'Online':ultimoVisto(pr.lastSeen))+'</div><div class="cp-acts">'+acts+'</div>');
+};
+window.cpSilenciar=function(u){
+  var ch=getChatChannelPath(u),m=JSON.parse(localStorage.getItem('chatMuted')||'{}'); m[ch]=!m[ch]; localStorage.setItem('chatMuted',JSON.stringify(m)); cpPerfil(u);
+};
+
+/* ---------- menção com teclado ---------- */
+function fecharLista(){var l=$('chatMentionList');if(l)l.style.display='none';mIdx=-1;mList=[];}
+function mostrarLista(busca){
+  var l=$('chatMentionList'),b=norm(busca);
+  mList=pessoas().filter(function(p){return norm(p.nome).indexOf(b)>-1&&norm(p.nome)!==norm(meuNome());})
+    .sort(function(a,c){return (norm(c.nome).indexOf(b)===0)-(norm(a.nome).indexOf(b)===0)||a.nome.localeCompare(c.nome);}).slice(0,8);
+  if(!mList.length) return fecharLista();
+  if(mSel>=mList.length) mSel=0;
+  l.innerHTML=mList.map(function(p,i){return '<div class="chat-mention-item'+(i===mSel?' sel':'')+'" onmousedown="event.preventDefault();cpPick('+i+')"><div class="av">'+(p.uid?htmlAvatarPerfil(perfilDe(p.uid)):'<span style="color:#fff;display:flex;align-items:center;justify-content:center;height:100%;font-size:11px">'+esc(p.nome.charAt(0))+'</span>')+'</div>'+esc(p.nome)+'</div>';}).join('');
+  l.style.display='block';
+}
+window.cpPick=function(i){
+  var p=mList[i],ta=$('chatInputMsg'); if(!p) return;
+  var antes=ta.value.substring(0,mIdx),depois=ta.value.substring(ta.selectionStart);
+  ta.value=antes+'@'+p.nome+' '+depois; var pos=antes.length+p.nome.length+2;
+  fecharLista(); ta.focus(); ta.setSelectionRange(pos,pos);
+};
+window.rastrearMarcacao=function(){
+  if(typeof handleChatTyping==='function') handleChatTyping();
+  var ta=$('chatInputMsg'),antes=ta.value.substring(0,ta.selectionStart);
+  var m=antes.match(/(?:^|\s)@([\p{L}\p{N}_ ]{0,25})$/u);
+  if(m){mIdx=antes.length-m[1].length-1;mSel=0;mostrarLista(m[1]);} else fecharLista();
+};
+window.mostrarListaMarcacao=mostrarLista; window.fecharListaMarcacao=fecharLista;
+window.inserirMarcacao=function(nome){var i=mList.findIndex(function(p){return p.nome===nome;});if(i>-1)cpPick(i);};
+
+/* ---------- init ---------- */
+function init(){
+  var main=document.querySelector('#chatWindow .chat-main'),area=$('chatMessagesArea'),ta=$('chatInputMsg');
+  if(!main||!area||!ta) return;
+  var pin=document.createElement('div');pin.id='cpPinBar';area.parentNode.insertBefore(pin,area);
+  var pill=document.createElement('button');pill.id='cpPill';pill.innerHTML='⬇<i></i>';pill.onclick=function(){area.scrollTo({top:area.scrollHeight,behavior:'smooth'});};main.appendChild(pill);
+  area.addEventListener('scroll',atualizarPill);
+  obs=new MutationObserver(agendarDecor); obs.observe(area,{childList:true});
+  var hd=document.querySelector('#chatWindow .chat-main-header');
+  hd.addEventListener('click',function(e){if(e.target.closest('#chatActiveHeader'))cpPerfil();});
+  var sh=document.querySelector('#chatWindow .chat-sidebar-header');
+  sh.insertAdjacentHTML('beforeend','<button class="cp-me" id="cpMe" onclick="cpPerfil(cpMyId())"><span class="cp-me-av"></span><span><b></b><small>Meu perfil</small></span></button><input class="cp-csearch" id="cpCSearch" placeholder="🔍 Buscar contato..." oninput="cpFiltrar()">');
+  window.cpFiltrar=function(){var q=norm($('cpCSearch').value);document.querySelectorAll('#chatContactList .chat-contact').forEach(function(c){var n=c.querySelector('.chat-contact-name');c.style.display=(!q||norm(n&&n.textContent).indexOf(q)>-1)?'':'none';});};
+  var _rc=window.renderizarContatosChat; if(typeof _rc==='function') window.renderizarContatosChat=function(){var r=_rc.apply(this,arguments);window.cpFiltrar();return r;};
+  var at=document.querySelector('#chatWindow .chat-input-area .chat-attach-btn');
+  if(at) at.insertAdjacentHTML('beforebegin','<button class="chat-attach-btn" title="Marcar alguém" style="font-size:20px;font-weight:900" onclick="var t=document.getElementById(\'chatInputMsg\');t.value+=(t.value&&!/\\s$/.test(t.value)?\' \':\'\')+\'@\';t.focus();rastrearMarcacao()">@</button>');
+  ta.addEventListener('keydown',function(e){
+    var l=$('chatMentionList'); if(!l||l.style.display!=='block'||!mList.length) return;
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();mSel=(mSel+(e.key==='ArrowDown'?1:-1)+mList.length)%mList.length;mostrarLista(ta.value.substring(mIdx+1,ta.selectionStart));}
+    else if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();e.stopImmediatePropagation();cpPick(mSel);}
+    else if(e.key==='Escape'){e.preventDefault();fecharLista();}
+  },true);
+  var _mc=window.mudarCanalChat;
+  if(typeof _mc==='function') window.mudarCanalChat=async function(alvo){
+    if(ta) DRAFTS[_chatAtivo]=ta.value;
+    try{cancelarResposta();}catch(e){}
+    await _mc.apply(this,arguments);
+    ta.value=DRAFTS[alvo]||''; ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,100)+'px'; fecharLista();
+  };
+  document.addEventListener('click',function(e){var m=$('cpMenu');if(m&&!m.contains(e.target))fecharMenu();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){fecharMenu();cpFechar();}});
+  document.addEventListener('visibilitychange',marcarLido);
+  var cl=document.querySelector('#chatWindow .chat-close-btn');
+  if(cl){
+    var ex=document.createElement('button');ex.id='cpExpand';
+    var aplicar=function(big){
+      $('chatWindow').classList.toggle('cp-big',big);
+      ex.textContent=big?'⤡':'⤢'; ex.title=big?'Reduzir chat':'Expandir chat';
+      try{localStorage.setItem('chatExpandido',big?'1':'0');}catch(e){}
+      setTimeout(function(){var a=$('chatMessagesArea');if(a)a.scrollTop=a.scrollHeight;},380);
+    };
+    ex.onclick=function(){aplicar(!$('chatWindow').classList.contains('cp-big'));};
+    cl.parentNode.insertBefore(ex,cl);
+    aplicar((function(){try{return localStorage.getItem('chatExpandido')==='1';}catch(e){return false;}})());
+    hd.addEventListener('dblclick',function(e){if(!e.target.closest('input,button'))ex.click();});
+  }
+  var lastMe='';
+  setInterval(function(){
+    marcarLido();
+    try{var p=perfilDe(myId()),k=p.nome+'|'+(p.perfilFoto?1:0)+'|'+p.avatar;
+      if(k!==lastMe){lastMe=k;var me=$('cpMe');me.querySelector('.cp-me-av').innerHTML=htmlAvatarPerfil(p);me.querySelector('b').textContent=p.nome;}}catch(e){}
+  },2500);
+}
+init();
+})();
+</script>
+<!-- =================== FIM CHAT PRO =================== -->
+
 </body>
 </html>
