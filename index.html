@@ -1867,14 +1867,26 @@
         .chat-messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
        
         /* Balões de Mensagem */
-        .chat-msg-wrap { display: flex; gap: 10px; max-width: 80%; animation: chatPopIn 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+        .chat-msg-wrap { display: flex; gap: 10px; max-width: 80%; animation: chatPopIn 0.3s cubic-bezier(0.22, 1, 0.36, 1); min-width: 0; }
         .chat-msg-wrap.mine { align-self: flex-end; flex-direction: row-reverse; }
         .chat-msg-wrap.theirs { align-self: flex-start; }
        
         .chat-msg-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #ccc; display:flex; align-items:center; justify-content:center;}
         .chat-msg-avatar img, .chat-msg-avatar svg { width:100%; height:100%; object-fit:cover; }
        
-        .chat-bubble { padding: 12px 16px; border-radius: 18px; font-size: 13px; font-weight: 500; line-height: 1.5; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05);}
+       .chat-bubble { 
+    padding: 12px 16px; 
+    border-radius: 18px; 
+    font-size: 13px; 
+    font-weight: 500; 
+    line-height: 1.5; 
+    position: relative; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+    word-break: break-word;
+    white-space: pre-wrap;
+    min-width: 0;
+    max-width: 100%;
+}
         .chat-msg-wrap.mine .chat-bubble { background: linear-gradient(135deg, #007AFF, #5E5CE6); color: #fff; border-bottom-right-radius: 4px; }
         .chat-msg-wrap.theirs .chat-bubble { background: var(--input-bg); border: 1px solid var(--glass-border); color: var(--text-main); border-bottom-left-radius: 4px; }
        
@@ -1957,7 +1969,7 @@
         .chat-reply-text {
             font-size: 12px; font-weight: 500; color: var(--text-muted);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            display: block; width: 100%;
+            display: block; width: 100%; min-width: 0;
         }
         .chat-cancel-reply {
             position: absolute; right: 12px; top: 14px;
