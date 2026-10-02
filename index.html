@@ -9634,7 +9634,7 @@ conteudoImagem = `
             `;
 
             try {
-                const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}`);
+                const res = await fetch(`${FIREBASE_URL}/chat/messages/${channel}.json${AUTH}${AUTH ? '&' : '?'}orderBy=%22$key%22&limitToLast=40`);
                 const data = await res.json() || {};
                
                 area.innerHTML = '';
@@ -11246,12 +11246,14 @@ body.dark-mode #chatWindow{--cp-mine:#005c4b;--cp-theirs:#202c33;--cp-txt:#e9ede
 /* ---- expandir chat (estilo Hangouts) ---- */
 #chatWindow{transition:transform .5s cubic-bezier(.22,1,.36,1),width .35s ease,height .35s ease,right .35s ease,bottom .35s ease,border-radius .35s ease}
 #chatWindow.cp-big{width:96vw;max-width:1680px;height:94vh;right:max(2vw,calc((100vw - 1680px)/2));bottom:3vh}
+#chatWindow.cp-big{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 #chatWindow.cp-big .chat-sidebar{width:340px}
 #chatWindow.cp-big .chat-msg-wrap{max-width:min(760px,68%)}
 #chatWindow.cp-big .chat-messages{padding:20px 6%}
 #chatWindow.cp-big .chat-bubble{font-size:14.5px}
 #chatWindow.cp-big .chat-input-area{padding-left:6%!important;padding-right:6%!important}
 #chatWindow.cp-big #chatSearchInput{width:220px!important}
+#cpOlder{align-self:center;margin:4px 0 8px;flex-shrink:0}
 #cpExpand{background:rgba(127,127,127,.12);color:var(--text-main);border:1px solid var(--glass-border);width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:900;transition:.2s;padding:0}
 #cpExpand:hover{background:var(--cp-accent,#00a884);color:#fff}
 @media (max-width:768px){#cpExpand{display:none}}
@@ -11264,7 +11266,7 @@ var $=function(id){return document.getElementById(id);};
 var EMOJIS=['👍','❤️','😂','😮','😢','🙏'];
 var MSGS={}, READS={}, PIN=null, CUR={channel:null}, LASTW={}, DRAFTS={}, pillN=0, mIdx=-1, mSel=0, mList=[];
 var readsRef=null, pinRef=null;
-var _origBuild=window._buildMsgHtml;
+var PAGE=40,OLD={};
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function myId(){return (typeof _usuarioAtual!=='undefined'&&_usuarioAtual)?_usuarioAtual.user.replace(/\./g,'_'):'';}
@@ -11288,18 +11290,24 @@ function ultimoVisto(ts){
 function online(uid){var p=(typeof _chatOnlineUsers!=='undefined'&&_chatOnlineUsers[uid])||{};return !!(p.online&&Date.now()-p.lastSeen<120000);}
 
 /* ---------- pessoas / menções ---------- */
+var PC={t:0,list:null,re:undefined,me:''};
 function pessoas(){
+  var now=Date.now(); if(PC.list&&now-PC.t<5000) return PC.list;
   var out={};
   try{Object.keys(credenciaisEditor||{}).forEach(function(u){var p=perfilDoUsuario(u);if(p&&p.nome)out[p.nome]={nome:p.nome,uid:u.replace(/\./g,'_')};});}catch(e){}
   var srcs=[typeof defaultUsuarios!=='undefined'&&defaultUsuarios,typeof credenciaisGerente!=='undefined'&&credenciaisGerente,typeof credenciaisDev!=='undefined'&&credenciaisDev,typeof coordenadoresAutorizados!=='undefined'&&coordenadoresAutorizados];
   srcs.forEach(function(s){if(!s)return;Object.keys(s).forEach(function(k){var v=s[k],n=typeof v==='string'?v:(v&&v.nome);if(n&&!out[n])out[n]={nome:n};});});
-  return Object.keys(out).map(function(k){return out[k];});
+  PC.list=Object.keys(out).map(function(k){return out[k];}); PC.t=now; PC.re=undefined;
+  try{PC.me=norm(meuNome());}catch(e){PC.me='';}
+  return PC.list;
 }
-var _reKey='',_re=null;
 function mentionRe(){
-  var ns=pessoas().map(function(p){return p.nome;}).sort(function(a,b){return b.length-a.length;});
-  var key=ns.join('|'); if(key!==_reKey){_reKey=key;_re=ns.length?new RegExp('(^|[\\s>(])@('+ns.map(function(n){return esc(n).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}).join('|')+')(?![\\p{L}\\p{N}_])','giu'):null;}
-  return _re;
+  pessoas();
+  if(PC.re===undefined){
+    var ns=PC.list.map(function(p){return p.nome;}).sort(function(a,b){return b.length-a.length;});
+    PC.re=ns.length?new RegExp('(^|[\\s>(])@('+ns.map(function(n){return esc(n).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}).join('|')+')(?![\\p{L}\\p{N}_])','giu'):null;
+  }
+  return PC.re;
 }
 function fmt(text){
   var urls=[],t=esc(text||'');
@@ -11308,11 +11316,11 @@ function fmt(text){
   t=t.replace(/(^|[\s(>])\*([^*\n]+)\*(?=$|[\s.,!?;:)<])/g,'$1<b>$2</b>');
   t=t.replace(/(^|[\s(>])_([^_\n]+)_(?=$|[\s.,!?;:)<])/g,'$1<i>$2</i>');
   t=t.replace(/(^|[\s(>])~([^~\n]+)~(?=$|[\s.,!?;:)<])/g,'$1<s>$2</s>');
-  var re=mentionRe(),me=norm(meuNome());
+  var re=mentionRe(),me=PC.me;
   if(re) t=t.replace(re,function(x,pre,n){return pre+'<span class="cp-mention'+(norm(n)===me?' me':'')+'">@'+n+'</span>';});
   return t.replace(/\u0001(\d+)\u0002/g,function(x,i){return '<a href="'+urls[i]+'" target="_blank" rel="noopener noreferrer">'+urls[i]+'</a>';});
 }
-function mencionaMe(text){var n=meuNome();return !!(n&&text&&norm(text).indexOf('@'+norm(n))>-1);}
+function mencionaMe(text){pessoas();return !!(PC.me&&text&&norm(text).indexOf('@'+PC.me)>-1);}
 
 /* ---------- leitura / ticks ---------- */
 function lidoPor(m){return Object.keys(READS).filter(function(u){var r=READS[u];return u!==myId()&&u!==m.sender&&r&&r.msgTs>=m.ts;});}
@@ -11333,8 +11341,8 @@ function marcarLido(){
   try{
     if(!aberto()||document.hidden||!_usuarioAtual||!CUR.channel) return;
     var bl=JSON.parse(localStorage.getItem('chatBlocked')||'{}'); if(bl[CUR.channel]) return;
-    var ws=$('chatMessagesArea').querySelectorAll('.chat-msg-wrap'); if(!ws.length) return;
-    var ts=+ws[ws.length-1].dataset.ts; if(!ts||ts<=(LASTW[CUR.channel]||0)) return;
+    var e=$('chatMessagesArea').lastElementChild; while(e&&!e.classList.contains('chat-msg-wrap'))e=e.previousElementSibling; if(!e) return;
+    var ts=+e.dataset.ts; if(!ts||ts<=(LASTW[CUR.channel]||0)) return;
     LASTW[CUR.channel]=ts;
     fetch(FIREBASE_URL+'/chat/reads/'+CUR.channel+'/'+myId()+'.json'+AUTH,{method:'PUT',body:JSON.stringify({ts:Date.now(),msgTs:ts})});
   }catch(e){}
@@ -11352,9 +11360,9 @@ function sigOf(m){return String(hash(JSON.stringify([m.text||'',!!m.edited,!!m.d
 window._buildMsgHtml=function(id,m,isMine,perfil,alvoId){
   MSGS[id]=m;
   var grp=isGroup(alvoId),del=!!m.deleted,media='';
-  if(!del&&_origBuild){
-    try{var tmp=document.createElement('div');tmp.innerHTML=_origBuild(id,m,isMine,perfil,alvoId);
-      var el=tmp.querySelector('.chat-bubble > div[onclick*="abrirImagemChat"], .chat-bubble > img'); if(el) media=el.outerHTML;}catch(e){}
+  if(!del){
+    if(m.thumbBase64&&m.mediaId) media='<div style="position:relative;margin-top:6px;cursor:pointer;border-radius:8px;overflow:hidden;width:220px;max-width:100%;height:220px;background:#e0e0e0" onclick="cpImg(\''+id+'\')"><img src="'+esc(m.thumbBase64)+'" decoding="async" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block"></div>';
+    else if(m.imagemBase64) media='<img src="'+esc(m.imagemBase64)+'" decoding="async" style="max-width:100%;max-height:250px;object-fit:contain;border-radius:8px;margin-top:5px;cursor:pointer" onclick="window.abrirImagemChat(this.src)">';
   }
   var rid=m.replyId||m.replyToId||m.replyMsgId||'';
   var quote=(m.replyTo&&m.replyText&&!del)?'<div class="cp-quote" '+(rid?'onclick="cpIr(\''+esc(rid)+'\')"':'')+'><b>'+esc(m.replyTo)+'</b>'+esc(m.replyText)+'</div>':'';
@@ -11374,18 +11382,49 @@ function rotuloDia(ts){
   if(d.toDateString()===o.toDateString())return 'Ontem';
   return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 }
+function ensureOlder(){
+  var area=$('chatMessagesArea'),ch=CUR.channel; if(!area||!ch) return;
+  var b=$('cpOlder'),n=area.querySelectorAll('.chat-msg-wrap').length;
+  if(OLD[ch]==='done'||n<PAGE){if(b)b.remove();return;}
+  if(!b){b=document.createElement('button');b.id='cpOlder';b.className='cp-btn';b.textContent='↑ Carregar mensagens anteriores';b.onclick=carregarAnteriores;}
+  var first=area.querySelector('.cp-day,.chat-msg-wrap');
+  if(first&&b.nextElementSibling!==first) area.insertBefore(b,first);
+}
+async function carregarAnteriores(){
+  var ch=CUR.channel,area=$('chatMessagesArea'),w=area.querySelector('.chat-msg-wrap'),b=$('cpOlder');
+  if(!w||OLD[ch]==='busy') return;
+  var first=w.id.slice(4); OLD[ch]='busy'; if(b) b.textContent='Carregando...';
+  try{
+    var snap=await db.ref('/chat/messages/'+ch).orderByKey().endAt(first).limitToLast(PAGE+1).once('value');
+    var data=snap.val()||{},ids=Object.keys(data).filter(function(k){return k<first;}).sort();
+    if(CUR.channel!==ch) return;
+    var h=area.scrollHeight,t=area.scrollTop,my=myId(),html='';
+    ids.forEach(function(id){var m=data[id];html+=window._buildMsgHtml(id,m,m.sender===my,perfilDe(m.sender),_chatAtivo);});
+    var ref=area.querySelector('.cp-day,.chat-msg-wrap'); if(ref&&html) ref.insertAdjacentHTML('beforebegin',html);
+    area.scrollTop=t+(area.scrollHeight-h);
+    OLD[ch]=ids.length<PAGE?'done':'';
+  }catch(e){OLD[ch]='';}
+  var bb=$('cpOlder'); if(bb) bb.textContent='↑ Carregar mensagens anteriores';
+  agendarDecor();
+}
 function decorar(){
   var area=$('chatMessagesArea'); if(!area) return;
   if(obs) obs.disconnect();
-  var dist=area.scrollHeight-area.scrollTop;
-  area.querySelectorAll('.cp-day').forEach(function(e){e.remove();});
-  var prev=null,prevDay='';
-  area.querySelectorAll('.chat-msg-wrap').forEach(function(w){
-    var ts=+w.dataset.ts||0,day=new Date(ts).toDateString();
-    if(day!==prevDay){var s=document.createElement('div');s.className='cp-day';s.textContent=rotuloDia(ts);area.insertBefore(s,w);prev=null;prevDay=day;}
-    w.classList.toggle('cp-cont',!!(prev&&prev.dataset.sender===w.dataset.sender&&ts-(+prev.dataset.ts)<300000));
+  var dist=area.scrollHeight-area.scrollTop,keep=[],prev=null,prevDay='',ws=area.querySelectorAll('.chat-msg-wrap');
+  for(var i=0;i<ws.length;i++){
+    var w=ws[i],ts=+w.dataset.ts||0,day=new Date(ts).toDateString();
+    if(day!==prevDay){
+      var s=w.previousElementSibling;
+      if(!(s&&s.classList.contains('cp-day'))){s=document.createElement('div');s.className='cp-day';area.insertBefore(s,w);}
+      var lb=rotuloDia(ts); if(s.textContent!==lb) s.textContent=lb;
+      keep.push(s);prev=null;prevDay=day;
+    }
+    var cont=!!(prev&&prev.dataset.sender===w.dataset.sender&&ts-(+prev.dataset.ts)<300000);
+    if(w.classList.contains('cp-cont')!==cont) w.classList.toggle('cp-cont',cont);
     prev=w;
-  });
+  }
+  area.querySelectorAll('.cp-day').forEach(function(e){if(keep.indexOf(e)<0)e.remove();});
+  ensureOlder();
   area.scrollTop=area.scrollHeight-dist;
   if(obs) obs.observe(area,{childList:true});
   marcarLido(); atualizarPill();
@@ -11403,9 +11442,9 @@ function atualizarPill(){
 window.iniciarListenerDeMensagens=function(channel){
   if(window._chatMsgRef){try{window._chatMsgRef.off();}catch(e){}}
   if(readsRef){try{readsRef.off();}catch(e){}} if(pinRef){try{pinRef.off();}catch(e){}}
-  CUR.channel=channel; READS={}; PIN=null; renderPin(); pillN=0;
+  CUR.channel=channel; if(OLD[channel]==='busy')OLD[channel]=''; READS={}; PIN=null; renderPin(); pillN=0;
   var bl=JSON.parse(localStorage.getItem('chatBlocked')||'{}'); if(bl[channel]) return;
-  var ref=db.ref('/chat/messages/'+channel).orderByKey().limitToLast(60);
+  var ref=db.ref('/chat/messages/'+channel).orderByKey().limitToLast(PAGE);
   window._chatMsgRef=ref;
   readsRef=db.ref('/chat/reads/'+channel); readsRef.on('value',function(s){READS=s.val()||{};refreshTicks();});
   pinRef=db.ref('/chat/pins/'+channel); pinRef.on('value',function(s){PIN=s.val();renderPin();});
@@ -11515,6 +11554,7 @@ function modal(html){
   var o=$('cpModal'); if(!o){o=document.createElement('div');o.id='cpModal';o.onclick=function(e){if(e.target===o)cpFechar();};document.body.appendChild(o);}
   o.innerHTML='<div class="cp-card">'+html+'<button class="cp-x" onclick="cpFechar()">✕</button></div>'; o.classList.add('show');
 }
+window.cpImg=function(id){var m=MSGS[id];if(m&&window.abrirImagemChatNova)window.abrirImagemChatNova(m.mediaId,m.thumbBase64);};
 window.cpFechar=function(){var o=$('cpModal');if(o)o.classList.remove('show');};
 window.cpMyId=myId;
 window.cpPerfil=function(uid){
