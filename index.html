@@ -11657,16 +11657,29 @@ function init(){
 init();
 })();
 
-// === ROLAGEM AUTOMÁTICA DO CHAT ===
+// === ROLAGEM AUTOMÁTICA DO CHAT (ESTILO WHATSAPP) ===
 window.addEventListener('DOMContentLoaded', () => {
-    const chatAreaScroll = document.getElementById('chatMessagesArea');
-    if (chatAreaScroll) {
+    const chatArea = document.getElementById('chatMessagesArea');
+    if (chatArea) {
+        // Desativa a lentidão padrão do CSS antigo para o chat
+        chatArea.style.scrollBehavior = 'auto';
+
         const observer = new MutationObserver(() => {
-            chatAreaScroll.scrollTop = chatAreaScroll.scrollHeight;
+            // Pega o último balão de mensagem que entrou na tela
+            const ultimaMensagem = chatArea.lastElementChild;
+            
+            if (ultimaMensagem) {
+                // Traz a última mensagem para a visão de forma fluida e focada (igual ao Wpp)
+                ultimaMensagem.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
         });
-        observer.observe(chatAreaScroll, { childList: true, subtree: true });
+        
+        // childList: true faz o sistema só rodar quando uma mensagem inteira nova chega, economizando memória
+        observer.observe(chatArea, { childList: true });
     }
 });
+
+
 </script>
 <!-- =================== FIM CHAT PRO =================== -->
 
