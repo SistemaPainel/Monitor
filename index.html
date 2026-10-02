@@ -11656,6 +11656,17 @@ function init(){
 }
 init();
 })();
+
+// === ROLAGEM AUTOMÁTICA DO CHAT ===
+window.addEventListener('DOMContentLoaded', () => {
+    const chatAreaScroll = document.getElementById('chatMessagesArea');
+    if (chatAreaScroll) {
+        const observer = new MutationObserver(() => {
+            chatAreaScroll.scrollTop = chatAreaScroll.scrollHeight;
+        });
+        observer.observe(chatAreaScroll, { childList: true, subtree: true });
+    }
+});
 </script>
 <!-- =================== FIM CHAT PRO =================== -->
 
