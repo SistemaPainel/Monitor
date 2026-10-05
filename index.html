@@ -2516,6 +2516,14 @@ body.is-resizing * { transition: none !important; animation: none !important; }
     opacity: 0.7;
 }
 
+/* Celular: o selo pisca só com opacidade (animar box-shadow/transform força repintura a cada quadro) */
+@media (max-width: 768px) {
+    .badge-talao-pisca { animation-name: piscaAlertaMobile; box-shadow: 0 0 6px rgba(249, 115, 22, 0.5); }
+    @keyframes piscaAlertaMobile { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+}
+/* Botões de autorizar/reprovar: toque imediato (sem atraso de duplo toque) */
+.btn-aprovar-req, .btn-reprovar-req { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
 
 
 /* ===== ANIMAÇÃO DE CARREGAMENTO - GERENTE ===== */
@@ -5980,6 +5988,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             if (snap.val() === null && navigator.onLine === false) return;
 
             const data = snap.val() || {};
+            window._reimpUltimoSync = Date.now();
             const novosItens = Object.keys(data).map(id => normalizarRequisicaoReimpressao(id, data[id]));
             
             if (_historicoCompletoCarregado) {
@@ -5994,7 +6003,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             }
                 
             if (userRole === 'gerente') {
-                renderGerenteReimpressoes(window._mostrarTodasReimpressoesFeed);
+                _agendarRenderGerente();
             } else if (userRole === 'editor' && document.getElementById('reprintModalOverlay').classList.contains('open')) {
                 renderReimpressoes();
             }
@@ -6724,23 +6733,88 @@ async function cancelarReimpressaoEditor(id) {
             }
         }
 
-        async function carregarReimpressoesGerente() {
-            // 1. Injeta o Loader visualmente na tela antes de buscar os dados
-            const body = document.getElementById('gerentePendentesBody');
-            if (body) {
-                body.innerHTML = `
-                    <div class="gerente-loader-container">
-                        <div class="gerente-loader-spinner"></div>
-                        <div class="gerente-loader-text">Buscando requisições...</div>
-                    </div>
-                `;
+        // ---- Render do gerente com debounce: junta várias atualizações seguidas em 1 render só ----
+        let _gerRenderTimer = null;
+        function _agendarRenderGerente() {
+            if (_gerRenderTimer) return;
+            _gerRenderTimer = setTimeout(() => {
+                _gerRenderTimer = null;
+                if (userRole === 'gerente') renderGerenteReimpressoes(window._mostrarTodasReimpressoesFeed);
+            }, 200);
+        }
+
+        // ---- Análises: só recalcula tudo se o painel estiver aberto; fechado, atualiza apenas o selo de pendentes ----
+        let _gerFiltrosSig = null;
+        function _atualizarAnalisesGerenteLeve() {
+            // Repopula os filtros só quando a lista de nomes/modelos realmente mudou
+            const sig = [
+                [...new Set(_reprintData.map(r => r.solicitante).filter(Boolean))].join(','),
+                [...new Set(_reprintData.map(r => r.aprovador).filter(Boolean))].join(','),
+                [...new Set(_reprintData.map(r => r.modelo).filter(Boolean))].join(',')
+            ].join('||');
+            if (sig !== _gerFiltrosSig) {
+                _popularFiltrosGerente();
+                _gerFiltrosSig = sig;
             }
-           
-            // 2. Aguarda os dados do servidor
-            await carregarReimpressoes(false);
-           
-            // 3. Substitui o loader pelos cards renderizados
-            renderGerenteReimpressoes();
+            const panel = document.getElementById('gerenteAnalyticsPanel');
+            if (panel && panel.classList.contains('open')) {
+                atualizarAnalisesGerente();
+                return;
+            }
+            // Painel fechado: conta só as pendentes (mesmos filtros da análise) para o selo do botão
+            const periodo = document.getElementById('gerenteFiltroPeriodo').value;
+            const dataEspec = document.getElementById('gerenteFiltroData').value;
+            const grupoFiltro = document.getElementById('gerenteFiltroGrupo').value;
+            const coordFiltro = document.getElementById('gerenteFiltroCoord').value;
+            const gerenteFiltro = document.getElementById('gerenteFiltroGerente').value;
+            const pend = _reprintData.filter(r => {
+                if (r.status !== 'pendente') return false;
+                if (!_filtrarPeriodo(r, periodo, dataEspec)) return false;
+                if (grupoFiltro !== 'todos' && r.grupo !== grupoFiltro) return false;
+                if (coordFiltro !== 'todos' && (r.solicitante || '') !== coordFiltro) return false;
+                if (gerenteFiltro !== 'todos' && (r.aprovador || '') !== gerenteFiltro) return false;
+                return true;
+            }).length;
+            _atualizarBadgeAnalytics(pend);
+        }
+
+        // ---- Carga do gerente: 1 chamada por vez, sem apagar a tela se já tem cards, sem baixar de novo se o tempo real já atualizou ----
+        let _gerCarregando = null;
+        let _gerEventoTimer = null;
+        async function carregarReimpressoesGerente(opts) {
+            // Chamadas vindas de eventos do Firebase: espera um instante e deixa o ouvinte em tempo real resolver
+            if (opts && opts.deEvento) {
+                if (_gerEventoTimer) return;
+                const t0 = Date.now();
+                await new Promise(res => { _gerEventoTimer = setTimeout(res, 400); });
+                _gerEventoTimer = null;
+                if ((window._reimpUltimoSync || 0) >= t0) return; // o ouvinte já atualizou e agendou o render
+            }
+            if (_gerCarregando) return _gerCarregando;
+            _gerCarregando = (async () => {
+                try {
+                    const body = document.getElementById('gerentePendentesBody');
+                    const sincronizadoAgora = _reprintData.length && (Date.now() - (window._reimpUltimoSync || 0) < 5000);
+                    if (sincronizadoAgora) {
+                        renderGerenteReimpressoes(window._mostrarTodasReimpressoesFeed);
+                        return;
+                    }
+                    // Loader só na primeira carga (tela vazia); depois atualiza por cima sem piscar
+                    if (body && !body.querySelector('.req-card')) {
+                        body.innerHTML = `
+                            <div class="gerente-loader-container">
+                                <div class="gerente-loader-spinner"></div>
+                                <div class="gerente-loader-text">Buscando requisições...</div>
+                            </div>
+                        `;
+                    }
+                    await carregarReimpressoes(false);
+                    renderGerenteReimpressoes(window._mostrarTodasReimpressoesFeed);
+                } finally {
+                    _gerCarregando = null;
+                }
+            })();
+            return _gerCarregando;
         }
 
         function renderGerenteReimpressoes(loadAll = false) {
@@ -6788,10 +6862,12 @@ async function cancelarReimpressaoEditor(id) {
             let isMobile = window.innerWidth <= 768;
             let mostrarBotao = false;
 
-            // Corta para 150 itens se for celular e não tiver clicado no botão
-            if (isMobile && !window._mostrarTodasReimpressoesFeed && feedFiltrado.length > 150) {
-                dadosParaRenderizar = feedFiltrado.slice(0, 150);
-                mostrarBotao = true;
+            // No celular mostra só os 40 mais recentes + TODAS as pendentes (nunca esconde uma pendente)
+            const LIMITE_MOBILE = 40;
+            if (isMobile && !window._mostrarTodasReimpressoesFeed && feedFiltrado.length > LIMITE_MOBILE) {
+                dadosParaRenderizar = feedFiltrado.filter((r, i) =>
+                    i < LIMITE_MOBILE || (r.status !== 'aprovado' && r.status !== 'reprovado' && r.status !== 'feito'));
+                mostrarBotao = dadosParaRenderizar.length < feedFiltrado.length;
             }
 
             const mapaVias = obterMapaViasReimpressao();
@@ -6803,7 +6879,7 @@ async function cancelarReimpressaoEditor(id) {
 
             // 7. Adiciona o botão "Carregar mais" no final se cortou a lista
             if (mostrarBotao) {
-                const restante = feedFiltrado.length - 150;
+                const restante = feedFiltrado.length - dadosParaRenderizar.length;
                 htmlCards += `
                     <button onclick="renderGerenteReimpressoes(true)"
                             style="width: 100%; padding: 14px; margin-top: 14px; margin-bottom: 24px; background: var(--stat-box); border: 2px dashed var(--glass-border); border-radius: 14px; color: var(--text-main); font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; box-shadow: var(--glass-shadow);">
@@ -6813,17 +6889,35 @@ async function cancelarReimpressaoEditor(id) {
             }
 
             // Injeta os cards na tela
-            document.getElementById('gerentePendentesBody').innerHTML = htmlCards;
+            // Só mexe no DOM se algo mudou de verdade; preserva a posição da rolagem
+            const _bodyEl = document.getElementById('gerentePendentesBody');
+            if (_bodyEl._htmlRender !== htmlCards || _bodyEl.querySelector('.gerente-loader-container')) {
+                const _y = window.scrollY;
+                _bodyEl.innerHTML = htmlCards;
+                _bodyEl._htmlRender = htmlCards;
+                if (_y > 0) window.scrollTo(0, _y);
+            }
            
             const histAux = document.getElementById('gerenteHistoricoBody');
             if(histAux) histAux.innerHTML = '';
            
-            // 8. Atualiza as ANÁLISES
-            _popularFiltrosGerente();
-            atualizarAnalisesGerente();
+            // 8. Atualiza as ANÁLISES (versão leve: só calcula tudo se o painel estiver aberto)
+            _atualizarAnalisesGerenteLeve();
         }
 
         async function gerenteAprovarReimpressao(id) {
+            window._gerAcaoEmAndamento = window._gerAcaoEmAndamento || {};
+            if (window._gerAcaoEmAndamento[id]) return; // evita toque duplo
+            window._gerAcaoEmAndamento[id] = true;
+
+            // Feedback imediato no botão (o gerente vê que o toque pegou)
+            const card = document.getElementById('reqCard_' + id);
+            const botoes = card ? card.querySelectorAll('.gerente-acoes-wrap button') : [];
+            const btnAprovar = card ? card.querySelector('.btn-aprovar-req') : null;
+            const txtOriginal = btnAprovar ? btnAprovar.innerHTML : '';
+            botoes.forEach(b => { b.disabled = true; });
+            if (btnAprovar) btnAprovar.innerHTML = '⏳ Autorizando...';
+
             try {
                 const dataHoraAprovacao = new Date().toLocaleString('pt-BR');
                 const updateData = {
@@ -6839,28 +6933,45 @@ async function cancelarReimpressaoEditor(id) {
                 });
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
-                // Broadcast para outros painéis via Firebase notification key
-                await fetch(`${FIREBASE_URL}/notificacoes/ultimaAprovacao.json${AUTH}`, {
+                // Broadcast para outros painéis (não bloqueia o gerente; a aprovação já foi salva)
+                fetch(`${FIREBASE_URL}/notificacoes/ultimaAprovacao.json${AUTH}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ aprovador: _gerenteAprovadorAtual, dataHoraAprovacao, id, timestamp: Date.now() })
-                });
+                }).catch(() => {});
 
-                // Recarrega do Firebase para garantir estado correto — aprovada some do painel
-                await carregarReimpressoesGerente();
+                // Atualiza a tela na hora com o dado local (o tempo real confirma em seguida, sem novo download)
+                const reqLocal = _reprintData.find(r => r.id === id);
+                if (reqLocal) Object.assign(reqLocal, updateData);
+                renderGerenteReimpressoes(window._mostrarTodasReimpressoesFeed);
 
                 if (document.getElementById('reprintModalOverlay').classList.contains('open')) renderReimpressoes();
 
                 tocarSomNotificacao();
                 await customAlert('✅ Reimpressao autorizada por ' + _gerenteAprovadorAtual + '.\n\nA solicitacao foi removida da sua fila.');
             } catch(e) {
+                botoes.forEach(b => { b.disabled = false; });
+                if (btnAprovar) btnAprovar.innerHTML = txtOriginal;
                 await customAlert('Falha ao autorizar reimpressao. Verifique a conexão.');
+            } finally {
+                delete window._gerAcaoEmAndamento[id];
             }
         }
        
         async function gerenteReprovarReimpressao(id) {
+            window._gerAcaoEmAndamento = window._gerAcaoEmAndamento || {};
+            if (window._gerAcaoEmAndamento[id]) return; // evita toque duplo
+
             const motivo = await customPrompt('Motivo da reprovação (opcional):', false);
             if (motivo === null) return;
+
+            window._gerAcaoEmAndamento[id] = true;
+            const card = document.getElementById('reqCard_' + id);
+            const botoes = card ? card.querySelectorAll('.gerente-acoes-wrap button') : [];
+            const btnReprovar = card ? card.querySelector('.btn-reprovar-req') : null;
+            const txtOriginal = btnReprovar ? btnReprovar.innerHTML : '';
+            botoes.forEach(b => { b.disabled = true; });
+            if (btnReprovar) btnReprovar.innerHTML = '⏳ Reprovando...';
 
             try {
                 const dataHoraReprovacao = new Date().toLocaleString('pt-BR');
@@ -6885,13 +6996,19 @@ async function cancelarReimpressaoEditor(id) {
                 });
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
-                await carregarReimpressoesGerente();
+                // Atualiza a tela na hora com o dado local (o tempo real confirma em seguida, sem novo download)
+                if (req) Object.assign(req, updateData);
+                renderGerenteReimpressoes(window._mostrarTodasReimpressoesFeed);
                 if (document.getElementById('reprintModalOverlay').classList.contains('open')) renderReimpressoes();
 
                 tocarSomErro();
                 await customAlert('❌ Solicitação reprovada por ' + _gerenteAprovadorAtual + '.\n\nA solicitação foi removida da sua fila.');
             } catch(e) {
+                botoes.forEach(b => { b.disabled = false; });
+                if (btnReprovar) btnReprovar.innerHTML = txtOriginal;
                 await customAlert('Falha ao reprovar solicitação. Verifique a conexão.');
+            } finally {
+                delete window._gerAcaoEmAndamento[id];
             }
         }
 
@@ -8124,14 +8241,22 @@ function fecharHistoricoModal() {
         function _iniciarOuvintesBackgroundGlobais() {
             // A - REIMPRESSÕES
             if(!window._refReimp) {
-                window._refReimp = db.ref('/reimpressoes');
+                // Mesma query do ouvinte principal (últimas 150): compartilha os dados já baixados,
+                // em vez de baixar o histórico INTEIRO de /reimpressoes no celular
+                window._refReimp = db.ref('/reimpressoes').orderByKey().limitToLast(150);
+                window._reimpBgPronto = false;
                
                 window._refReimp.on('child_added', (snap) => {
                     const r = snap.val();
+                    // Carga inicial: só guarda o timestamp mais recente (sem toasts e sem recarregar a tela por item antigo)
+                    if (!window._reimpBgPronto) {
+                        if (r && r.timestamp && r.timestamp > _ultimoTimestampReimpressao) _ultimoTimestampReimpressao = r.timestamp;
+                        return;
+                    }
                     if(r && r.timestamp && _ultimoTimestampReimpressao > 0 && r.timestamp > _ultimoTimestampReimpressao) {
                         if(r.status === 'pendente') {
                             exibirToastReimpressao('solicitar', r.solicitante || 'Usuário', r.modelo, r.tamanho, r.estacao, r.aprovadorSolicitado);
-                            if(userRole === 'gerente') carregarReimpressoesGerente();
+                            if(userRole === 'gerente') carregarReimpressoesGerente({ deEvento: true });
                         }
                         _ultimoTimestampReimpressao = r.timestamp;
                     } else if (r && r.timestamp && _ultimoTimestampReimpressao === 0) {
@@ -8145,8 +8270,11 @@ function fecharHistoricoModal() {
                         exibirToastReimpressao('aprovar', r.aprovador || '--', '', '', '', '');
                     }
                     if(document.getElementById('reprintModalOverlay')?.classList.contains('open')) carregarReimpressoes(true);
-                    if(userRole === 'gerente') carregarReimpressoesGerente();
+                    if(userRole === 'gerente') carregarReimpressoesGerente({ deEvento: true });
                 });
+
+                // O evento 'value' chega depois de todos os child_added iniciais: a partir daqui são novidades de verdade
+                window._refReimp.once('value', () => { window._reimpBgPronto = true; });
             }
 
             // B - ALOCAÇÃO BACKGROUND (OTIMIZADO)
