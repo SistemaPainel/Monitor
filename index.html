@@ -11257,6 +11257,18 @@ body.dark-mode #chatWindow{--cp-mine:#005c4b;--cp-theirs:#202c33;--cp-txt:#e9ede
 #cpExpand{background:rgba(127,127,127,.12);color:var(--text-main);border:1px solid var(--glass-border);width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:900;transition:.2s;padding:0}
 #cpExpand:hover{background:var(--cp-accent,#00a884);color:#fff}
 @media (max-width:768px){#cpExpand{display:none}}
+
+/* ---- FIX: mensagem fixada (nowrap) alargava o chat e cortava/distorcia as mensagens ---- */
+#chatWindow .chat-main{min-width:0;max-width:100%;overflow:hidden}
+#chatWindow .chat-messages{min-width:0;max-width:100%;overflow-x:hidden}
+#chatWindow #cpPinBar{min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden}
+#chatWindow #cpPinBar span{display:block;min-width:0;max-width:100%}
+#chatWindow .chat-main-header{min-width:0}
+#chatWindow .chat-active-info{min-width:0;flex:1 1 auto}
+#chatWindow .chat-active-info>div:last-child{min-width:0}
+#chatWindow .chat-msg-wrap{box-sizing:border-box}
+#chatWindow .chat-msg-wrap .chat-bubble{max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word}
+#chatWindow .cp-text{overflow-wrap:anywhere;min-width:0}
 </style>
 <script id="chatProJs">
 (function(){
