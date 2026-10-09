@@ -2677,6 +2677,83 @@ body.is-resizing * { transition: none !important; animation: none !important; }
     }
 }
     </style>
+<style>
+    /* ===== VISÃO PLANTA (prefixo plt-) — paleta do sistema ===== */
+    .plt-overlay{--plt-bg:#000;--plt-bg2:#09090b;--plt-panel:rgba(24,24,27,.55);--plt-panel2:rgba(9,9,11,.6);--plt-line:rgba(255,255,255,.09);--plt-line2:rgba(255,255,255,.2);--plt-room:rgba(255,255,255,.02);--plt-grid:rgba(255,255,255,.035);--plt-text:#f8fafc;--plt-muted:#94a3b8;--plt-accent:#007AFF;--plt-stage:#050506;--plt-field:rgba(0,0,0,.6)}
+    body:not(.dark-mode) .plt-overlay{--plt-bg:#e2e8f0;--plt-bg2:#f8fafc;--plt-panel:rgba(255,255,255,.85);--plt-panel2:rgba(241,245,249,.9);--plt-line:rgba(148,163,184,.4);--plt-line2:rgba(100,116,139,.55);--plt-room:rgba(15,23,42,.025);--plt-grid:rgba(15,23,42,.05);--plt-text:#0f172a;--plt-muted:#475569;--plt-stage:#f1f5f9;--plt-field:rgba(255,255,255,.9)}
+    .plt-overlay{position:fixed;inset:0;z-index:99999;background:var(--plt-bg);display:none;font-family:'Inter',-apple-system,sans-serif;color:var(--plt-text)}
+    .plt-shell{display:flex;flex-direction:column;height:100%;background:linear-gradient(135deg,var(--plt-bg),var(--plt-bg2))}
+    .plt-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid var(--plt-line);background:var(--plt-panel);backdrop-filter:blur(30px)}
+    .plt-brand{display:flex;align-items:center;gap:12px}
+    .plt-logo{font-size:26px;color:#007AFF;text-shadow:0 0 18px rgba(0,122,255,.7)}
+    .plt-title{font-family:'JetBrains Mono',monospace;font-weight:800;letter-spacing:3px;font-size:15px}
+    .plt-sub{font-size:10px;color:var(--plt-muted);letter-spacing:1.2px;text-transform:uppercase}
+    .plt-live{display:inline-flex;align-items:center;gap:6px;font:800 10px 'JetBrains Mono',monospace;letter-spacing:1.5px;color:#10b981;border:1px solid rgba(16,185,129,.4);border-radius:20px;padding:4px 10px;margin-left:6px}
+    .plt-live i{width:7px;height:7px;border-radius:50%;background:#10b981;animation:pltPulse 1.4s infinite}
+    .plt-live.off{color:#ef4444;border-color:rgba(239,68,68,.4)}.plt-live.off i{background:#ef4444;animation:none}
+    @keyframes pltPulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.7)}100%{box-shadow:0 0 0 9px rgba(16,185,129,0)}}
+    .plt-ctrls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .plt-seg,.plt-chips{display:flex;background:var(--plt-panel);border:1px solid var(--plt-line);border-radius:12px;overflow:hidden}
+    .plt-seg button,.plt-chips button{background:none;border:0;color:var(--plt-muted);font:700 11px 'Inter',sans-serif;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:6px}
+    .plt-seg button.on{background:#007AFF;color:#fff}
+    .plt-chips button i{width:9px;height:9px;border-radius:3px;display:inline-block}
+    .plt-chips button:not(.on){opacity:.35}
+    .plt-search{display:flex;align-items:center;gap:6px;background:var(--plt-field);border:1px solid var(--plt-line);border-radius:12px;padding:0 10px}
+    .plt-search input{background:none;border:0;color:var(--plt-text);font:600 12px 'Inter',sans-serif;padding:8px 0;width:200px}
+    .plt-btn{background:var(--plt-panel);border:1px solid var(--plt-line);color:var(--plt-text);border-radius:10px;width:36px;height:34px;cursor:pointer;font-size:15px}
+    .plt-btn.plt-x:hover{background:#ef4444;color:#fff}
+    .plt-kpis{display:flex;gap:10px;padding:8px 18px;flex-wrap:wrap}
+    .plt-kpi{flex:1;min-width:120px;background:var(--plt-panel);backdrop-filter:blur(30px);border:1px solid var(--plt-line);border-radius:16px;padding:6px 14px;position:relative;overflow:hidden}
+    .plt-kpi b{display:block;font:900 22px 'JetBrains Mono',monospace;line-height:1.1}
+    .plt-kpi span{font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--plt-muted);font-weight:800}
+    .plt-kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,#007AFF)}
+    .plt-main{flex:1;display:flex;min-height:0;gap:12px;padding:0 14px 12px}
+    .plt-stage{flex:1;position:relative;min-width:0;border:1px solid var(--plt-line);border-radius:20px;overflow:hidden;background:var(--plt-stage);}
+    #pltSvg{width:100%;height:100%;display:block;user-select:none;touch-action:none}
+    .plt-hint{position:absolute;left:12px;bottom:10px;font-size:10px;color:var(--plt-muted);letter-spacing:.5px;pointer-events:none}
+    .plt-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--plt-stage);color:var(--plt-muted);font:700 13px 'JetBrains Mono',monospace;letter-spacing:2px}
+    .plt-tip{position:absolute;pointer-events:none;display:none;background:var(--plt-bg2);color:var(--plt-text);border:1px solid var(--plt-line2);border-radius:10px;padding:9px 12px;font-size:11px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.6);z-index:5;max-width:260px}
+    .plt-tip b{font-family:'JetBrains Mono',monospace}
+    .plt-side{width:320px;flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:2px}
+    .plt-side::-webkit-scrollbar{width:6px}.plt-side::-webkit-scrollbar-thumb{background:var(--plt-line2);border-radius:6px}
+    .plt-card{background:var(--plt-panel);backdrop-filter:blur(30px);border:1px solid var(--plt-line);border-radius:18px;padding:12px 14px}
+    .plt-card h4{margin:0 0 10px;font:800 10px 'JetBrains Mono',monospace;letter-spacing:2px;color:var(--plt-muted);text-transform:uppercase}
+    .plt-row{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:8px;cursor:pointer;font-size:12px}
+    .plt-row:hover{background:var(--plt-line)}
+    .plt-row .n{font:800 11px 'JetBrains Mono',monospace;min-width:46px}
+    .plt-bar{flex:1;height:7px;border-radius:5px;background:var(--plt-line);overflow:hidden;display:flex}
+    .plt-bar i{display:block;height:100%}
+    .plt-pct{font:800 11px 'JetBrains Mono',monospace;min-width:36px;text-align:right}
+    .plt-alert{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:9px;margin-bottom:6px;font-size:11.5px;cursor:pointer;border:1px solid transparent}
+    .plt-alert.crit{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)}
+    .plt-alert.warn{background:rgba(245,158,11,.09);border-color:rgba(245,158,11,.28)}
+    .plt-alert.ok{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25);cursor:default}
+    .plt-det dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0;font-size:12px}
+    .plt-det dt{color:var(--plt-muted)}.plt-det dd{margin:0;font-weight:700;text-align:right;word-break:break-word}
+    .plt-det .big{font:800 20px 'JetBrains Mono',monospace;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+    .plt-go{margin-top:10px;width:100%;background:#007AFF;border:0;color:#fff;font:800 11px 'Inter',sans-serif;letter-spacing:1px;text-transform:uppercase;border-radius:9px;padding:9px;cursor:pointer}
+    .plt-mdot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+    /* SVG */
+    .pst{transition:fill .35s,opacity .25s,stroke .25s;cursor:pointer}
+    .pst:hover{stroke:var(--plt-text);stroke-width:1.6}
+    .pst.sel{stroke:var(--plt-text);stroke-width:2}
+    .pst.stop{animation:pltBlink 1.6s infinite}
+    @keyframes pltBlink{0%,100%{filter:drop-shadow(0 0 0 rgba(239,68,68,0))}50%{filter:drop-shadow(0 0 5px rgba(239,68,68,.95))}}
+    .pst.dim{opacity:.1}
+    .pnum{font:700 6.5px 'JetBrains Mono',monospace;pointer-events:none;text-anchor:middle;opacity:.75}
+    .pmod{font:800 8px 'JetBrains Mono',monospace;pointer-events:none;text-anchor:middle}
+    .ptam{font:800 7.5px 'JetBrains Mono',monospace;pointer-events:none;text-anchor:middle;opacity:.9}
+    .pflow{stroke-dasharray:8 8;animation:pltFlow 1.2s linear infinite}
+    @keyframes pltFlow{to{stroke-dashoffset:-16}}
+    @media(max-width:900px){.plt-main{flex-direction:column;overflow-y:auto}.plt-side{width:100%}.plt-stage{min-height:360px}}
+
+    .plt-sel{background:var(--plt-field);border:1px solid var(--plt-line);color:var(--plt-text);border-radius:12px;padding:8px 10px;font:700 12px 'Inter',sans-serif;cursor:pointer}
+    .plt-sel option{background:var(--plt-bg2);color:var(--plt-text)}
+    .plt-est{max-height:340px;overflow-y:auto}
+    .plt-est .plt-row{padding:4px 6px;font-size:11.5px}
+    .plt-est .plt-row .n{min-width:34px}
+    .plt-sz{font:700 10px 'JetBrains Mono',monospace;color:var(--plt-muted)}
+</style>
 </head>
 <body>
    
@@ -3471,6 +3548,13 @@ rx="1.5" fill="#f59e0b"/>
                                 <span class="vm-sub">Ordens abastecidas</span>
                             </span>
                         </button>
+                        <button onclick="pltAbrir(); fecharMenuVisao()">
+                            <span class="vm-icon">🗺️</span>
+                            <span class="vm-label">
+                                <span class="vm-title">Planta</span>
+                                <span class="vm-sub">Pavilhão ao vivo</span>
+                            </span>
+                        </button>
                         <button onclick="abrirVisaoMacro(); fecharMenuVisao()">
                             <span class="vm-icon">🏭</span>
                             <span class="vm-label">
@@ -3705,6 +3789,50 @@ rx="1.5" fill="#f59e0b"/>
                 <p style="text-align:center;color:var(--text-muted);font-weight:700;">Carregando dados de todos os grupos...</p>
             </div>
         </div>
+    </div>
+    <!-- ============ VISÃO PLANTA (PLT) — pavilhão ao vivo ============ -->
+    <div id="pltOverlay" class="plt-overlay" style="display:none;">
+      <div class="plt-shell">
+        <header class="plt-top">
+          <div class="plt-brand">
+            <span class="plt-logo">◈</span>
+            <div><div class="plt-title">PLANTA · PAVILHÃO</div><div class="plt-sub">Centro de comando ao vivo · Escala 1/150</div></div>
+            <span class="plt-live" id="pltLive"><i></i>AO VIVO</span>
+          </div>
+          <div class="plt-ctrls">
+            <select class="plt-sel" id="pltGrupo" onchange="pltGrupo(this.value)" title="Filtrar por grupo"></select>
+            <div class="plt-seg" id="pltModos">
+              <button data-m="status" class="on" onclick="pltModo('status')">Status</button>
+              <button data-m="modelo" onclick="pltModo('modelo')">Modelo</button>
+              <button data-m="giro" onclick="pltModo('giro')">Giro</button>
+            </div>
+            <div class="plt-seg" id="pltLabels" title="O que mostrar dentro de cada estação">
+              <button data-l="n" onclick="pltLabel('n')">Nº</button>
+              <button data-l="m" onclick="pltLabel('m')">Modelo</button>
+              <button data-l="t" onclick="pltLabel('t')">Tam</button>
+              <button data-l="mt" class="on" onclick="pltLabel('mt')">Mod+Tam</button>
+            </div>
+            <div class="plt-search"><span>⌕</span><input id="pltBusca" type="text" placeholder="Buscar modelo… (ex: 5 letras)" oninput="pltBuscar(this.value)" autocomplete="off"></div>
+            <div class="plt-chips" id="pltChips">
+              <button data-s="rodando" class="on" onclick="pltFiltro('rodando')"><i style="background:#22d3a0"></i>Rodando</button>
+              <button data-s="parada" class="on" onclick="pltFiltro('parada')"><i style="background:#ff4d6a"></i>Parada</button>
+              <button data-s="TROCA" class="on" onclick="pltFiltro('TROCA')"><i style="background:#ffb020"></i>Troca</button>
+              <button data-s="vazia" class="on" onclick="pltFiltro('vazia')"><i style="background:#475569"></i>Vazia</button>
+            </div>
+            <button class="plt-btn plt-x" onclick="pltFechar()" title="Fechar">✕</button>
+          </div>
+        </header>
+        <div class="plt-kpis" id="pltKpis"></div>
+        <div class="plt-main">
+          <div class="plt-stage" id="pltStage">
+            <svg id="pltSvg" viewBox="0 0 1624 880" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="plt-tip" id="pltTip"></div>
+            <div class="plt-hint">Clique na estação = detalhes · use o filtro de grupo para focar uma linha</div>
+            <div class="plt-load" id="pltLoad">Conectando ao pavilhão…</div>
+          </div>
+          <aside class="plt-side" id="pltSide"></aside>
+        </div>
+      </div>
     </div>
     <div class="notif-drawer-overlay" id="notifDrawerOverlay" onclick="fecharNotifDrawer()"></div>
     <div class="notif-panel" id="notifPanel">
@@ -11822,6 +11950,214 @@ window.addEventListener('DOMContentLoaded', () => {
 
 </script>
 <!-- =================== FIM CHAT PRO =================== -->
+
+<script>
+/* ===================== VISÃO PLANTA (PLT) — módulo isolado ===================== */
+(function(){
+  'use strict';
+  // Linha física -> grupo do sistema. AJUSTE AQUI se a correspondência for diferente.
+  // cl = clusters [x,y,w,h]; cols = colunas por cluster (12 estações = 4x3)
+  const TR=[[135,30,640,190],[135,232,640,190],[135,434,640,190]], TRX=[[935,30,565,190],[935,232,565,190],[935,434,565,190]];
+  const cl3=(r,xs,w)=>xs.map(x=>[x,r[1]+34,w,134]);
+  const ZONAS = [
+    {id:'1837', g:'Grupo 8', room:TR[0], cl:cl3(TR[0],[147,359,571],196), cols:4},
+    {id:'1737', g:'Grupo 7', room:TR[1], cl:cl3(TR[1],[147,359,571],196), cols:4},
+    {id:'1637', g:'Grupo 6', room:TR[2], cl:cl3(TR[2],[147,359,571],196), cols:4},
+    {id:'1137', g:'Grupo 1', room:TRX[0], cl:cl3(TRX[0],[947,1131,1315],172), cols:4},
+    {id:'1237', g:'Grupo 2', room:TRX[1], cl:cl3(TRX[1],[947,1131,1315],172), cols:4},
+    {id:'1337', g:'Grupo 3', room:TRX[2], cl:cl3(TRX[2],[947,1131,1315],172), cols:4},
+    {id:'1537', g:'Grupo 5', room:[118,636,812,224], lx:340, cl:[340,486,632,778].map(x=>[x,676,134,176]), cols:4},
+    {id:'1437', g:'Grupo 4', room:[945,636,675,224], cl:[957,1121,1285,1449].map(x=>[x,676,152,176]), cols:4},
+    {id:'CHINESA', g:'11337', room:null, lx:130, ly:650, cl:[[130,676,190,176]], cols:6}
+  ];
+  const NUM = g => (g==='Grupo 4'||g==='Grupo 5')?48:(g==='11337'?18:36);
+  const COR = {rodando:'#10b981',parada:'#ef4444',TROCA:'#f59e0b',vazia:'#52525b'};
+  let P = {est:[], byKey:{}, modo:'status', lm:'mt', busca:'', grp:'all', filtro:{rodando:1,parada:1,TROCA:1,vazia:1}, sel:null, ref:null, built:false, ts:0, last:null};
+
+  const svgNS='http://www.w3.org/2000/svg';
+  const el=(t,a,p)=>{const e=document.createElementNS(svgNS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const MONO="JetBrains Mono,monospace";
+
+  function build(){
+    if(P.built) return; P.built=true;
+    const svg=$('pltSvg');
+    const defs=el('defs',{},svg);
+    const gr=el('pattern',{id:'pltGrid',width:20,height:20,patternUnits:'userSpaceOnUse'},defs);
+    el('path',{d:'M20 0H0V20',fill:'none',stroke:'var(--plt-grid)','stroke-width':.6},gr);
+    el('rect',{x:0,y:0,width:1624,height:880,fill:'url(#pltGrid)'},svg);
+    el('rect',{x:4,y:4,width:1616,height:872,rx:10,fill:'none',stroke:'var(--plt-line2)','stroke-width':2},svg);
+    const fac=(x,y,w,h,t)=>{el('rect',{x,y,width:w,height:h,rx:6,fill:'var(--plt-room)',stroke:'var(--plt-line)','stroke-width':1},svg);
+      const tx=el('text',{x:x+w/2,y:y+h/2,fill:'var(--plt-muted)','font-size':9,'text-anchor':'middle','font-family':MONO,'font-weight':700},svg);tx.textContent=t;};
+    fac(8,30,104,120,'CENTRAL DESMOLDANTE');fac(8,160,104,110,'PRAÇA DE PAUSA');fac(8,280,104,130,'MANUTENÇÃO');
+    fac(8,470,104,150,'WC FEMININO');fac(8,630,104,230,'WC MASCULINO');fac(1510,434,100,190,'PRAÇA DE PAUSA');
+    // esteiras
+    [[792,830],[865,915]].forEach(([a,b])=>{
+      el('rect',{x:a,y:30,width:b-a,height:594,rx:6,fill:'var(--plt-panel2)',stroke:'var(--plt-line)','stroke-width':1.2},svg);
+      el('line',{x1:(a+b)/2,y1:36,x2:(a+b)/2,y2:618,stroke:'#007AFF','stroke-width':3,opacity:.55,class:'pflow'},svg);
+    });
+    const et=el('text',{x:853,y:327,fill:'#007AFF','font-size':12,'font-weight':800,'text-anchor':'middle','font-family':MONO,'letter-spacing':4,transform:'rotate(-90 853 327)'},svg);et.textContent='ESTEIRAS';
+    const sai=(x,y,w,t)=>{el('rect',{x,y,width:w,height:18,rx:4,fill:'#10b981'},svg);const s=el('text',{x:x+w/2,y:y+13,fill:'#000','font-size':10,'font-weight':800,'text-anchor':'middle'},svg);s.textContent=t;};
+    sai(462,8,84,'SAÍDA');sai(1508,8,84,'SAÍDA');sai(30,430,60,'SAÍDA');
+    // zonas
+    ZONAS.forEach(z=>{
+      if(z.room) z.roomEl=el('rect',{x:z.room[0],y:z.room[1],width:z.room[2],height:z.room[3],rx:10,fill:'var(--plt-room)',stroke:'var(--plt-line)','stroke-width':1.3},svg);
+      const lx=z.lx||(z.room[0]+12), ly=z.ly||(z.room[1]+22);
+      const tl=el('text',{x:lx,y:ly,fill:'var(--plt-text)','font-size':z.room?16:12,'font-weight':900,'font-family':MONO},svg);
+      tl.textContent=z.room?z.id:'CHINESA';
+      z.lbl=el('text',{x:z.room?lx+58:lx,y:z.room?ly:ly+13,'font-size':10.5,fill:'var(--plt-muted)','font-family':MONO,'font-weight':800},svg);
+      z.lbl.textContent=z.g;
+    });
+    // estações
+    const gst=el('g',{id:'pltSt'},svg);
+    ZONAS.forEach(z=>{
+      const per=NUM(z.g)/z.cl.length; let n=1;
+      z.cl.forEach(c=>{
+        const [x,y,w,h]=c, cols=z.cols, rows=Math.ceil(per/cols);
+        const gx=2.5, gy=4, cw=(w-gx*(cols-1))/cols, ch=(h-gy*(rows-1))/rows;
+        el('rect',{x:x-4,y:y-4,width:w+8,height:h+8,rx:7,fill:'none',stroke:'var(--plt-line2)','stroke-width':1,'stroke-dasharray':'3 3'},svg);
+        for(let k=0;k<per;k++,n++){
+          const r=Math.floor(k/cols), cc=k%cols, sx=x+cc*(cw+gx), sy=y+r*(ch+gy);
+          const rc=el('rect',{x:sx,y:sy,width:cw,height:ch,rx:3,fill:COR.vazia,class:'pst','data-k':z.g+'|'+n},gst);
+          const mk=cls=>el('text',{x:sx+cw/2,y:sy+ch/2,class:cls},gst);
+          const e={k:z.g+'|'+n,g:z.g,n,z,rc,tn:mk('pnum'),tm:mk('pmod'),tt:mk('ptam'),sy,ch,cw,cx:sx+cw/2,cy:sy+ch/2};
+          P.est.push(e);P.byKey[e.k]=e;
+        }
+      });
+    });
+    gst.addEventListener('mousemove',ev=>{const t=ev.target.closest&&ev.target.closest('.pst');if(!t){$('pltTip').style.display='none';return;}tip(P.byKey[t.getAttribute('data-k')],ev);});
+    gst.addEventListener('mouseleave',()=>$('pltTip').style.display='none');
+    gst.addEventListener('click',ev=>{const t=ev.target.closest('.pst');if(t)selecionar(t.getAttribute('data-k'));});
+    // seletor de grupo
+    const sel=$('pltGrupo');
+    sel.innerHTML='<option value="all">Todos os grupos</option>'+ZONAS.slice().sort((a,b)=>a.id.localeCompare(b.id)).map(z=>`<option value="${esc(z.g)}">${z.id} · ${esc(z.g)}</option>`).join('');
+  }
+
+  // ---- dados ----
+  function norm(it){
+    const modelo=(it&&it.modelo&&it.modelo!=='Não Alocado'&&it.modelo!=='VAZIO')?String(it.modelo).trim():'';
+    const vazia=!modelo;
+    const status=(it&&it.status)?it.status:'parada';
+    return {vazia,modelo,status,tamanho:it&&it.tamanho?String(it.tamanho).replace('.',',').trim():'',cor:it&&it.cor?it.cor:'',
+      giro:(parseInt(it&&it.giro)||0)+(parseInt(it&&it.prManual)||0),ordem:it&&it.ordem||'',pacote:it&&it.pacote||'',
+      estado:vazia?'vazia':(status==='rodando'?'rodando':(status==='TROCA'?'TROCA':'parada'))};
+  }
+  function receber(snap){
+    const all=snap.val()||{};
+    P.est.forEach(e=>{const a=all[e.g];e.d=norm(a?a[e.n]:null);});
+    P.ts=Date.now();$('pltLoad').style.display='none';$('pltLive').classList.remove('off');
+    pintar();
+  }
+  function hue(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h%360;}
+  function corModelo(m){return m?`hsl(${hue(m.toUpperCase())},70%,55%)`:COR.vazia;}
+  function corGiro(g,max){if(!g)return '#3f3f46';const t=Math.min(1,g/Math.max(1,max));return `hsl(${210-t*170},85%,${38+t*18}%)`;}
+  const abrevia=(m,n)=>m.replace(/[^A-Za-z0-9 ]/g,'').toUpperCase().slice(0,n);
+  const noGrp=e=>P.grp==='all'||e.g===P.grp;
+
+  function pintar(){
+    const q=P.busca.trim().toLowerCase(); let maxG=0;P.est.forEach(e=>{if(e.d&&e.d.giro>maxG)maxG=e.d.giro;});
+    const cont={rodando:0,parada:0,TROCA:0,vazia:0}, linhas={}, mods={};
+    const lm=P.lm, showM=lm.indexOf('m')>-1, showT=lm.indexOf('t')>-1;
+    P.est.forEach(e=>{const d=e.d;if(!d)return;
+      const ing=noGrp(e);
+      if(ing)cont[d.estado]++;
+      const L=linhas[e.g]||(linhas[e.g]={z:e.z,r:0,p:0,t:0,v:0,tot:0});L.tot++;
+      if(d.estado==='rodando')L.r++;else if(d.estado==='parada')L.p++;else if(d.estado==='TROCA')L.t++;else L.v++;
+      if(d.modelo&&ing){const M=mods[d.modelo]||(mods[d.modelo]={n:0,r:0,p:0,t:0,tam:{},lin:{}});M.n++;M.lin[e.z.id]=1;if(d.tamanho)M.tam[d.tamanho]=1;
+        if(d.estado==='rodando')M.r++;else if(d.estado==='parada')M.p++;else M.t++;}
+      let fill=COR[d.estado];
+      if(P.modo==='modelo')fill=d.vazia?COR.vazia:corModelo(d.modelo);
+      else if(P.modo==='giro')fill=d.vazia?COR.vazia:corGiro(d.giro,maxG);
+      e.rc.setAttribute('fill',fill);
+      const match=!q||(d.modelo&&d.modelo.toLowerCase().indexOf(q)>-1);
+      const vis=match&&ing&&P.filtro[d.estado];
+      e.rc.classList.toggle('dim',!vis);
+      e.rc.classList.toggle('stop',d.estado==='parada'&&vis);
+      e.rc.classList.toggle('sel',P.sel===e.k);
+      const fg=(d.vazia||P.modo==='giro')?'rgba(255,255,255,.85)':'rgba(0,0,0,.82)';
+      const dimT=vis?1:.1;
+      [e.tn,e.tm,e.tt].forEach(t=>{t.style.fill=fg;t.style.opacity=dimT;});
+      // rótulos
+      const mc=Math.max(3,Math.floor(e.cw/4.9)), cy=e.sy, h=e.ch;
+      e.tn.textContent=e.n;e.tm.textContent=(showM&&d.modelo)?abrevia(d.modelo,mc):'';e.tt.textContent=(showT&&d.tamanho)?d.tamanho:'';
+      const lines=(showM?1:0)+(showT?1:0);
+      if(lm==='n'){e.tn.setAttribute('y',cy+h/2+3);e.tn.style.fontSize='11px';e.tn.style.opacity=dimT;}
+      else{e.tn.style.fontSize='';e.tn.setAttribute('y',cy+9);}
+      if(lm==='mt'){e.tm.setAttribute('y',cy+h*0.56);e.tt.setAttribute('y',cy+h*0.88);}
+      else{e.tm.setAttribute('y',cy+h*0.65);e.tt.setAttribute('y',cy+h*0.65);}
+    });
+    ZONAS.forEach(z=>{const L=linhas[z.g];if(!L||!z.lbl)return;const at=L.tot-L.v;
+      z.lbl.textContent=z.g+' · '+(at?`${Math.round(L.r/at*100)}% rodando · ${L.p} paradas`:'sem alocação');
+      z.lbl.setAttribute('fill',!at?'var(--plt-muted)':(L.p/at>=.4?'#ef4444':(L.p/at>=.2?'#f59e0b':'#10b981')));
+      if(z.roomEl){const on=P.grp===z.g;z.roomEl.setAttribute('stroke',on?'#007AFF':'var(--plt-line)');z.roomEl.setAttribute('stroke-width',on?2.5:1.3);}});
+    kpis(cont);side(linhas,mods);
+  }
+  function kpis(c){
+    const at=c.rodando+c.parada+c.TROCA, ef=at?Math.round(c.rodando/at*100):0;
+    const K=[['#10b981',c.rodando,'Rodando'],['#ef4444',c.parada,'Paradas'],['#f59e0b',c.TROCA,'Em troca'],['#71717a',c.vazia,'Vazias'],['#007AFF',at,'Alocadas'],[ef>=70?'#10b981':ef>=50?'#f59e0b':'#ef4444',ef+'%','Eficiência']];
+    $('pltKpis').innerHTML=K.map(([c,v,l])=>`<div class="plt-kpi" style="--c:${c}"><b style="color:${c}">${v}</b><span>${l}</span></div>`).join('');
+  }
+  function side(linhas,mods){
+    let h='';
+    const al=[];
+    Object.keys(linhas).forEach(g=>{const L=linhas[g],at=L.tot-L.v;if(!at)return;const pp=L.p/at;
+      if(pp>=.4)al.push(['crit',`Linha <b>${L.z.id}</b> com ${Math.round(pp*100)}% parada (${L.p}/${at})`,g]);
+      else if(pp>=.2)al.push(['warn',`Linha <b>${L.z.id}</b> com ${L.p} paradas (${Math.round(pp*100)}%)`,g]);
+      if(L.t/at>=.3)al.push(['warn',`Linha <b>${L.z.id}</b>: ${L.t} estações em troca`,g]);});
+    al.sort((a,b)=>(a[0]==='crit'?0:1)-(b[0]==='crit'?0:1));
+    h+=`<div class="plt-card"><h4>Alertas</h4>`+(al.length?al.slice(0,5).map(a=>`<div class="plt-alert ${a[0]}" onclick="pltGrupo('${esc(a[2])}')">${a[0]==='crit'?'🚨':'⚠️'}<div>${a[1]}</div></div>`).join(''):`<div class="plt-alert ok">✅ Sem alertas — pavilhão estável</div>`)+`</div>`;
+    h+=`<div class="plt-card plt-det" id="pltDet">${detalhe()}</div>`;
+    if(P.grp!=='all'){
+      const z=ZONAS.find(z=>z.g===P.grp);
+      h+=`<div class="plt-card"><h4>Estações · ${z?z.id:''} (${esc(P.grp)})</h4><div class="plt-est">`+P.est.filter(e=>e.g===P.grp&&e.d).map(e=>{const d=e.d;
+        return `<div class="plt-row" onclick="pltSel('${e.k}')"><i class="plt-mdot" style="background:${COR[d.estado]}"></i><span class="n">EST ${String(e.n).padStart(2,'0')}</span><span style="flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.modelo||'—')}</span><span class="plt-sz">${esc(d.tamanho||'')}</span></div>`;}).join('')+`</div></div>`;
+    }
+    h+=`<div class="plt-card"><h4>Linhas</h4>`+Object.keys(linhas).sort((a,b)=>linhas[a].z.id.localeCompare(linhas[b].z.id)).map(g=>{const L=linhas[g],at=L.tot-L.v,pc=at?Math.round(L.r/at*100):0;
+      return `<div class="plt-row" onclick="pltGrupo('${esc(g)}')"><span class="n">${L.z.id==='CHINESA'?'CHIN.':L.z.id}</span><div class="plt-bar"><i style="width:${L.r/L.tot*100}%;background:#10b981"></i><i style="width:${L.t/L.tot*100}%;background:#f59e0b"></i><i style="width:${L.p/L.tot*100}%;background:#ef4444"></i></div><span class="plt-pct">${pc}%</span></div>`;}).join('')+`</div>`;
+    const lm=Object.keys(mods).sort((a,b)=>mods[b].n-mods[a].n).slice(0,14);
+    h+=`<div class="plt-card"><h4>Modelos ${P.grp==='all'?'em produção':'do grupo'} (${Object.keys(mods).length})</h4>`+(lm.length?lm.map(m=>{const M=mods[m];const tams=Object.keys(M.tam).sort((a,b)=>parseFloat(a)-parseFloat(b)).slice(0,8).join(' · ');
+      return `<div class="plt-row" onclick="pltBuscarSet(this.dataset.m)" data-m="${esc(m)}" title="${esc(m)} · ${Object.keys(M.lin).join(', ')}"><i class="plt-mdot" style="background:${corModelo(m)}"></i><span style="flex:1;min-width:0"><span style="display:block;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m)}</span><span class="plt-sz">TAM ${esc(tams||'—')}</span></span><span class="plt-pct" style="color:#10b981">${M.r}</span><span class="plt-pct" style="color:#ef4444;min-width:22px">${M.p}</span><span class="plt-pct" style="color:var(--plt-muted)">${M.n}</span></div>`;}).join(''):'<div style="color:var(--plt-muted);font-size:12px">Nenhum modelo alocado.</div>')+`<div style="font-size:9.5px;color:var(--plt-muted);margin-top:6px">verde = rodando · vermelho = parada · cinza = estações</div></div>`;
+    const keep=$('pltSide').scrollTop;$('pltSide').innerHTML=h;$('pltSide').scrollTop=keep;
+  }
+  function detalhe(){
+    const e=P.sel&&P.byKey[P.sel];if(!e||!e.d)return `<h4>Estação</h4><div style="color:var(--plt-muted);font-size:12px">Clique em uma estação da planta para ver modelo, tamanho, giro e situação.</div>`;
+    const d=e.d,c=COR[d.estado];
+    return `<h4>Estação selecionada</h4><div class="big"><span>${e.z.id==='CHINESA'?'CHINESA':e.z.id} · EST ${String(e.n).padStart(2,'0')}</span><span style="color:${c};font-size:12px">${d.estado.toUpperCase()}</span></div>
+    <dl><dt>Grupo</dt><dd>${esc(e.g)}</dd><dt>Modelo</dt><dd>${esc(d.modelo||'—')}</dd><dt>Tamanho</dt><dd>${esc(d.tamanho||'—')}</dd>${d.cor?`<dt>Cor</dt><dd>${esc(d.cor)}</dd>`:''}<dt>Giro</dt><dd>${d.giro}</dd>${d.ordem?`<dt>Ordem</dt><dd>${esc(d.ordem)}</dd>`:''}${d.pacote?`<dt>Pacote</dt><dd>${esc(d.pacote)}</dd>`:''}</dl>
+    <button class="plt-go" onclick="pltIrGrupo('${esc(e.g)}')">Abrir grupo no painel</button>`;
+  }
+  function tip(e,ev){
+    const t=$('pltTip');if(!e||!e.d){t.style.display='none';return;}const d=e.d,r=$('pltStage').getBoundingClientRect();
+    t.innerHTML=`<b>${e.z.id} · EST ${String(e.n).padStart(2,'0')}</b> <span style="color:${COR[d.estado]};font-weight:800">● ${d.estado.toUpperCase()}</span><br>${d.vazia?'Sem alocação':`${esc(d.modelo)} · tam <b>${esc(d.tamanho||'—')}</b><br>Giro: <b>${d.giro}</b>`}`;
+    t.style.display='block';t.style.left=Math.min(ev.clientX-r.left+14,r.width-270)+'px';t.style.top=Math.min(ev.clientY-r.top+14,r.height-90)+'px';
+  }
+  function selecionar(k){P.sel=k;P.est.forEach(e=>e.rc.classList.toggle('sel',e.k===k));const d=$('pltDet');if(d)d.innerHTML=detalhe();}
+
+  // ---- API pública ----
+  window.pltAbrir=function(){
+    build();$('pltOverlay').style.display='block';document.body.style.overflow='hidden';
+    $('pltLoad').style.display='flex';
+    try{
+      if(P.ref)P.ref.off('value');
+      P.ref=db.ref('/alocacao');
+      P.ref.on('value',receber,()=>{$('pltLive').classList.add('off');});
+    }catch(e){$('pltLoad').textContent='Falha ao conectar: '+e.message;}
+    clearInterval(P.iv);P.iv=setInterval(()=>{if(P.ts&&Date.now()-P.ts>120000)$('pltLive').classList.add('off');},15000);
+  };
+  window.pltFechar=function(){$('pltOverlay').style.display='none';document.body.style.overflow='';
+    if(P.ref){P.ref.off('value');P.ref=null;}clearInterval(P.iv);};
+  window.pltModo=function(m){P.modo=m;document.querySelectorAll('#pltModos button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));pintar();};
+  window.pltLabel=function(l){P.lm=l;document.querySelectorAll('#pltLabels button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));pintar();};
+  window.pltGrupo=function(g){P.grp=g||'all';$('pltGrupo').value=P.grp;pintar();};
+  window.pltSel=function(k){selecionar(k);};
+  window.pltBuscar=function(v){P.busca=v||'';pintar();};
+  window.pltBuscarSet=function(v){$('pltBusca').value=v;P.busca=v;pintar();};
+  window.pltFiltro=function(s){P.filtro[s]=P.filtro[s]?0:1;document.querySelector(`#pltChips [data-s="${s}"]`).classList.toggle('on',!!P.filtro[s]);pintar();};
+  window.pltIrGrupo=function(g){try{const s=document.getElementById('filtroGrupo');if(s){s.value=g;trocarGrupo();}}catch(e){}pltFechar();};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('pltOverlay')&&$('pltOverlay').style.display==='block')pltFechar();});
+})();
+</script>
 
 </body>
 </html>
