@@ -3562,6 +3562,13 @@ rx="1.5" fill="#f59e0b"/>
                                 <span class="vm-sub">Planta de produção</span>
                             </span>
                         </button>
+                        <button onclick="pgAbrirPainel(); fecharMenuVisao()">
+                            <span class="vm-icon">📅</span>
+                            <span class="vm-label">
+                                <span class="vm-title">Programação</span>
+                                <span class="vm-sub">Fila semanal por estação</span>
+                            </span>
+                        </button>
                     </div>
                 </div>
                 <div class="notif-bell-wrap" id="notifBellWrap">
@@ -4003,7 +4010,7 @@ rx="1.5" fill="#f59e0b"/>
 
         // === INICIALIZAÇÃO DO BANCO ===
         firebase.initializeApp({
-            databaseURL: "https://projeto-hackton-618ca-default-rtdb.firebaseio.com"
+            databaseURL: "https://gen-lang-client-0514567939-default-rtdb.firebaseio.com/"
         });
         window.db = firebase.database();
 
@@ -4014,7 +4021,7 @@ rx="1.5" fill="#f59e0b"/>
     // cola a URL do banco aqui — sem barra no final
     // a secret fica vazia se o banco for público
     // =====================================================================
-    const FIREBASE_URL = "https://projeto-hackton-618ca-default-rtdb.firebaseio.com";
+    const FIREBASE_URL = "https://gen-lang-client-0514567939-default-rtdb.firebaseio.com";
     const FIREBASE_SECRET = "";
     const AUTH = FIREBASE_SECRET && !/^https?:\/\//i.test(FIREBASE_SECRET) ? `?auth=${encodeURIComponent(FIREBASE_SECRET)}` : "";
     // =====================================================================
@@ -7690,13 +7697,14 @@ function fecharHistoricoModal() {
 
                     front.innerHTML = `
                         <div class="card-header"><h2 title="EST ${strEstacao} (ID Real: ${i})">EST ${strEstacao}${badgeRepetido}${badgeMatriz}</h2>
+                            <span class="card-actions"></span>
                             <select onchange="mudarStatus('${grupoAtual}', ${i}, this.value)" onclick="event.stopPropagation()" ${disableSelect}>
                                 <option value="rodando" ${statusBanco === 'rodando' ? 'selected' : ''}>RODANDO</option><option value="parada" ${statusBanco === 'parada' ? 'selected' : ''}>PARADA</option><option value="TROCA" ${statusBanco === 'TROCA' ? 'selected' : ''}>TROCA</option>
                             </select></div>
                         <div class="info-row"><span class="info-label">Modelo Ativo</span><span class="info-value" title="${modeloBanco}">${modeloBanco}</span></div>
-                        <div class="info-row"><span class="info-label">Grade/Tamanho</span><span class="info-value" title="${tamanhoBanco}">${tamanhoBanco}</span></div>
+                        <div class="info-row"><span class="info-label" title="Grade/Tamanho">Grade</span><span class="info-value" title="${tamanhoBanco}">${tamanhoBanco}</span></div>
                         <div class="health-container">
-                            <div class="health-header"><span class="health-label">Saúde Operacional</span><span style="font-size: 10px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: ${saudeColor};">${saude}%</span></div>
+                            <div class="health-header"><span class="health-label" title="Saúde Operacional">Saúde</span><span style="font-size: 10px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: ${saudeColor};">${saude}%</span></div>
                             <div class="health-bar-bg"><div class="health-bar-fill" style="width: ${saude}%; background: ${saudeColor}; box-shadow: 0 0 8px ${saudeColor};"></div></div>
                         </div>
                         <div class="stats-grid" ${grupoAtual === "11337" ? 'style="grid-template-columns: 1fr;"' : ''}>
@@ -7727,7 +7735,7 @@ function fecharHistoricoModal() {
                     notaBtn.title = 'Nota da estação';
                     notaBtn.textContent = '📝';
                     notaBtn.addEventListener('click', (e) => { e.stopPropagation(); abrirNotaModal(grupoAtual, i, e); });
-                    front.appendChild(notaBtn);
+                    front.querySelector('.card-actions').appendChild(notaBtn);
 
 // --- BOTÃO DE HISTÓRICO ---
                     const histBtn = document.createElement('button');
@@ -7735,7 +7743,7 @@ function fecharHistoricoModal() {
                     histBtn.title = 'Histórico de Alocação';
                     histBtn.textContent = '🕒';
                     histBtn.addEventListener('click', (e) => { e.stopPropagation(); abrirHistoricoEstacao(grupoAtual, i); });
-                    front.appendChild(histBtn);
+                    front.querySelector('.card-actions').appendChild(histBtn);
 
                     const back = document.createElement('div'); back.className = 'flip-card-back';
                     back.innerHTML = gerarBackContent(detalhes, i, modeloBanco, tamanhoBanco, reprovNum > 0);
@@ -12158,6 +12166,752 @@ window.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('pltOverlay')&&$('pltOverlay').style.display==='block')pltFechar();});
 })();
 </script>
+
+<style>
+/* ===================== PROGRAMAÇÃO SEMANAL (BASE 99) — módulo isolado ===================== */
+/* Faixa dentro do card da estação (só existe quando o grupo tem programação importada) */
+#stationGrid.pg-on .flip-card-wrapper { height: 311px; }
+@media (max-width: 768px) { #stationGrid.pg-on .flip-card-wrapper { height: 273px !important; } }
+@media (max-width: 480px) { #stationGrid.pg-on .flip-card-wrapper { height: 268px !important; } }
+@media (max-width: 360px) { #stationGrid.pg-on .flip-card-wrapper { height: 298px !important; } }
+
+.pg-strip {
+    margin-top: 6px; padding: 6px 8px 6px 9px; border-radius: 11px; cursor: pointer; position: relative;
+    background: rgba(99,102,241,0.07); border: 1px solid rgba(99,102,241,0.22);
+    display: flex; flex-direction: column; gap: 4px; min-width: 0; flex-shrink: 0;
+    transition: background .2s, border-color .2s, transform .15s;
+}
+.pg-strip:hover { background: rgba(99,102,241,0.14); border-color: rgba(99,102,241,0.5); }
+.pg-strip:active { transform: scale(0.99); }
+.pg-strip::before { content: ''; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 3px; background: #6366f1; }
+.pg-strip.pg-ok::before { background: #10b981; }
+.pg-strip.pg-fora { background: rgba(245,158,11,0.09); border-color: rgba(245,158,11,0.4); }
+.pg-strip.pg-fora::before { background: #f59e0b; }
+.pg-strip.pg-livre::before { background: #007AFF; }
+.pg-strip.pg-none { background: rgba(148,163,184,0.07); border-color: var(--glass-border); }
+.pg-strip.pg-none::before { background: #94a3b8; }
+.pg-s1, .pg-s2, .pg-s3 { display: flex; align-items: center; gap: 5px; min-width: 0; line-height: 1.15; }
+.pg-s3 { padding-left: 1px; }
+.pg-lbl { font-size: 8px; font-weight: 900; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; flex-shrink: 0; }
+.pg-chip { font-size: 8px; font-weight: 900; letter-spacing: .4px; padding: 2px 5px; border-radius: 5px; white-space: nowrap; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+.pg-chip.ok { color: #10b981; background: rgba(16,185,129,.13); border: 1px solid rgba(16,185,129,.35); }
+.pg-chip.fora { color: #f59e0b; background: rgba(245,158,11,.14); border: 1px solid rgba(245,158,11,.45); }
+.pg-chip.livre { color: #007AFF; background: rgba(0,122,255,.12); border: 1px solid rgba(0,122,255,.35); }
+.pg-chip.none { color: var(--text-muted); background: rgba(148,163,184,.12); border: 1px solid var(--glass-border); }
+.pg-chip.mesmo { color: #10b981; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); }
+.pg-chip.troca { color: #8b5cf6; background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.3); }
+.pg-chip.atraso { color: #ef4444; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.35); }
+.pg-cnt { margin-left: auto; font-size: 9px; font-weight: 800; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+.pg-w { font-size: 9px; font-weight: 900; color: #6366f1; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.pg-w.atraso { color: #ef4444; }
+.pg-m { font-size: 10px; font-weight: 800; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.pg-t { font-size: 9px; font-weight: 800; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.pg-q { font-size: 9px; font-weight: 900; color: var(--text-main); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.pg-mais { font-size: 8px; font-weight: 900; color: #6366f1; flex-shrink: 0; }
+@media (max-width: 768px) {
+    .pg-s2, .pg-s3 { display: none; }
+    .pg-strip { padding: 7px 7px 7px 9px; }
+    .pg-cnt { font-size: 8px; }
+}
+
+/* Item no menu Visão: reaproveita .btn-visao-menu button */
+
+/* ---------- Gaveta da estação ---------- */
+.pg-drawer-bg { position: fixed; inset: 0; z-index: 99996; background: rgba(0,0,0,.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: none; }
+.pg-drawer-bg.open { display: block; animation: pgFade .2s ease; }
+.pg-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); z-index: 99997;
+    background: var(--card-back-bg); border-left: 1px solid var(--glass-border);
+    box-shadow: -20px 0 60px rgba(0,0,0,.35); display: none; flex-direction: column;
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+}
+.pg-drawer.open { display: flex; animation: pgSlide .28s cubic-bezier(.22,1,.36,1); }
+@keyframes pgSlide { from { transform: translateX(60px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pgFade { from { opacity: 0; } to { opacity: 1; } }
+.pg-dh { padding: 18px 20px 14px; border-bottom: 1px solid var(--glass-border); display: flex; gap: 12px; align-items: flex-start; }
+.pg-dh-main { flex: 1; min-width: 0; }
+.pg-dtitle { font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pg-dsub { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; }
+.pg-x { background: var(--stat-box); border: 1px solid var(--glass-border); color: var(--text-main); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: 900; flex-shrink: 0; }
+.pg-x:hover { background: rgba(239,68,68,.15); color: #ef4444; border-color: rgba(239,68,68,.4); }
+.pg-now { margin: 14px 20px 0; padding: 12px 14px; border-radius: 14px; background: var(--stat-box); border: 1px solid var(--glass-border); border-left: 4px solid #94a3b8; }
+.pg-now.ok { border-left-color: #10b981; } .pg-now.fora { border-left-color: #f59e0b; background: rgba(245,158,11,.07); } .pg-now.livre { border-left-color: #007AFF; }
+.pg-now-l { font-size: 9px; font-weight: 900; letter-spacing: 1.2px; color: var(--text-muted); text-transform: uppercase; display: flex; gap: 8px; align-items: center; }
+.pg-now-m { font-size: 15px; font-weight: 900; color: var(--text-main); margin: 4px 0 2px; word-break: break-word; }
+.pg-now-d { font-size: 11px; font-weight: 600; color: var(--text-muted); line-height: 1.45; }
+.pg-dk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 20px 0; }
+.pg-dk div { background: var(--stat-box); border: 1px solid var(--glass-border); border-radius: 12px; padding: 9px 11px; }
+.pg-dk b { display: block; font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--text-main); font-weight: 900; }
+.pg-dk span { font-size: 8px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+.pg-filt { display: flex; gap: 6px; padding: 12px 20px 8px; flex-wrap: wrap; align-items: center; }
+.pg-fb { background: var(--stat-box); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 6px 11px; border-radius: 20px; font-size: 10px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.pg-fb:hover { color: var(--text-main); }
+.pg-fb.on { background: rgba(99,102,241,.15); color: #6366f1; border-color: rgba(99,102,241,.5); }
+.pg-fb.copy { margin-left: auto; }
+.pg-db { flex: 1; overflow-y: auto; padding: 4px 20px 30px; }
+.pg-wk { margin-top: 14px; }
+.pg-wk-h { display: flex; align-items: center; gap: 8px; padding: 8px 2px; position: sticky; top: 0; background: var(--card-back-bg); z-index: 2; border-bottom: 1px solid var(--glass-border); }
+.pg-wk-n { font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 13px; color: #6366f1; }
+.pg-wk.atraso .pg-wk-n { color: #ef4444; }
+.pg-wk-d { font-size: 10px; font-weight: 700; color: var(--text-muted); }
+.pg-wk-t { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 900; color: var(--text-main); }
+.pg-wk.flash { animation: pgFlash 1.6s ease; }
+@keyframes pgFlash { 0%,100% { background: transparent; } 20% { background: rgba(99,102,241,.2); } }
+.pg-b { margin-top: 8px; border: 1px solid var(--glass-border); border-radius: 13px; background: var(--stat-box); padding: 10px 12px; cursor: pointer; position: relative; overflow: hidden; transition: border-color .2s; }
+.pg-b:hover { border-color: rgba(99,102,241,.5); }
+.pg-b.atual { border-color: rgba(16,185,129,.55); background: rgba(16,185,129,.07); }
+.pg-b-top { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.pg-b-m { font-size: 12px; font-weight: 800; color: var(--text-main); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-b-t { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 900; color: #fff; background: #6366f1; border-radius: 7px; padding: 2px 7px; flex-shrink: 0; }
+.pg-b-bot { display: flex; align-items: center; gap: 10px; margin-top: 7px; }
+.pg-b-p { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 900; color: var(--text-main); flex-shrink: 0; }
+.pg-b-p small { font-size: 9px; color: var(--text-muted); font-weight: 700; margin-left: 2px; }
+.pg-b-bar { flex: 1; height: 5px; border-radius: 4px; background: rgba(148,163,184,.18); overflow: hidden; }
+.pg-b-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #6366f1, #007AFF); }
+.pg-b.atual .pg-b-bar i { background: linear-gradient(90deg, #10b981, #34d399); }
+.pg-b-meta { font-size: 9px; font-weight: 700; color: var(--text-muted); white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+.pg-ords { display: none; margin-top: 9px; border-top: 1px dashed var(--glass-border); padding-top: 8px; }
+.pg-b.exp .pg-ords { display: block; }
+.pg-or { display: grid; grid-template-columns: 1.2fr 1.4fr .6fr .5fr; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 0; color: var(--text-main); font-weight: 600; }
+.pg-or.h { font-size: 8px; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; color: var(--text-muted); }
+.pg-or .rep { color: #f59e0b; font-weight: 800; }
+.pg-or span:nth-child(n+3) { text-align: right; }
+.pg-vazio { text-align: center; color: var(--text-muted); padding: 50px 10px; font-weight: 700; font-size: 13px; line-height: 1.6; }
+.pg-foot { padding: 10px 20px; border-top: 1px solid var(--glass-border); font-size: 9px; color: var(--text-muted); font-weight: 700; letter-spacing: .5px; font-family: 'JetBrains Mono', monospace; }
+
+/* ---------- Painel ---------- */
+.pg-overlay { position: fixed; inset: 0; z-index: 99995; background: rgba(0,0,0,.65); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); display: none; align-items: flex-start; justify-content: center; padding: 18px; overflow: auto; }
+.pg-overlay.open { display: flex; animation: pgFade .2s ease; }
+.pg-modal { width: 100%; max-width: 1500px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 26px; box-shadow: var(--glass-shadow); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); display: flex; flex-direction: column; max-height: calc(100vh - 36px); min-height: 0; overflow: hidden; }
+body:not(.dark-mode) .pg-modal { background: rgba(255,255,255,.96); }
+.pg-mh { display: flex; align-items: center; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--glass-border); flex-wrap: wrap; }
+.pg-mtitle { font-size: 20px; font-weight: 900; color: var(--text-main); letter-spacing: -.5px; }
+.pg-msub { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+.pg-mctl { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pg-mctl select, .pg-mctl input[type=text] { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 11px; padding: 9px 12px; font-size: 12px; font-weight: 700; font-family: inherit; }
+.pg-mctl input[type=text] { width: 190px; }
+.pg-sw { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 800; color: var(--text-muted); cursor: pointer; user-select: none; text-transform: uppercase; letter-spacing: .6px; }
+.pg-sw input { accent-color: #6366f1; width: 15px; height: 15px; }
+.pg-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 16px 24px 4px; }
+.pg-kpi { background: var(--stat-box); border: 1px solid var(--glass-border); border-radius: 16px; padding: 12px 14px; }
+.pg-kpi b { display: block; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 900; color: var(--text-main); }
+.pg-kpi b.r { color: #ef4444; } .pg-kpi b.g { color: #10b981; } .pg-kpi b.a { color: #f59e0b; }
+.pg-kpi span { font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+.pg-tabs { display: flex; gap: 6px; padding: 14px 24px 0; border-bottom: 1px solid var(--glass-border); }
+.pg-tab { background: none; border: none; padding: 10px 16px; font-size: 12px; font-weight: 800; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; font-family: inherit; letter-spacing: .3px; }
+.pg-tab:hover { color: var(--text-main); }
+.pg-tab.on { color: #6366f1; border-bottom-color: #6366f1; }
+.pg-tab .pg-badge { background: #ef4444; color: #fff; border-radius: 9px; padding: 1px 6px; font-size: 9px; margin-left: 5px; }
+.pg-body { flex: 1; overflow: auto; padding: 16px 24px 26px; min-height: 0; }
+
+/* matriz */
+.pg-mx { border-collapse: separate; border-spacing: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; width: 100%; }
+.pg-mx th { position: sticky; top: 0; z-index: 3; background: var(--card-back-bg); font-size: 10px; font-weight: 900; color: var(--text-muted); padding: 8px 6px; border-bottom: 2px solid var(--glass-border); text-align: center; white-space: nowrap; }
+body:not(.dark-mode) .pg-mx th { background: #f1f5f9; }
+.pg-mx th.cur { color: #fff; background: #6366f1; border-radius: 8px 8px 0 0; }
+.pg-mx th.atr { color: #ef4444; }
+.pg-mx th small { display: block; font-size: 8px; font-weight: 700; opacity: .75; margin-top: 2px; }
+.pg-mx td { padding: 0; border-bottom: 1px solid var(--glass-border); text-align: center; height: 34px; }
+.pg-mx td.c { cursor: pointer; font-weight: 800; color: var(--text-main); min-width: 62px; transition: filter .15s; }
+.pg-mx td.c:hover { filter: brightness(1.35); outline: 2px solid #6366f1; outline-offset: -2px; }
+.pg-mx td.c.atr { box-shadow: inset 0 0 0 1px rgba(239,68,68,.55); }
+.pg-mx td.e { position: sticky; left: 0; z-index: 2; background: var(--card-back-bg); text-align: left; padding: 0 10px; font-weight: 900; color: var(--text-main); white-space: nowrap; cursor: pointer; min-width: 62px; }
+body:not(.dark-mode) .pg-mx td.e, body:not(.dark-mode) .pg-mx td.mo, body:not(.dark-mode) .pg-mx td.tt { background: #f8fafc; }
+.pg-mx td.mo { position: sticky; left: 62px; z-index: 2; background: var(--card-back-bg); text-align: left; padding: 0 10px; max-width: 230px; min-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; color: var(--text-muted); cursor: pointer; }
+.pg-mx td.tt { position: sticky; right: 0; z-index: 2; background: var(--card-back-bg); font-weight: 900; padding: 0 12px; color: var(--text-main); }
+.pg-mx th.e, .pg-mx th.mo { left: 0; z-index: 5; text-align: left; padding-left: 10px; }
+.pg-mx th.mo { left: 62px; }
+.pg-mx th.tt { right: 0; z-index: 5; }
+.pg-mx tr.dim td { opacity: .35; }
+.pg-mx tfoot td { font-weight: 900; border-top: 2px solid var(--glass-border); height: 38px; color: var(--text-main); background: var(--card-back-bg); position: sticky; bottom: 0; z-index: 3; }
+body:not(.dark-mode) .pg-mx tfoot td { background: #f1f5f9; }
+.pg-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: middle; background: #52525b; }
+.pg-dot.rodando { background: #10b981; box-shadow: 0 0 6px #10b981; } .pg-dot.parada { background: #ef4444; } .pg-dot.TROCA { background: #f59e0b; }
+.pg-leg { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; font-size: 10px; font-weight: 700; color: var(--text-muted); flex-wrap: wrap; }
+.pg-leg i { display: inline-block; width: 60px; height: 9px; border-radius: 5px; background: linear-gradient(90deg, rgba(99,102,241,.1), rgba(99,102,241,.75)); vertical-align: middle; margin: 0 5px; }
+
+/* modelos */
+.pg-mod { border: 1px solid var(--glass-border); border-radius: 14px; background: var(--stat-box); margin-bottom: 8px; overflow: hidden; }
+.pg-mod-h { display: grid; grid-template-columns: minmax(180px, 2.2fr) .8fr .7fr .8fr 1.6fr 20px; gap: 12px; align-items: center; padding: 11px 14px; cursor: pointer; }
+.pg-mod-h:hover { background: rgba(99,102,241,.07); }
+.pg-mod-n { font-size: 12px; font-weight: 800; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-mod-v { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 900; color: var(--text-main); text-align: right; }
+.pg-mod-v small { display: block; font-size: 8px; font-weight: 800; color: var(--text-muted); letter-spacing: .8px; text-transform: uppercase; }
+.pg-spark { display: flex; align-items: flex-end; gap: 2px; height: 26px; }
+.pg-spark i { flex: 1; background: linear-gradient(#6366f1, #007AFF); border-radius: 2px 2px 0 0; min-height: 2px; opacity: .9; }
+.pg-spark i.atr { background: #ef4444; }
+.pg-mod-x { display: none; padding: 4px 14px 14px; border-top: 1px dashed var(--glass-border); }
+.pg-mod.open .pg-mod-x { display: block; }
+.pg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pg-ch { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; padding: 5px 9px; border-radius: 9px; background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.3); color: var(--text-main); cursor: pointer; }
+.pg-ch:hover { background: rgba(99,102,241,.25); }
+.pg-ch.run { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.45); }
+.pg-ch em { font-style: normal; color: var(--text-muted); font-weight: 700; margin-left: 4px; }
+
+/* alertas */
+.pg-al { margin-bottom: 22px; }
+.pg-al-h { font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--text-main); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.pg-al-d { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; }
+.pg-li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--stat-box); margin-bottom: 6px; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-main); }
+.pg-li:hover { border-color: rgba(99,102,241,.55); }
+.pg-li b { font-family: 'JetBrains Mono', monospace; font-weight: 900; min-width: 54px; }
+.pg-li .m { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); }
+.pg-li .q { font-family: 'JetBrains Mono', monospace; font-weight: 900; }
+.pg-ok-box { padding: 16px; border: 1px dashed rgba(16,185,129,.45); border-radius: 12px; color: #10b981; font-size: 12px; font-weight: 800; text-align: center; background: rgba(16,185,129,.06); }
+@media (max-width: 768px) {
+    .pg-overlay { padding: 0; } .pg-modal { border-radius: 0; max-height: 100vh; min-height: 100vh; }
+    .pg-mh { padding: 14px; } .pg-kpis { padding: 12px 14px 0; grid-template-columns: repeat(2, 1fr); } .pg-tabs { padding: 10px 14px 0; overflow-x: auto; } .pg-body { padding: 12px 14px 24px; }
+    .pg-mctl input[type=text] { width: 130px; } .pg-mod-h { grid-template-columns: 1fr .8fr 20px; } .pg-mod-h > :nth-child(3), .pg-mod-h > :nth-child(4), .pg-mod-h > :nth-child(5) { display: none; }
+    .pg-mx td.mo, .pg-mx th.mo { display: none; }
+}
+
+</style>
+<script>
+/* ===================== PROGRAMAÇÃO SEMANAL (BASE 99) — módulo isolado =====================
+   Lê /programacao (gravado pelo ATUALIZADOR) e cruza com /alocacao (o que está rodando agora).
+   - Faixa em cada card de estação (status na programação + próxima opção)
+   - Gaveta da estação (todas as opções por semana)
+   - Painel "Programação" (Matriz estação × semana, Modelos, Alertas) no menu ✦ Visão
+   Nada aqui altera dados: é só leitura. Para desligar a faixa dos cards: chave no painel. */
+(function () {
+  'use strict';
+  // Mesmo mapeamento célula -> grupo usado pela Planta
+  const CEL_GRUPO = { '1137': 'Grupo 1', '1237': 'Grupo 2', '1337': 'Grupo 3', '1437': 'Grupo 4', '1537': 'Grupo 5', '1637': 'Grupo 6', '1737': 'Grupo 7', '1837': 'Grupo 8' };
+  const GRUPO_CEL = {}; Object.keys(CEL_GRUPO).forEach(c => GRUPO_CEL[CEL_GRUPO[c]] = c);
+  const NUM = g => (g === 'Grupo 4' || g === 'Grupo 5') ? 48 : (g === '11337' ? 18 : 36);
+  const MESES = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = n => Number(n || 0).toLocaleString('pt-BR');
+  const fmtK = n => n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + 'k' : String(n);
+  const pad2 = n => String(n).padStart(2, '0');
+
+  // ---------- normalização (mesma regra do ATUALIZADOR / chave da referência) ----------
+  const normM = m => String(m == null ? '' : m).trim().replace(/\s+/g, ' ').toUpperCase();
+  function normT(t) {
+    t = String(t == null ? '' : t).trim().toUpperCase().replace(/\./g, ',');
+    if (/^\d+,\d+$/.test(t)) t = t.replace(/0+$/, '').replace(/,$/, '');
+    return t.replace(/\//g, ',');
+  }
+  const semModelo = m => !m || /^(NÃO ALOCADO|NAO ALOCADO|VAZIO|--)$/i.test(String(m).trim());
+
+  // ---------- semanas ISO ----------
+  function isoWeek(d) {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day);
+    const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil(((t - y0) / 864e5 + 1) / 7);
+  }
+  function semIntervalo(ano, sem) {
+    const jan4 = new Date(Date.UTC(ano, 0, 4)); const dow = jan4.getUTCDay() || 7;
+    const seg = new Date(jan4); seg.setUTCDate(jan4.getUTCDate() - dow + 1 + (sem - 1) * 7);
+    const dom = new Date(seg); dom.setUTCDate(seg.getUTCDate() + 6);
+    const f = d => pad2(d.getUTCDate()) + ' ' + MESES[d.getUTCMonth()];
+    return f(seg) + ' – ' + f(dom);
+  }
+
+  // ---------- estado ----------
+  const S = {
+    meta: null, dados: null, carregando: null, cache: {}, faixaOn: true, semAtual: isoWeek(new Date()),
+    alocCache: {},
+    p: { aberto: false, grupo: null, aba: 'matriz', busca: '', refAloc: null, aloc: {}, exp: {} },
+    d: { aberto: false, grupo: null, est: null, filtro: 'tudo', aloc: null, exp: {} }
+  };
+  try { S.faixaOn = localStorage.getItem('pg_faixa') !== '0'; } catch (e) { }
+  const ano = () => parseInt(S.meta && S.meta.ano, 10) || new Date().getFullYear();
+
+  // ---------- dados ----------
+  function carregar(force) {
+    if (S.carregando && !force) return S.carregando;
+    if (!window.db) return Promise.reject(new Error('Banco não inicializado'));
+    S.carregando = window.db.ref('/programacao').once('value').then(snap => {
+      const v = snap.val() || {};
+      S.meta = v.meta || null; S.dados = v.dados || {}; S.cache = {};
+      return S;
+    }).catch(e => { S.carregando = null; throw e; });
+    return S.carregando;
+  }
+  function temDadosCel(cel) { return !!(S.dados && S.dados['c' + cel]); }
+  function filaBruta(cel, est) {
+    const c = S.dados && S.dados['c' + cel]; if (!c) return [];
+    let f = c['e' + est]; if (!f) return [];
+    if (!Array.isArray(f)) f = Object.keys(f).map(k => f[k]);
+    return f.filter(Boolean);
+  }
+  // agrupa ordens em blocos (semana + modelo + tamanho)
+  function blocos(cel, est) {
+    const key = cel + '|' + est; if (S.cache[key]) return S.cache[key];
+    const map = new Map();
+    filaBruta(cel, est).forEach(it => {
+      const k = it.s + '|' + normM(it.m) + '|' + normT(it.t);
+      let b = map.get(k);
+      if (!b) { b = { s: +it.s, m: String(it.m), t: String(it.t), mk: normM(it.m), tk: normT(it.t), p: 0, k: 0, ordens: [] }; map.set(k, b); }
+      b.p += (+it.p || 0); b.k += (+it.k || 0); b.ordens.push({ o: it.o, l: it.l, p: +it.p || 0, k: +it.k || 0 });
+    });
+    return (S.cache[key] = Array.from(map.values()));
+  }
+  // cruza com a alocação atual da estação
+  function analisar(cel, est, aloc) {
+    const bl = blocos(cel, est);
+    if (!bl.length) return { tem: false, estado: 'sem', blocos: [], opcoes: [], atuais: [] };
+    const temAloc = aloc && !semModelo(aloc.modelo);
+    const mk = temAloc ? normM(aloc.modelo) : '', tk = temAloc ? normT(aloc.tamanho) : '';
+    bl.forEach(b => { b.atual = !!mk && b.mk === mk && b.tk === tk; b.mesmo = !!mk && b.mk === mk && !b.atual; });
+    const atuais = bl.filter(b => b.atual);
+    const opcoes = bl.filter(b => !b.atual).sort((a, b) => (a.s - b.s) || ((b.mesmo ? 1 : 0) - (a.mesmo ? 1 : 0)) || (b.p - a.p));
+    return {
+      tem: true, estado: !temAloc ? 'livre' : (atuais.length ? 'ok' : 'fora'), blocos: bl, atuais, opcoes,
+      paresTotal: bl.reduce((s, b) => s + b.p, 0), paresAtual: atuais.reduce((s, b) => s + b.p, 0), paresOpcoes: opcoes.reduce((s, b) => s + b.p, 0)
+    };
+  }
+  function alocDe(grupo) {
+    return window.db.ref('/alocacao/' + grupo).once('value').then(s => { const v = s.val() || {}; S.alocCache[grupo] = v; return v; });
+  }
+  const alocEst = (al, est) => { if (!al) return null; const it = Array.isArray(al) ? al[est] : al[est]; return (it && typeof it === 'object') ? it : null; };
+
+  // ======================================================================
+  //  FAIXA NOS CARDS
+  // ======================================================================
+  function stripHTML(a) {
+    if (!a.tem) return `<div class="pg-s1"><span class="pg-chip none">SEM PROG.</span></div>`;
+    const chip = a.estado === 'ok' ? '<span class="pg-chip ok">✓ NA PROG.</span>'
+      : a.estado === 'fora' ? '<span class="pg-chip fora">⚠ FORA PROG.</span>'
+        : '<span class="pg-chip livre">LIVRE</span>';
+    const n = a.opcoes.length;
+    const cnt = n ? `${n} ${n === 1 ? 'opção' : 'opç.'}` : 'sem opções';
+    if (!n) return `<div class="pg-s1">${chip}<span class="pg-cnt">${cnt}</span></div><div class="pg-s2"><span class="pg-m" style="color:var(--text-muted)">Tudo já está rodando aqui</span></div>`;
+    const o = a.opcoes.find(b => b.s >= S.semAtual) || a.opcoes[0], atr = o.s < S.semAtual;
+    const rel = a.estado === 'livre' ? '' : `<span class="pg-chip ${o.mesmo ? 'mesmo' : 'troca'}" title="${o.mesmo ? 'Mesmo modelo (troca só de tamanho)' : 'Troca de modelo'}">${o.mesmo ? '↻' : '⇄'}</span>`;
+    return `<div class="pg-s1">${chip}<span class="pg-cnt">${cnt}</span></div>
+      <div class="pg-s2"><span class="pg-m" title="${esc(o.m)}">${esc(o.m)}</span>${n > 1 ? `<span class="pg-mais">+${n - 1}</span>` : ''}</div>
+      <div class="pg-s3"><span class="pg-w${atr ? ' atraso' : ''}" title="${atr ? 'Semana atrasada' : 'Semana ' + o.s}">S${o.s}</span><span class="pg-t">${esc(o.t)}</span><span class="pg-q">${fmtK(o.p)}</span>${rel}</div>`;
+  }
+  function estadoClasse(a) { return !a.tem ? 'pg-none' : a.estado === 'ok' ? 'pg-ok' : a.estado === 'fora' ? 'pg-fora' : 'pg-livre'; }
+
+  function decorar() {
+    const grid = $('stationGrid'), selG = $('filtroGrupo'); if (!grid || !selG) return;
+    const grupo = selG.value, cel = GRUPO_CEL[grupo];
+    const ativo = S.faixaOn && cel && S.dados && temDadosCel(cel);
+    grid.classList.toggle('pg-on', !!ativo);
+    if (!ativo) { grid.querySelectorAll('.pg-strip').forEach(e => e.remove()); return; }
+    grid.querySelectorAll('.flip-card-front[data-estacao]').forEach(front => {
+      if (front.querySelector('.pg-strip')) return;
+      const est = parseInt(front.getAttribute('data-estacao'), 10); if (!est) return;
+      const vals = front.querySelectorAll('.info-row .info-value');
+      const aloc = { modelo: vals[0] ? (vals[0].getAttribute('title') || vals[0].textContent) : '', tamanho: vals[1] ? (vals[1].getAttribute('title') || vals[1].textContent) : '' };
+      const a = analisar(cel, est, aloc);
+      const div = document.createElement('div');
+      div.className = 'pg-strip ' + estadoClasse(a);
+      div.title = a.tem ? `Abrir fila · ${fmt(a.paresOpcoes)} pares em opções${a.opcoes.some(b => b.s < S.semAtual) ? ' · ' + a.opcoes.filter(b => b.s < S.semAtual).length + ' item(ns) atrasado(s)' : ''}` : 'Sem itens na programação importada';
+      div.innerHTML = stripHTML(a);
+      div.addEventListener('click', e => { e.stopPropagation(); abrirEstacao(grupo, est); });
+      front.appendChild(div);
+    });
+  }
+  let _decTimer = null;
+  function agendarDecorar() { clearTimeout(_decTimer); _decTimer = setTimeout(() => requestAnimationFrame(decorar), 60); }
+
+  function iniciarObservador() {
+    const grid = $('stationGrid');
+    if (!grid) { setTimeout(iniciarObservador, 500); return; }
+    new MutationObserver(() => {
+      // primeira renderização: garante que os dados foram carregados
+      if (!S.dados) carregar().then(agendarDecorar).catch(() => { }); else agendarDecorar();
+    }).observe(grid, { childList: true });
+    // quando um novo import é feito, recarrega sozinho
+    const tentar = () => {
+      if (!window.db) return setTimeout(tentar, 800);
+      try {
+        window.db.ref('/programacao/meta/versao').on('value', snap => {
+          const v = snap.val();
+          if (S.meta && v && v !== S.meta.versao) carregar(true).then(() => { agendarDecorar(); if (S.p.aberto) renderPainel(); if (S.d.aberto) renderGaveta(); });
+          else if (!S.meta && v && !S.carregando) carregar().then(agendarDecorar).catch(() => { });
+        });
+      } catch (e) { }
+    };
+    tentar();
+    if (grid.children.length) agendarDecorar();
+  }
+
+  // ======================================================================
+  //  GAVETA DA ESTAÇÃO
+  // ======================================================================
+  function garantirDOM() {
+    if ($('pgDrawer')) return;
+    const bg = document.createElement('div'); bg.className = 'pg-drawer-bg'; bg.id = 'pgDrawerBg'; bg.onclick = fecharGaveta;
+    const dr = document.createElement('div'); dr.className = 'pg-drawer'; dr.id = 'pgDrawer';
+    const ov = document.createElement('div'); ov.className = 'pg-overlay'; ov.id = 'pgOverlay';
+    ov.innerHTML = `<div class="pg-modal">
+      <div class="pg-mh">
+        <div><div class="pg-mtitle">📅 Programação Semanal</div><div class="pg-msub" id="pgSub"></div></div>
+        <div class="pg-mctl">
+          <select id="pgGrupo" onchange="pgTrocarGrupo(this.value)"></select>
+          <input type="text" id="pgBusca" placeholder="🔍 Filtrar modelo..." oninput="pgBuscar(this.value)">
+          <label class="pg-sw" title="Mostra ou esconde a faixa de programação dentro de cada card"><input type="checkbox" id="pgSwFaixa" onchange="pgFaixa(this.checked)"> Faixa nos cards</label>
+          <button class="pg-x" onclick="pgFecharPainel()" title="Fechar">✕</button>
+        </div>
+      </div>
+      <div class="pg-kpis" id="pgKpis"></div>
+      <div class="pg-tabs">
+        <button class="pg-tab on" data-a="matriz" onclick="pgAba('matriz')">Matriz Estação × Semana</button>
+        <button class="pg-tab" data-a="modelos" onclick="pgAba('modelos')">Modelos</button>
+        <button class="pg-tab" data-a="alertas" onclick="pgAba('alertas')">Alertas <span class="pg-badge" id="pgBadge" style="display:none"></span></button>
+      </div>
+      <div class="pg-body" id="pgBody"></div>
+    </div>`;
+    document.body.appendChild(bg); document.body.appendChild(dr); document.body.appendChild(ov);
+    // delegação de cliques (gaveta e painel)
+    document.addEventListener('click', ev => {
+      const b = ev.target.closest && ev.target.closest('.pg-b'); if (b && b.closest('#pgDrawer')) { b.classList.toggle('exp'); return; }
+      const mh = ev.target.closest && ev.target.closest('.pg-mod-h'); if (mh) { mh.parentElement.classList.toggle('open'); S.p.exp[mh.parentElement.dataset.k] = mh.parentElement.classList.contains('open'); return; }
+      const ce = ev.target.closest && ev.target.closest('[data-pg-est]'); if (ce && ce.closest('#pgOverlay')) { abrirEstacao(ce.dataset.pgG || S.p.grupo, parseInt(ce.dataset.pgEst, 10), ce.dataset.pgSem ? parseInt(ce.dataset.pgSem, 10) : null); }
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (S.d.aberto) fecharGaveta(); else if (S.p.aberto) fecharPainel();
+    });
+  }
+
+  function abrirEstacao(grupo, est, semana) {
+    garantirDOM();
+    S.d = { aberto: true, grupo, est, filtro: 'tudo', aloc: null, exp: {}, semana: semana || null };
+    $('pgDrawerBg').classList.add('open'); $('pgDrawer').classList.add('open');
+    $('pgDrawer').innerHTML = `<div class="pg-vazio">Carregando fila da estação...</div>`;
+    Promise.all([carregar(), alocDe(grupo)]).then(([, al]) => { S.d.aloc = alocEst(al, est); renderGaveta(); })
+      .catch(e => { $('pgDrawer').innerHTML = `<div class="pg-vazio">Não foi possível carregar a programação.<br>${esc(e.message)}</div>`; });
+  }
+  function fecharGaveta() { S.d.aberto = false; const a = $('pgDrawer'), b = $('pgDrawerBg'); if (a) a.classList.remove('open'); if (b) b.classList.remove('open'); }
+
+  function renderGaveta() {
+    const { grupo, est, filtro } = S.d, cel = GRUPO_CEL[grupo], el = $('pgDrawer'); if (!el) return;
+    const al = S.d.aloc, a = analisar(cel, est, al);
+    const num = (grupo === '11337') ? ((est - 1) % 6) + 1 : est;
+    const head = `<div class="pg-dh"><div class="pg-dh-main">
+        <div class="pg-dtitle">EST ${pad2(num)} <span class="pg-chip ${a.estado === 'ok' ? 'ok' : a.estado === 'fora' ? 'fora' : a.estado === 'livre' ? 'livre' : 'none'}">${a.estado === 'ok' ? '✓ NA PROGRAMAÇÃO' : a.estado === 'fora' ? '⚠ FORA DA PROGRAMAÇÃO' : a.estado === 'livre' ? 'LIVRE' : 'SEM PROGRAMAÇÃO'}</span></div>
+        <div class="pg-dsub">${esc(grupo)} · Célula ${esc(cel || '--')} · Fila de programação</div></div>
+        <button class="pg-x" onclick="pgFecharGaveta()" title="Fechar">✕</button></div>`;
+    if (!a.tem) {
+      el.innerHTML = head + `<div class="pg-db"><div class="pg-vazio">Esta estação não tem itens na programação importada.<br><span style="font-weight:600">Cole a base 99 atualizada no Atualizador (aba Programação) se isso não for esperado.</span></div></div>` + rodape();
+      return;
+    }
+    const temAloc = al && !semModelo(al.modelo);
+    const nowTxt = !temAloc ? 'Estação sem modelo alocado — qualquer opção abaixo pode entrar.'
+      : a.estado === 'ok' ? `${fmt(a.paresAtual)} pares deste modelo/tamanho estão programados (${[...new Set(a.atuais.map(b => 'S' + b.s))].join(' · ')}).`
+        : 'Este modelo/tamanho <b>não consta</b> na programação importada desta estação.';
+    const now = `<div class="pg-now ${a.estado}"><div class="pg-now-l"><span class="pg-dot ${al && al.status ? al.status : ''}"></span>Alocado agora${al && al.status ? ' · ' + esc(String(al.status).toUpperCase()) : ''}</div>
+        <div class="pg-now-m">${temAloc ? esc(al.modelo) + ' · ' + esc(String(al.tamanho || '--').replace('.', ',')) : '— Não alocado —'}</div><div class="pg-now-d">${nowTxt}</div></div>`;
+    const sems = [...new Set(a.blocos.map(b => b.s))].sort((x, y) => x - y);
+    const kp = `<div class="pg-dk"><div><b>${fmt(a.paresOpcoes)}</b><span>Pares em opções</span></div><div><b>${a.opcoes.length}</b><span>Opções</span></div><div><b>S${sems[0]}${sems.length > 1 ? '–S' + sems[sems.length - 1] : ''}</b><span>Semanas</span></div></div>`;
+    const filtros = [['tudo', 'Tudo'], ['mesmo', '↻ Mesmo modelo'], ['atraso', 'Atrasadas'], ['atual', 'Semana atual']];
+    const fb = `<div class="pg-filt">${filtros.map(([k, l]) => `<button class="pg-fb ${filtro === k ? 'on' : ''}" onclick="pgFiltroG('${k}')">${l}</button>`).join('')}<button class="pg-fb copy" onclick="pgCopiar()">📋 Copiar fila</button></div>`;
+
+    let lista = a.blocos.slice();
+    if (filtro === 'mesmo') lista = lista.filter(b => b.mesmo || b.atual);
+    else if (filtro === 'atraso') lista = lista.filter(b => b.s < S.semAtual);
+    else if (filtro === 'atual') lista = lista.filter(b => b.s === S.semAtual);
+    const porSem = {}; lista.forEach(b => (porSem[b.s] = porSem[b.s] || []).push(b));
+    const maxP = Math.max(1, ...a.blocos.map(b => b.p));
+    const ano_ = ano();
+    const corpo = Object.keys(porSem).map(Number).sort((x, y) => x - y).map(s => {
+      const bs = porSem[s].sort((x, y) => ((y.atual ? 1 : 0) - (x.atual ? 1 : 0)) || ((y.mesmo ? 1 : 0) - (x.mesmo ? 1 : 0)) || (y.p - x.p));
+      const atr = s < S.semAtual, cur = s === S.semAtual;
+      const tag = atr ? '<span class="pg-chip atraso">ATRASADA</span>' : cur ? '<span class="pg-chip ok">SEMANA ATUAL</span>' : s === S.semAtual + 1 ? '<span class="pg-chip none">PRÓXIMA</span>' : '';
+      const tot = bs.reduce((q, b) => q + b.p, 0);
+      return `<div class="pg-wk ${atr ? 'atraso' : ''}" data-sem="${s}"><div class="pg-wk-h"><span class="pg-wk-n">SEMANA ${s}</span><span class="pg-wk-d">${semIntervalo(ano_, s)}</span>${tag}<span class="pg-wk-t">${fmt(tot)} pares</span></div>
+        ${bs.map((b, i) => blocoHTML(b, maxP, a.estado)).join('')}</div>`;
+    }).join('');
+    el.innerHTML = head + now + kp + fb + `<div class="pg-db" id="pgDb">${corpo || '<div class="pg-vazio">Nenhum item neste filtro.</div>'}</div>` + rodape();
+    if (S.d.semana) {
+      const w = el.querySelector(`.pg-wk[data-sem="${S.d.semana}"]`);
+      if (w) { try { w.scrollIntoView({ block: 'start' }); } catch (e) { } w.classList.add('flash'); }
+      S.d.semana = null;
+    }
+  }
+  function blocoHTML(b, maxP, estado) {
+    const rel = b.atual ? '<span class="pg-chip ok">▶ RODANDO</span>' : estado === 'livre' ? '' : b.mesmo ? '<span class="pg-chip mesmo">↻ MESMO MODELO</span>' : '<span class="pg-chip troca">⇄ TROCA</span>';
+    const ords = b.ordens.map(o => `<div class="pg-or"><span>${esc(o.o || '--')}</span><span class="${/^(REP|DEV)/i.test(o.l || '') ? 'rep' : ''}" title="${/^(REP|DEV)/i.test(o.l || '') ? 'Lote REP/DEV' : ''}">${esc(o.l || '--')}</span><span>${fmt(o.p)}</span><span>${o.k} pc</span></div>`).join('');
+    return `<div class="pg-b ${b.atual ? 'atual' : ''}"><div class="pg-b-top">${rel}<span class="pg-b-m" title="${esc(b.m)}">${esc(b.m)}</span><span class="pg-b-t">${esc(b.t)}</span></div>
+      <div class="pg-b-bot"><span class="pg-b-p">${fmt(b.p)}<small>pares</small></span><div class="pg-b-bar"><i style="width:${Math.max(4, Math.round(b.p / maxP * 100))}%"></i></div><span class="pg-b-meta">${b.k} pc · ${b.ordens.length} ord</span></div>
+      <div class="pg-ords"><div class="pg-or h"><span>Ordem</span><span>Lote</span><span>Pares</span><span>Pac.</span></div>${ords}</div></div>`;
+  }
+  function rodape() {
+    const m = S.meta; if (!m) return '';
+    const d = new Date(m.atualizadoEm);
+    return `<div class="pg-foot">BASE 99 IMPORTADA EM ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · SEMANA ATUAL: S${S.semAtual}</div>`;
+  }
+  function copiarFila() {
+    const { grupo, est } = S.d, cel = GRUPO_CEL[grupo], a = analisar(cel, est, S.d.aloc);
+    const linhas = [`${grupo} · EST ${est} — fila de programação`];
+    a.blocos.sort((x, y) => (x.s - y.s) || (y.p - x.p)).forEach(b => linhas.push(`S${b.s} | ${b.m} | ${b.t} | ${b.p} pares | ${b.ordens.length} ord`));
+    const txt = linhas.join('\n');
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Fila copiada')).catch(() => {
+      const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Fila copiada'); } catch (e) { } ta.remove();
+    });
+  }
+  function toast(t) {
+    const e = document.createElement('div'); e.textContent = t;
+    e.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;padding:10px 18px;border-radius:12px;font-weight:800;font-size:12px;z-index:100010;box-shadow:0 10px 30px rgba(0,0,0,.4)';
+    document.body.appendChild(e); setTimeout(() => e.remove(), 1600);
+  }
+
+  // ======================================================================
+  //  PAINEL
+  // ======================================================================
+  function gruposComDados() {
+    return Object.keys(CEL_GRUPO).filter(c => temDadosCel(c)).map(c => CEL_GRUPO[c]).sort((a, b) => parseInt(a.replace(/\D/g, ''), 10) - parseInt(b.replace(/\D/g, ''), 10));
+  }
+  function abrirPainel() {
+    garantirDOM();
+    $('pgOverlay').classList.add('open'); document.body.style.overflow = 'hidden';
+    $('pgBody').innerHTML = `<div class="pg-vazio">Carregando programação...</div>`;
+    carregar().then(() => {
+      const gs = gruposComDados();
+      if (!gs.length) { $('pgBody').innerHTML = `<div class="pg-vazio">Nenhuma programação importada ainda.<br><span style="font-weight:600">Abra o Atualizador, aba <b>Programação (Base 99)</b>, cole a base e confirme o envio.</span></div>`; $('pgKpis').innerHTML = ''; $('pgSub').textContent = ''; return; }
+      const atual = $('filtroGrupo') ? $('filtroGrupo').value : '';
+      S.p.grupo = gs.includes(S.p.grupo) ? S.p.grupo : (gs.includes(atual) ? atual : gs[0]);
+      $('pgGrupo').innerHTML = gs.map(g => `<option value="${esc(g)}">${esc(g)} · ${GRUPO_CEL[g]}</option>`).join('');
+      $('pgGrupo').value = S.p.grupo; $('pgSwFaixa').checked = S.faixaOn;
+      assinarAloc();
+    }).catch(e => { $('pgBody').innerHTML = `<div class="pg-vazio">Falha ao carregar: ${esc(e.message)}</div>`; });
+  }
+  function assinarAloc() {
+    if (S.p.refAloc) { try { S.p.refAloc.off('value'); } catch (e) { } S.p.refAloc = null; }
+    S.p.aloc = {};
+    S.p.refAloc = window.db.ref('/alocacao/' + S.p.grupo);
+    S.p.refAloc.on('value', snap => { S.p.aloc = snap.val() || {}; clearTimeout(S.p._t); S.p._t = setTimeout(renderPainel, 120); });
+  }
+  function fecharPainel() {
+    S.p.aberto = false; const o = $('pgOverlay'); if (o) o.classList.remove('open'); document.body.style.overflow = '';
+    if (S.p.refAloc) { try { S.p.refAloc.off('value'); } catch (e) { } S.p.refAloc = null; }
+  }
+  // dados do painel para o grupo atual
+  function resumoGrupo() {
+    const g = S.p.grupo, cel = GRUPO_CEL[g], n = NUM(g), est = [];
+    for (let i = 1; i <= n; i++) {
+      const al = alocEst(S.p.aloc, i), a = analisar(cel, i, al);
+      est.push({ i, al, a });
+    }
+    return { g, cel, n, est };
+  }
+  function renderPainel() {
+    S.p.aberto = true;
+    if (!S.p.grupo || !$('pgBody')) return;
+    const R = resumoGrupo(), busca = normM(S.p.busca);
+    const m = S.meta, d = m ? new Date(m.atualizadoEm) : null;
+    $('pgSub').textContent = (d ? `BASE 99 · ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · ` : '') + `S${S.semAtual} ATUAL`;
+    // KPIs
+    let totalP = 0, semAt = 0, atras = 0, comProg = 0, alocados = 0, naProg = 0; const alertas = { fora: [], sem: [], livre: [], atraso: [] };
+    R.est.forEach(({ i, al, a }) => {
+      const temAl = al && !semModelo(al.modelo);
+      if (temAl) alocados++;
+      if (a.tem) {
+        comProg++; totalP += a.paresTotal;
+        a.blocos.forEach(b => { if (b.s === S.semAtual) semAt += b.p; if (b.s < S.semAtual) { atras += b.p; } });
+        if (temAl && a.estado === 'ok') naProg++;
+        if (a.estado === 'fora') alertas.fora.push({ i, al, a });
+        if (a.estado === 'livre') alertas.livre.push({ i, al, a });
+        const at = a.blocos.filter(b => b.s < S.semAtual); if (at.length) alertas.atraso.push({ i, al, a, p: at.reduce((q, b) => q + b.p, 0), n: at.length });
+      } else if (temAl) alertas.sem.push({ i, al, a });
+    });
+    const pct = alocados ? Math.round(naProg / alocados * 100) : 0;
+    $('pgKpis').innerHTML = `
+      <div class="pg-kpi"><b>${fmt(totalP)}</b><span>Pares programados</span></div>
+      <div class="pg-kpi"><b>${comProg}<small style="font-size:13px;color:var(--text-muted)"> / ${R.n}</small></b><span>Estações com programação</span></div>
+      <div class="pg-kpi"><b>${fmt(semAt)}</b><span>Semana atual (S${S.semAtual})</span></div>
+      <div class="pg-kpi"><b class="${atras ? 'r' : 'g'}">${fmt(atras)}</b><span>Atrasado (antes da S${S.semAtual})</span></div>
+      <div class="pg-kpi"><b class="${pct >= 90 ? 'g' : pct >= 70 ? 'a' : 'r'}">${alocados ? pct + '%' : '--'}</b><span>Rodando dentro da programação (${naProg}/${alocados})</span></div>`;
+    const nAl = alertas.fora.length + alertas.sem.length;
+    const bd = $('pgBadge'); bd.style.display = nAl ? 'inline' : 'none'; bd.textContent = nAl;
+    document.querySelectorAll('.pg-tab').forEach(t => t.classList.toggle('on', t.dataset.a === S.p.aba));
+    $('pgBody').innerHTML = S.p.aba === 'matriz' ? htmlMatriz(R, busca) : S.p.aba === 'modelos' ? htmlModelos(R, busca) : htmlAlertas(R, alertas, busca);
+  }
+
+  function htmlMatriz(R, busca) {
+    const sems = new Set(); R.est.forEach(e => e.a.blocos.forEach(b => sems.add(b.s)));
+    const cols = [...sems].sort((a, b) => a - b); if (!cols.length) return '<div class="pg-vazio">Sem dados para este grupo.</div>';
+    const a_ = ano(); let max = 1; const tot = {}; cols.forEach(c => tot[c] = 0);
+    const linhas = R.est.map(({ i, al, a }) => {
+      const por = {}; let soma = 0;
+      a.blocos.forEach(b => { if (busca && !b.mk.includes(busca)) return; por[b.s] = (por[b.s] || 0) + b.p; soma += b.p; });
+      Object.keys(por).forEach(s => { if (por[s] > max) max = por[s]; tot[s] += por[s]; });
+      return { i, al, a, por, soma };
+    });
+    const head = cols.map(c => `<th class="${c === S.semAtual ? 'cur' : c < S.semAtual ? 'atr' : ''}">S${c}<small>${semIntervalo(a_, c).split(' – ')[0]}</small></th>`).join('');
+    const body = linhas.map(({ i, al, a, por, soma }) => {
+      const temAl = al && !semModelo(al.modelo);
+      const dim = busca && !soma;
+      const tds = cols.map(c => {
+        const v = por[c]; if (!v) return `<td class="${c < S.semAtual ? 'atr' : ''}"></td>`;
+        const alpha = (0.1 + 0.62 * Math.sqrt(v / max)).toFixed(2);
+        return `<td class="c ${c < S.semAtual ? 'atr' : ''}" style="background:rgba(99,102,241,${alpha})" data-pg-est="${i}" data-pg-sem="${c}" title="EST ${i} · S${c} · ${fmt(v)} pares">${fmtK(v)}</td>`;
+      }).join('');
+      const modTxt = temAl ? esc(al.modelo) + ' · ' + esc(String(al.tamanho || '').replace('.', ',')) : '<i style="opacity:.6">livre</i>';
+      return `<tr class="${dim ? 'dim' : ''}"><td class="e" data-pg-est="${i}"><span class="pg-dot ${al && al.status ? al.status : ''}"></span>${pad2(i)}</td><td class="mo" data-pg-est="${i}" title="${temAl ? esc(al.modelo) : ''}">${modTxt}</td>${tds}<td class="tt">${soma ? fmtK(soma) : '—'}</td></tr>`;
+    }).join('');
+    const foot = cols.map(c => `<td>${tot[c] ? fmtK(tot[c]) : ''}</td>`).join('');
+    const totalGeral = Object.values(tot).reduce((s, v) => s + v, 0);
+    return `<div class="pg-leg"><span>Pares por estação e semana<i></i>menor → maior</span><span style="color:#ef4444">▢ borda vermelha = semana atrasada</span><span>Clique numa célula para ver os modelos daquela semana</span></div>
+      <div style="overflow:auto;max-height:calc(100vh - 380px);border:1px solid var(--glass-border);border-radius:14px">
+      <table class="pg-mx"><thead><tr><th class="e">EST</th><th class="mo">ALOCADO AGORA</th>${head}<th class="tt">FILA</th></tr></thead><tbody>${body}</tbody>
+      <tfoot><tr><td class="e">Σ</td><td class="mo"></td>${foot}<td class="tt">${fmtK(totalGeral)}</td></tr></tfoot></table></div>`;
+  }
+
+  function htmlModelos(R, busca) {
+    const M = new Map(); const semSet = new Set();
+    R.est.forEach(({ i, al, a }) => a.blocos.forEach(b => {
+      if (busca && !b.mk.includes(busca)) return;
+      let x = M.get(b.mk); if (!x) { x = { nome: b.m, p: 0, est: new Map(), sem: {}, rod: new Set() }; M.set(b.mk, x); }
+      x.p += b.p; x.sem[b.s] = (x.sem[b.s] || 0) + b.p; semSet.add(b.s);
+      const e = x.est.get(i) || { p: 0, ss: new Set(), tams: new Set() }; e.p += b.p; e.ss.add(b.s); e.tams.add(b.t); x.est.set(i, e);
+      if (b.atual || b.mesmo) x.rod.add(i);
+    }));
+    const cols = [...semSet].sort((a, b) => a - b);
+    const lista = [...M.entries()].sort((a, b) => b[1].p - a[1].p);
+    if (!lista.length) return '<div class="pg-vazio">Nenhum modelo encontrado.</div>';
+    return lista.map(([k, x]) => {
+      const mx = Math.max(...Object.values(x.sem));
+      const spark = cols.map(c => `<i class="${c < S.semAtual ? 'atr' : ''}" style="height:${x.sem[c] ? Math.max(8, Math.round(x.sem[c] / mx * 100)) : 0}%" title="S${c}: ${fmt(x.sem[c] || 0)}"></i>`).join('');
+      const chips = [...x.est.entries()].sort((a, b) => b[1].p - a[1].p).map(([i, e]) => `<span class="pg-ch ${x.rod.has(i) ? 'run' : ''}" data-pg-est="${i}" title="Tamanhos: ${[...e.tams].join(', ')}">EST ${pad2(i)}<em>${fmtK(e.p)} · S${[...e.ss].sort((a, b) => a - b).join('/')}</em></span>`).join('');
+      return `<div class="pg-mod ${S.p.exp[k] ? 'open' : ''}" data-k="${esc(k)}"><div class="pg-mod-h">
+        <div class="pg-mod-n" title="${esc(x.nome)}">${esc(x.nome)}</div>
+        <div class="pg-mod-v">${fmt(x.p)}<small>pares</small></div>
+        <div class="pg-mod-v">${x.est.size}<small>estações</small></div>
+        <div class="pg-mod-v" style="color:${x.rod.size ? '#10b981' : 'var(--text-muted)'}">${x.rod.size}<small>com o modelo agora</small></div>
+        <div class="pg-spark">${spark}</div><div style="color:var(--text-muted);font-size:11px">▾</div></div>
+        <div class="pg-mod-x"><div class="pg-chips">${chips}</div></div></div>`;
+    }).join('');
+  }
+
+  function htmlAlertas(R, al, busca) {
+    const li = (e, extra, cls) => `<div class="pg-li" data-pg-est="${e.i}"><b>EST ${pad2(e.i)}</b><span class="m">${e.al && !semModelo(e.al.modelo) ? esc(e.al.modelo) + ' · ' + esc(String(e.al.tamanho || '').replace('.', ',')) : 'livre'}</span>${extra}</div>`;
+    const sec = (tit, desc, itens, vazioTxt) => `<div class="pg-al"><div class="pg-al-h">${tit} <span class="pg-chip none">${itens.length}</span></div><div class="pg-al-d">${desc}</div>${itens.length ? itens.join('') : `<div class="pg-ok-box">✓ ${vazioTxt}</div>`}</div>`;
+    const fora = al.fora.map(e => li(e, `<span class="pg-chip fora">FORA</span><span class="q">${e.a.opcoes.length} opç.</span>`));
+    const sem = al.sem.map(e => li(e, `<span class="pg-chip none">SEM FILA</span>`));
+    const atr = al.atraso.sort((a, b) => b.p - a.p).map(e => li(e, `<span class="pg-chip atraso">ATRASO</span><span class="q">${fmt(e.p)} pares</span>`));
+    const liv = al.livre.map(e => li(e, `<span class="pg-chip livre">LIVRE</span><span class="q">${e.a.opcoes.length} opç. · ${fmtK(e.a.paresOpcoes)}</span>`));
+    return sec('⚠ Rodando fora da programação', 'Estações com modelo/tamanho alocado que não consta na programação importada desta estação.', fora, 'Tudo que está alocado consta na programação.')
+      + sec('Alocadas sem programação', 'Estações com modelo alocado e nenhum item programado para elas na base 99.', sem, 'Nenhuma estação alocada está sem programação.')
+      + sec('Itens atrasados', `Pares programados para semanas anteriores à S${S.semAtual} e ainda na fila.`, atr, 'Nada atrasado na fila.')
+      + sec('Estações livres com opções', 'Estações sem modelo alocado que já têm itens programados prontos para entrar.', liv, 'Não há estações livres com fila.');
+  }
+
+  // ======================================================================
+  //  API pública
+  // ======================================================================
+  window.pgAbrirPainel = abrirPainel;
+  window.pgFecharPainel = fecharPainel;
+  window.pgFecharGaveta = fecharGaveta;
+  window.pgAbrirEstacao = abrirEstacao;
+  window.pgAba = a => { S.p.aba = a; renderPainel(); };
+  window.pgBuscar = v => { S.p.busca = v || ''; clearTimeout(S.p._b); S.p._b = setTimeout(renderPainel, 150); };
+  window.pgTrocarGrupo = g => { S.p.grupo = g; S.p.exp = {}; assinarAloc(); };
+  window.pgFiltroG = f => { S.d.filtro = f; renderGaveta(); };
+  window.pgCopiar = copiarFila;
+  window.pgFaixa = on => { S.faixaOn = !!on; try { localStorage.setItem('pg_faixa', on ? '1' : '0'); } catch (e) { } document.querySelectorAll('.pg-strip').forEach(e => e.remove()); decorar(); };
+  window._pgDebug = { S, analisar, blocos, decorar, normT, normM, isoWeek };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarObservador); else iniciarObservador();
+})();
+
+</script>
+
+<style id="card-layout-v2">
+/* ===================== CARD v2 — layout compacto e organizado ===================== */
+
+.station-card {
+    container-type: inline-size; container-name: est;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    align-content: space-between; grid-template-rows: auto auto auto auto minmax(0, 1fr); row-gap: 9px; column-gap: 10px;
+    padding: 12px 12px 12px 18px;
+}
+
+
+/* Altura automática: o card se ajusta ao conteúdo (frente e verso ocupam a mesma célula) */
+.flip-card-wrapper,
+#stationGrid.pg-on .flip-card-wrapper { height: auto !important; display: flex; min-height: 200px; }
+#stationGrid.pg-on .flip-card-wrapper { min-height: 0; }
+.flip-card-inner { flex: 1; min-width: 0; height: auto; display: grid; }
+.flip-card-front { grid-area: 1 / 1; height: auto; }
+.flip-card-back  { grid-area: 1 / 1; position: relative; top: auto; left: auto; width: auto; height: 0; min-height: 100%; }
+
+/* Linha 1 — título + ações + status */
+.station-card .card-header {
+    grid-column: 1 / -1; margin: 0; padding: 0; gap: 6px; flex-wrap: nowrap; min-width: 0;
+}
+.station-card .card-header h2 { font-size: 1rem; flex: 1 1 auto; }
+.station-card .badge-repetido { padding: 2px 6px; font-size: 9px; margin-left: 6px; border-radius: 6px; }
+.station-card .card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.station-card .card-actions .nota-btn,
+.station-card .card-actions .hist-btn {
+    position: relative; top: auto; right: auto; bottom: auto; left: auto;
+    width: 23px; height: 23px; border-radius: 7px; font-size: 11px;
+}
+.station-card .card-header select { padding: 5px 4px; font-size: 8.5px; flex: 0 0 78px; width: 78px; max-width: 78px; border-radius: 8px; }
+.station-card.status-rodando .card-header select { border-color: rgba(16,185,129,.45); }
+.station-card.status-parada  .card-header select { border-color: rgba(239,68,68,.55); }
+.station-card.status-TROCA   .card-header select { border-color: rgba(245,158,11,.55); }
+
+/* Linha 2 — modelo (esquerda) + grade (direita, em "chip") */
+.station-card .info-row { margin: 0; padding: 0; width: auto; min-width: 0; gap: 2px; }
+.station-card .info-row:nth-child(2) { grid-column: 1; }
+.station-card .info-row:nth-child(3) { grid-column: 2; align-items: flex-end; }
+.station-card .info-label { font-size: 8px; line-height: 1; }
+.station-card .info-value { font-size: 13px; line-height: 1.2; margin-top: 0; }
+.station-card .info-row:nth-child(3) .info-value {
+    width: auto; min-width: 38px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 900;
+    background: var(--stat-box); border: 1px solid var(--glass-border); border-radius: 8px; padding: 1px 8px;
+}
+
+/* Linha 3 — saúde em uma linha só: SAÚDE ▬▬▬▬ 100% */
+.station-card .health-container {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;
+    padding: 0; margin: 0; background: none; border: none; border-radius: 0;
+}
+.station-card .health-header { display: contents; }
+.station-card .health-label { order: 1; flex-shrink: 0; }
+.station-card .health-bar-bg { order: 2; flex: 1; width: auto; height: 6px; }
+.station-card .health-header > span:last-child { order: 3; flex-shrink: 0; min-width: 40px; text-align: right; }
+
+/* Linha 4 — giro / refil / reprov */
+.station-card .stats-grid { grid-column: 1 / -1; margin-top: 0; gap: 6px; }
+.station-card .stat-box { padding: 6px 2px 5px; border-radius: 11px; }
+.station-card .giro-alert-badge { top: -8px; font-size: 8px; padding: 2px 7px; }
+
+/* Linha 5 — faixa de programação (IA PROG.) */
+.station-card .pg-strip {
+    grid-column: 1 / -1; margin: 0; min-height: 58px; align-content: center;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 4px;
+    padding: 7px 10px 7px 13px;
+}
+.station-card .pg-strip::before { top: 8px; bottom: 8px; left: 5px; }
+.station-card .pg-s1 { grid-column: 1 / -1; }
+.station-card .pg-s2 { grid-column: 1; }
+.station-card .pg-m { flex: 0 1 auto; }
+.station-card .pg-s3 { grid-column: 2; justify-self: end; }
+.station-card .pg-strip.pg-none { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; padding: 8px 10px 8px 13px; }
+
+@media (max-width: 768px) {
+    .station-card .pg-strip { min-height: 0; }      /* no celular a faixa mostra só a linha 1 */
+    .station-card .pg-strip.pg-none { min-height: 0; }
+}
+@media (max-width: 360px) {
+    .station-card .card-header { flex-direction: row; align-items: center; }
+}
+
+/* Cartão médio (≈ 3 máquinas em 1920px): a linha da programação quebra em duas */
+@container est (max-width: 270px) {
+    .station-card .pg-s3 { grid-column: 1 / -1; justify-self: start; }
+}
+/* Cartão estreito (telas menores / celular): título numa linha, ações + status na de baixo */
+@container est (max-width: 215px) {
+    .station-card .card-header { flex-wrap: wrap; row-gap: 6px; }
+    .station-card .card-header h2 { flex: 1 1 100%; }
+    .station-card .card-header .card-actions { order: 2; }
+    .station-card .card-header select { order: 3; flex: 1 1 0; width: auto; max-width: none; min-width: 0; font-size: 8px; padding: 5px 2px; }
+    .station-card .info-value { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+</style>
 
 </body>
 </html>
