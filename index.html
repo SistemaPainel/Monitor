@@ -556,13 +556,14 @@
         .req-num { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:900; color:#007AFF; }
         .req-meta { font-size:10px; color:var(--text-muted); font-weight:700; margin-top:4px; }
         .req-order-list { display:flex; flex-direction:column; gap:6px; margin:10px 0; }
-        .req-order-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; background:var(--input-bg);
+        .req-order-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:center; background:var(--input-bg);
             border:1px solid var(--glass-border); border-radius:10px; padding:8px 10px; font-size:11px; font-family:'JetBrains Mono',monospace;
         }
         .req-order-row strong { color:#007AFF; }
-        .req-pacote-wrap { display:flex; align-items:center; flex-wrap:wrap; gap:4px; min-width:0; }
-        .req-pacote-item { display:inline-flex; align-items:center; gap:4px; min-width:0; }
-        .req-pacote-text { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .req-pacote-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:5px; min-width:0; }
+        .req-pacote-item { display:grid; grid-template-columns:minmax(64px,auto) auto auto; align-items:center; gap:8px; min-width:0; }
+        .req-pacote-text { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:800; font-size:12px; }
+        .req-proc-wrap { display:inline-flex; flex-wrap:wrap; gap:4px; }
         .req-pacote-sep { color:var(--text-muted); font-weight:900; }
         .req-via-badge { display:inline-flex; align-items:center; white-space:nowrap; border-radius:999px; padding:1px 6px;
             background:rgba(225,29,72,0.10); color:#e11d48; border:1px solid rgba(225,29,72,0.24);
@@ -3035,7 +3036,7 @@ rx="1.5" fill="#f59e0b"/>
                         <span style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;">⚙️</span>
                         Desenvolvedor Criador
                     </h1>
-                    <p style="margin:4px 0 0;font-size:11px;color:#8b5cf6;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;">Painel de Credenciais e Acessos</p>
+                    <p style="margin:4px 0 0;font-size:11px;color:#8b5cf6;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;">Configurações do Sistema · Usuários, Avisos, Relatórios e Acessos</p>
                 </div>
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                     <button class="profile-chip" id="btnPerfilDev" onclick="abrirPerfil()" style="background:rgba(139,92,246,0.12);border-color:rgba(139,92,246,0.3);color:#fff;">
@@ -3046,8 +3047,23 @@ rx="1.5" fill="#f59e0b"/>
                 </div>
             </div>
 
+            <!-- NAVEGAÇÃO DO PAINEL DE CONFIGURAÇÕES -->
+            <style>
+                #devNav { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:22px; padding:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; position:sticky; top:0; z-index:5; backdrop-filter:blur(10px); }
+                #devNav .dev-nav-btn { flex:1; min-width:130px; padding:11px 14px; border-radius:12px; border:none; background:transparent; color:#94a3b8; font-size:12px; font-weight:800; cursor:pointer; transition:.2s; font-family:'Inter',sans-serif; }
+                #devNav .dev-nav-btn:hover { background:rgba(139,92,246,0.12); color:#e2e8f0; }
+                #devNav .dev-nav-btn.active { background:linear-gradient(135deg,#8b5cf6,#6d28d9); color:#fff; box-shadow:0 4px 14px rgba(139,92,246,0.4); }
+            </style>
+            <div id="devNav">
+                <button class="dev-nav-btn" data-sec="usuarios" onclick="devSecao('usuarios')">👥 Usuários</button>
+                <button class="dev-nav-btn" data-sec="avisos" onclick="devSecao('avisos')">📢 Avisos</button>
+                <button class="dev-nav-btn" data-sec="relatorios" onclick="devSecao('relatorios')">📧 Relatórios</button>
+                <button class="dev-nav-btn" data-sec="analise" onclick="devSecao('analise')">📊 Análise de Acesso</button>
+                <button class="dev-nav-btn" data-sec="credenciais" onclick="devSecao('credenciais')">🔑 Credenciais</button>
+            </div>
+
             <!-- SEÇÃO DE AVISO GLOBAL -->
-            <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:20px;padding:24px;margin-bottom:28px;">
+            <div data-dev-sec="avisos" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:20px;padding:24px;margin-bottom:28px;">
                 <h3 style="margin:0 0 6px;font-size:13px;font-weight:900;color:#a78bfa;text-transform:uppercase;letter-spacing:1.5px;display:flex;align-items:center;gap:8px;">
                     📢 Aviso Global para Todos os Painéis
                 </h3>
@@ -3075,7 +3091,7 @@ rx="1.5" fill="#f59e0b"/>
             <!-- ══════════════════════════════════════════════════ -->
             <!-- SEÇÃO: GERENCIAMENTO DE USUÁRIOS                   -->
             <!-- ══════════════════════════════════════════════════ -->
-            <div id="devUserMgmt" style="margin-bottom:28px;">
+            <div id="devUserMgmt" data-dev-sec="usuarios" style="margin-bottom:28px;">
 
                 <!-- Tabs de categoria -->
                 <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
@@ -3200,7 +3216,7 @@ rx="1.5" fill="#f59e0b"/>
             <!-- ══════════════════════════════════════════════════ -->
             <!-- SEÇÃO: ANÁLISE DE ACESSO POR USUÁRIO               -->
             <!-- ══════════════════════════════════════════════════ -->
-            <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:20px;padding:24px;margin-bottom:28px;">
+            <div data-dev-sec="analise" style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:20px;padding:24px;margin-bottom:28px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px;">
                     <div>
                         <h3 style="margin:0 0 4px;font-size:13px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:1.5px;">📊 Análise de Acesso por Usuário</h3>
@@ -3217,7 +3233,35 @@ rx="1.5" fill="#f59e0b"/>
                 </div>
             </div>
 
-            <div id="devCredenciaisBody"></div>
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- SEÇÃO: RELATÓRIO DIÁRIO DE REIMPRESSÕES POR E-MAIL -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <div id="devRelatorioEmail" data-dev-sec="relatorios" style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.25);border-radius:20px;padding:24px;margin-bottom:28px;">
+                <h3 style="margin:0 0 4px;font-size:13px;font-weight:900;color:#818cf8;text-transform:uppercase;letter-spacing:1.5px;">📧 Relatório Diário de Reimpressões</h3>
+                <p style="margin:0 0 18px;font-size:11px;color:#6b7280;">Cadastre os e-mails e os horários de envio. O relatório (últimas 24h) é enviado automaticamente pelo robô do Google Apps Script.</p>
+                <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#e2e8f0;margin-bottom:18px;cursor:pointer;">
+                    <input type="checkbox" id="devRelAtivo" checked style="width:16px;height:16px;accent-color:#6366f1;"> Envio automático ativo
+                </label>
+                <div style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">E-mails</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                    <input id="devRelEmailInp" type="email" placeholder="nome@empresa.com" autocomplete="off" style="flex:1;min-width:200px;background:rgba(0,0,0,0.35);border:1px solid rgba(99,102,241,0.35);border-radius:10px;padding:11px 14px;font-size:13px;color:#e2e8f0;font-family:'Inter',sans-serif;outline:none;" onkeypress="if(event.key==='Enter') devRelAddEmail()">
+                    <button onclick="devRelAddEmail()" style="background:linear-gradient(135deg,#6366f1,#4338ca);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;">+ Adicionar</button>
+                </div>
+                <div id="devRelEmailLista" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;"></div>
+                <div style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Horários de envio</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                    <input id="devRelHoraInp" type="time" value="07:00" style="width:140px;background:rgba(0,0,0,0.35);border:1px solid rgba(99,102,241,0.35);border-radius:10px;padding:11px 14px;font-size:13px;color:#e2e8f0;font-family:'Inter',sans-serif;outline:none;" onkeypress="if(event.key==='Enter') devRelAddHorario()">
+                    <button onclick="devRelAddHorario()" style="background:linear-gradient(135deg,#6366f1,#4338ca);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;">+ Adicionar</button>
+                </div>
+                <div id="devRelHoraLista" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;"></div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <button onclick="devRelSalvar()" id="btnDevRelSalvar" style="background:linear-gradient(135deg,#6366f1,#4338ca);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;">💾 Salvar configuração</button>
+                    <div id="devRelStatus" style="font-size:11px;font-weight:700;min-height:16px;"></div>
+                </div>
+                <div id="devRelUltimo" style="margin-top:12px;font-size:11px;color:#64748b;"></div>
+            </div>
+
+            <div id="devCredenciaisBody" data-dev-sec="credenciais"></div>
         </div>
     </div>
 
@@ -4677,6 +4721,121 @@ rx="1.5" fill="#f59e0b"/>
         // GERENCIAMENTO DE USUÁRIOS — PAINEL DESENVOLVEDOR
         // =========================================================================
 
+
+        // =========================================================================
+        // RELATÓRIO DIÁRIO DE REIMPRESSÕES POR E-MAIL — configuração (painel ADM)
+        // Guarda e-mails e horários em /configRelatorio/reimpressoes.
+        // O envio em si é feito pelo Google Apps Script (RelatorioReimpressoes.gs).
+        // =========================================================================
+        const FB_REL_CFG = '/configRelatorio/reimpressoes';
+        let _devRelCfg = { ativo: true, emails: [], horarios: [] };
+
+        function _devRelMsg(txt, cor) {
+            const el = document.getElementById('devRelStatus');
+            if (el) { el.textContent = txt || ''; el.style.color = cor || '#94a3b8'; }
+        }
+
+        function devRelRender() {
+            const chip = (texto, tipo, i) => '<span style="display:inline-flex;align-items:center;gap:8px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#c7d2fe;border-radius:999px;padding:6px 8px 6px 14px;font-size:12px;font-weight:700;font-family:\'JetBrains Mono\',monospace;">' +
+                htmlSafe(texto) + '<button onclick="devRelRemover(\'' + tipo + '\',' + i + ')" style="background:rgba(239,68,68,0.2);color:#f87171;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-weight:900;line-height:1;">×</button></span>';
+            const le = document.getElementById('devRelEmailLista');
+            const lh = document.getElementById('devRelHoraLista');
+            if (le) le.innerHTML = _devRelCfg.emails.length ? _devRelCfg.emails.map((e, i) => chip(e, 'email', i)).join('') : '<span style="font-size:11px;color:#4b5563;">Nenhum e-mail cadastrado.</span>';
+            if (lh) lh.innerHTML = _devRelCfg.horarios.length ? _devRelCfg.horarios.map((h, i) => chip(h, 'hora', i)).join('') : '<span style="font-size:11px;color:#4b5563;">Nenhum horário cadastrado.</span>';
+            const chk = document.getElementById('devRelAtivo');
+            if (chk) chk.checked = !!_devRelCfg.ativo;
+        }
+
+        async function devRelCarregar() {
+            try {
+                const resp = await fetch(FIREBASE_URL + FB_REL_CFG + '.json' + AUTH);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const d = await resp.json();
+                if (d) {
+                    _devRelCfg.ativo = d.ativo !== false;
+                    _devRelCfg.emails = _normDetalhes(d.emails).map(String);
+                    _devRelCfg.horarios = _normDetalhes(d.horarios).map(String);
+                    const ult = document.getElementById('devRelUltimo');
+                    if (ult) {
+                        const u = d.ultimoEnvio && typeof d.ultimoEnvio === 'object' ? Object.values(d.ultimoEnvio).sort().pop() : '';
+                        ult.textContent = u ? ('Último envio automático: ' + u) : 'Nenhum envio automático registrado ainda.';
+                    }
+                }
+                devRelRender();
+            } catch (e) {
+                devRelRender();
+                _devRelMsg('Não foi possível carregar a configuração.', '#ef4444');
+            }
+        }
+
+        function devRelAddEmail() {
+            const inp = document.getElementById('devRelEmailInp');
+            const v = (inp.value || '').trim().toLowerCase();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { _devRelMsg('E-mail inválido.', '#ef4444'); return; }
+            if (_devRelCfg.emails.includes(v)) { _devRelMsg('Esse e-mail já está na lista.', '#f59e0b'); return; }
+            _devRelCfg.emails.push(v);
+            inp.value = '';
+            _devRelMsg('Lembre de salvar.', '#f59e0b');
+            devRelRender();
+        }
+
+        function devRelAddHorario() {
+            const inp = document.getElementById('devRelHoraInp');
+            const v = (inp.value || '').trim();
+            if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(v)) { _devRelMsg('Horário inválido.', '#ef4444'); return; }
+            if (_devRelCfg.horarios.includes(v)) { _devRelMsg('Esse horário já está na lista.', '#f59e0b'); return; }
+            _devRelCfg.horarios.push(v);
+            _devRelCfg.horarios.sort();
+            _devRelMsg('Lembre de salvar.', '#f59e0b');
+            devRelRender();
+        }
+
+        function devRelRemover(tipo, i) {
+            (tipo === 'email' ? _devRelCfg.emails : _devRelCfg.horarios).splice(i, 1);
+            _devRelMsg('Lembre de salvar.', '#f59e0b');
+            devRelRender();
+        }
+
+        async function devRelSalvar() {
+            const btn = document.getElementById('btnDevRelSalvar');
+            if (btn) btn.disabled = true;
+            try {
+                _devRelCfg.ativo = !!document.getElementById('devRelAtivo').checked;
+                // PATCH para não apagar o "ultimoEnvio" gravado pelo robô
+                const resp = await fetch(FIREBASE_URL + FB_REL_CFG + '.json' + AUTH, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ativo: _devRelCfg.ativo,
+                        emails: _devRelCfg.emails,
+                        horarios: _devRelCfg.horarios,
+                        atualizadoEm: new Date().toLocaleString('pt-BR')
+                    })
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                _devRelMsg('✅ Configuração salva.', '#10b981');
+            } catch (e) {
+                _devRelMsg('❌ Falha ao salvar. Verifique a conexão.', '#ef4444');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+
+        // ─── Navegação por seções do painel de configurações ─────────────────────
+        function devSecao(sec) {
+            const validas = ['usuarios','avisos','relatorios','analise','credenciais'];
+            if (!validas.includes(sec)) sec = 'usuarios';
+            window._devSecAtual = sec;
+            try { localStorage.setItem('devSecaoAtual', sec); } catch (e) {}
+            document.querySelectorAll('#devPainel [data-dev-sec]').forEach(el => {
+                el.style.display = el.getAttribute('data-dev-sec') === sec ? '' : 'none';
+            });
+            document.querySelectorAll('#devNav .dev-nav-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-sec') === sec);
+            });
+        }
+
         let _devTabAtual = 'operadores';
 
         function devSetTab(tab) {
@@ -4707,6 +4866,9 @@ rx="1.5" fill="#f59e0b"/>
                 }
             });
             devRenderLista(tab);
+            if (!window._devRelCarregado) { window._devRelCarregado = true; devRelCarregar(); }
+            let _secSalva = window._devSecAtual; try { _secSalva = _secSalva || localStorage.getItem('devSecaoAtual'); } catch (e) {}
+            devSecao(_secSalva || 'usuarios');
         }
 
         function devRenderLista(tab) {
@@ -5880,7 +6042,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
     const aprovador = await customSelectPrompt('Selecione o gerente aprovador:', listaGerentes);
     if (!aprovador) { await customAlert('Solicitacao cancelada.'); return; }
 
-    const ordens = [{ cor: cor, ordem: ordem, pacote: pacote }];
+    const ordens = await consultarProcessosOrdens([{ cor: cor, ordem: ordem, pacote: pacote }]);
     const numRequisicao = gerarNumeroRequisicao();
     const dataHora = new Date().toLocaleString('pt-BR');
     const btn = event ? event.currentTarget : null;
@@ -5940,7 +6102,8 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             const ordens = Array.from(checks).map(cb => ({
                 cor: cb.getAttribute('data-cor') || '--',
                 ordem: cb.getAttribute('data-ordem') || '--',
-                pacote: cb.getAttribute('data-pacote') || '--'
+                pacote: cb.getAttribute('data-pacote') || '--',
+                processos: [{ p: cb.getAttribute('data-pacote') || '--', t: cb.getAttribute('data-tipo') || 'giro' }]
             }));
             const numRequisicao = gerarNumeroRequisicao();
             const grupo = document.getElementById('filtroGrupo').value;
@@ -5990,18 +6153,120 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             };
         }
 
+        // ===== PROCESSO DA ORDEM/PACOTE (giro / refil / reprov) =====
+        function _subPacotes(valor) {
+            return String(valor == null ? '' : valor).split(/[#\/,;]/).map(s => s.trim()).filter(Boolean);
+        }
+        function _normPct(v) {
+            const s = String(v == null ? '' : v).trim().toUpperCase();
+            return /^\d+$/.test(s) ? String(parseInt(s, 10)) : s;
+        }
+        async function _obterReferenciaFresca() {
+            const agora = Date.now();
+            if (!window._cacheReferencia || !window._cacheReferenciaTs || (agora - window._cacheReferenciaTs) > 120000) {
+                const snap = await db.ref('/referencia').once('value');
+                window._cacheReferencia = snap.val() || {};
+                window._cacheReferenciaTs = agora;
+            }
+            return window._cacheReferencia;
+        }
+        // Índice ordem||pacote -> tipo, montado uma vez por carga do /referencia
+        function _indexarProcessosRef(ref) {
+            if (window._idxProcRefFonte === ref && window._idxProcRef) return window._idxProcRef;
+            const achados = {};
+            Object.keys(ref || {}).forEach(chave => {
+                const prod = ref[chave];
+                if (!prod || typeof prod !== 'object') return;
+                const dets = _normDetalhes(prod.detalhes);
+                if (!dets.length) return;
+                const nG = parseInt(prod.giro || 0) || 0;
+                const nR = parseInt(prod.refilagem || 0) || 0;
+                const nP = parseInt(prod.reprovado || 0) || 0;
+                const total = nG + nR + nP;
+                let limG, limR;
+                if (total === 0 || total === dets.length) { limG = nG; limR = nG + nR; }
+                else {
+                    const ratio = dets.length / total;
+                    limG = Math.round(nG * ratio);
+                    limR = limG + Math.round(nR * ratio);
+                }
+                dets.forEach((d, idx) => {
+                    const ord = String(d.ordem || '').trim();
+                    if (!ord) return;
+                    const tx = String(d.tipo || d.categoria || d.local || '').toLowerCase();
+                    const sx = String(d.status || '').toLowerCase();
+                    let t;
+                    if (/reprov/.test(tx) || /reprov/.test(sx) || d.reprovado || d.reprovados) t = 'reprov';
+                    else if (/refil|refilagem/.test(tx) || /refil/.test(sx)) t = 'refil';
+                    else if (/^giro$/.test(tx) || total === 0) t = 'giro';
+                    else if (idx < limG) t = 'giro';
+                    else if (idx < limR) t = 'refil';
+                    else t = 'reprov';
+                    _subPacotes(d.pacote).forEach(sp => {
+                        const k = ord + '||' + _normPct(sp);
+                        if (!(k in achados)) achados[k] = t;
+                    });
+                });
+            });
+            window._idxProcRefFonte = ref;
+            window._idxProcRef = achados;
+            return achados;
+        }
+        // Síncrono: devolve o mesmo array de ordens com .processos = [{p, t}]
+        function _classificarOrdensComRef(ref, ordens) {
+            const achados = _indexarProcessosRef(ref);
+            return ordens.map(o => {
+                const ord = String(o.ordem || '').trim();
+                const subs = _subPacotes(o.pacote);
+                const lista = (subs.length ? subs : ['--']).map(pc => ({ p: pc, t: achados[ord + '||' + _normPct(pc)] || 'nao_localizado' }));
+                return Object.assign({}, o, { processos: lista });
+            });
+        }
+        // t = 'giro' | 'refil' | 'reprov' | 'nao_localizado'
+        async function consultarProcessosOrdens(ordens) {
+            try {
+                const ref = await _obterReferenciaFresca();
+                return _classificarOrdensComRef(ref, ordens);
+            } catch (e) {
+                console.warn('Falha ao consultar processo das ordens:', e);
+                return ordens;
+            }
+        }
+        // Requisições criadas sem o processo gravado (versão antiga do sistema): consulta ao vivo
+        function _garantirReferenciaParaProcessos() {
+            if (window._cacheReferencia || window._refProcCarregando) return;
+            window._refProcCarregando = true;
+            _obterReferenciaFresca().then(() => {
+                if (userRole === 'gerente') { _agendarRenderGerente(); }
+                else if (document.getElementById('reprintModalOverlay').classList.contains('open')) { renderReimpressoes(); }
+            }).catch(e => console.warn('Falha ao carregar /referencia:', e)).finally(() => { window._refProcCarregando = false; });
+        }
+        function _rotuloProcesso(t) {
+            return t === 'reprov' ? 'REPROVO' : t === 'refil' ? 'REFILAGEM' : t === 'giro' ? 'GIRO' : 'NÃO LOCALIZADO';
+        }
+        function _badgeProcessoReq(t) {
+            if (t === 'nao_localizado') return '<span title="Ordem/pacote não localizado em giro, refil ou reprovo" style="display:inline-flex;align-items:center;gap:3px;background:rgba(148,163,184,0.18);color:#94a3b8;border:1px solid rgba(148,163,184,0.35);border-radius:6px;padding:1px 6px;font-size:8px;font-weight:900;letter-spacing:0.5px;white-space:nowrap;">? S/ REGISTRO</span>';
+            return _badgeTipo(t);
+        }
+
         function agruparOrdensRequisicao(ordens) {
             const mapa = {};
             (ordens || []).forEach(item => {
                 const ordem = item.ordem || '--';
-                if (!mapa[ordem]) mapa[ordem] = { ordem, cores: new Set(), pacotes: [] };
+                if (!mapa[ordem]) mapa[ordem] = { ordem, cores: new Set(), pacotes: [], processos: [] };
+                let procs = _normDetalhes(item.processos);
+                if (!procs.length && window._cacheReferencia) {
+                    try { procs = _classificarOrdensComRef(window._cacheReferencia, [item])[0].processos; } catch (e) { procs = []; }
+                }
+                procs.forEach(x => { if (x) mapa[ordem].processos.push(x); });
                 if (item.cor) mapa[ordem].cores.add(item.cor);
                 String(item.pacote || '--').split('#').filter(Boolean).forEach(p => mapa[ordem].pacotes.push(p));
             });
             return Object.values(mapa).map(g => ({
                 ordem: g.ordem,
                 cor: Array.from(g.cores).join(', ') || '--',
-                pacote: g.pacotes.join(' / ') || '--'
+                pacote: g.pacotes.join(' / ') || '--',
+                processos: g.processos
             }));
         }
 
@@ -6042,13 +6307,17 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
             return mapa[chaveViaReimpressao(ordem, pacote)] || 0;
         }
 
-        function renderPacoteComVias(ordem, pacote, mapaVias) {
+        function renderPacoteComVias(ordem, pacote, mapaVias, processos) {
             const pacotes = separarPacotesReimpressao(pacote);
+            const procs = processos || [];
             return '<span class="req-pacote-wrap">' + pacotes.map((p, idx) => {
-                const separador = idx > 0 ? '<span class="req-pacote-sep">/</span>' : '';
-                return separador +
-                    '<span class="req-pacote-item">' +
+                const subs = _subPacotes(p).map(_normPct);
+                const tipos = [];
+                procs.forEach(x => { if (x && subs.indexOf(_normPct(x.p)) !== -1 && tipos.indexOf(x.t) === -1) tipos.push(x.t); });
+                const procHtml = tipos.map(_badgeProcessoReq).join('');
+                return '<span class="req-pacote-item">' +
                     '<span class="req-pacote-text" title="' + htmlSafe(p) + '">' + htmlSafe(p) + '</span>' +
+                    '<span class="req-proc-wrap">' + procHtml + '</span>' +
                     '<span class="req-via-badge" title="Reimpressoes concluidas para esta ordem e pacote">via ' + contarViasReimpressao(ordem, p, mapaVias) + '</span>' +
                     '</span>';
             }).join('') + '</span>';
@@ -6130,6 +6399,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
                 _reprintData = novosItens.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             }
                 
+            _garantirReferenciaParaProcessos();
             if (userRole === 'gerente') {
                 _agendarRenderGerente();
             } else if (userRole === 'editor' && document.getElementById('reprintModalOverlay').classList.contains('open')) {
@@ -6335,7 +6605,7 @@ async function solicitarReimpressaoUnica(grupo, estacao, modelo, tamanho, cor, o
 
                 return '<div class="req-order-row">' + 
                     '<div style="display:flex; align-items:center;">' + checkboxHtml + iconeFeito + '<strong>' + htmlSafe(g.ordem) + '</strong></div>' + 
-                    '<div style="display:flex; align-items:center;">' + renderPacoteComVias(g.ordem, g.pacote, mapaViasReq) + '</div>' + 
+                    '<div style="display:flex; align-items:center;">' + renderPacoteComVias(g.ordem, g.pacote, mapaViasReq, g.processos) + '</div>' + 
                     '<div style="text-align:right; display:flex; justify-content:flex-end; align-items:center;"><span>' + htmlSafe(g.cor) + '</span></div>' +
                     '</div>';
             }).join('');
@@ -11044,6 +11314,9 @@ function handleChatTyping() {
                 return;
             }
 
+            // Consulta em qual processo (giro / refil / reprovo) cada ordem+pacote está
+            const ordensComProcesso = await consultarProcessosOrdens(ordens);
+
             const numRequisicao = gerarNumeroRequisicao();
             const payload = {
                 numRequisicao,
@@ -11051,7 +11324,7 @@ function handleChatTyping() {
                 estacao: '--',
                 modelo: 'Talão Fechado',
                 tamanho: '--',
-                ordens: ordens,
+                ordens: ordensComProcesso,
                 status: 'pendente',
                 solicitante: solicitanteNome,
                 solicitanteCracha,
@@ -11081,7 +11354,8 @@ function handleChatTyping() {
                 };
                 localStorage.setItem('notifReimpressao', JSON.stringify(notifReimpData));
 
-                await customAlert('✅ Solicitação de Talão Fechado enviada!\nRequisição: ' + numRequisicao);
+                const _resumoProc = ordensComProcesso.map(o => o.ordem + ' / ' + o.pacote + ' → ' + (o.processos || []).map(x => _rotuloProcesso(x.t)).filter((v, i, a) => a.indexOf(v) === i).join(', ')).join('\n');
+                await customAlert('✅ Solicitação de Talão Fechado enviada!\nRequisição: ' + numRequisicao + (_resumoProc ? '\n\n' + _resumoProc : ''));
             } catch (e) {
                 await customAlert('Falha ao enviar solicitação.');
                 document.getElementById('retModalOverlay').style.display = 'flex';
