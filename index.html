@@ -5786,7 +5786,7 @@ function customPromptMultiline(msg, defaultValue = '') {
     });
 }
 
-        function customSelectPrompt(msg, options) {
+        function customSelectPrompt(msg, options, defaultValue) {
             return new Promise(resolve => {
                 const overlay = document.getElementById('customModalOverlay');
                 const select = document.getElementById('customModalSelect');
@@ -5800,6 +5800,7 @@ function customPromptMultiline(msg, defaultValue = '') {
                     select.appendChild(option);
                 });
                 select.style.display = 'block';
+                if (defaultValue !== undefined) select.value = defaultValue;
                 const btnCancel = document.getElementById('customModalBtnCancel');
                 const btnOk = document.getElementById('customModalBtnOk');
                 btnCancel.style.display = 'block'; btnOk.style.display = 'block'; btnOk.innerText = 'Confirmar';
@@ -5809,6 +5810,61 @@ function customPromptMultiline(msg, defaultValue = '') {
             });
         }
        
+        // Modal com checkboxes (multi-seleção + "Todos"). Retorna array de valores ou null se cancelar.
+        function customCheckboxPrompt(msg, options, preChecked = []) {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.className = 'custom-modal-overlay';
+                overlay.style.display = 'flex';
+                overlay.style.zIndex = '100001';
+                const box = document.createElement('div');
+                box.className = 'custom-modal-box';
+                const h = document.createElement('h3'); h.innerText = msg; h.style.whiteSpace = 'pre-line';
+                box.appendChild(h);
+
+                const lista = document.createElement('div');
+                lista.style.cssText = 'display:flex; flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto; margin-bottom:20px; text-align:left;';
+                const estiloLinha = 'display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; background:var(--input-bg); color:var(--text-main); font-size:14px; font-weight:700; cursor:pointer; user-select:none;';
+
+                const linhaTodos = document.createElement('label'); linhaTodos.style.cssText = estiloLinha + 'border:1px solid rgba(239,68,68,0.35);';
+                const cbTodos = document.createElement('input'); cbTodos.type = 'checkbox';
+                linhaTodos.appendChild(cbTodos); linhaTodos.appendChild(document.createTextNode('Todos os grupos'));
+                lista.appendChild(linhaTodos);
+
+                const cbs = options.map(opt => {
+                    const l = document.createElement('label'); l.style.cssText = estiloLinha;
+                    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = opt.value;
+                    cb.checked = preChecked.includes(opt.value);
+                    l.appendChild(cb); l.appendChild(document.createTextNode(opt.label));
+                    lista.appendChild(l);
+                    return cb;
+                });
+                box.appendChild(lista);
+
+                const acoes = document.createElement('div'); acoes.className = 'custom-modal-actions';
+                const btnCancel = document.createElement('button'); btnCancel.className = 'btn-cancelar'; btnCancel.innerText = 'Cancelar';
+                const btnOk = document.createElement('button'); btnOk.className = 'btn-confirmar'; btnOk.innerText = 'Confirmar';
+                acoes.appendChild(btnCancel); acoes.appendChild(btnOk);
+                box.appendChild(acoes);
+                overlay.appendChild(box); document.body.appendChild(overlay);
+
+                const atualizar = () => {
+                    const n = cbs.filter(c => c.checked).length;
+                    cbTodos.checked = n === cbs.length;
+                    cbTodos.indeterminate = n > 0 && n < cbs.length;
+                    btnOk.disabled = n === 0; btnOk.style.opacity = n === 0 ? '0.4' : '1';
+                    btnOk.innerText = n === 0 ? 'Confirmar' : `Confirmar (${n})`;
+                };
+                cbTodos.onchange = () => { cbs.forEach(c => c.checked = cbTodos.checked); atualizar(); };
+                cbs.forEach(c => c.onchange = atualizar);
+                atualizar();
+
+                const fechar = (val) => { overlay.remove(); resolve(val); };
+                btnOk.onclick = () => { if (btnOk.disabled) return; tocarSomAuth(); fechar(cbs.filter(c => c.checked).map(c => c.value)); };
+                btnCancel.onclick = () => fechar(null);
+            });
+        }
+
         function customConfirm(msg, labelOk = 'Confirmar', labelCancel = 'Cancelar') {
             return new Promise(resolve => {
                 const overlay = document.getElementById('customModalOverlay');
@@ -7488,24 +7544,38 @@ async function cancelarReimpressaoEditor(id) {
 
         async function limparPrsManuais() {
             usuariosAutorizados = usuariosAutorizados = defaultUsuarios;
-            const info = await customPrompt("Ação Crítica de Limpeza.\n\nPor favor, digite seu Usuário/Crachá para confirmar:", false);
+
+            // 1) escolher os grupos (padrão = grupo atual do filtro)
+            const selGrupo = document.getElementById('filtroGrupo');
+            const opcoes = Array.from(selGrupo.options).map(o => ({ value: o.value, label: o.textContent }));
+            const grupos = await customCheckboxPrompt("Limpar PRs Manuais.\n\nMarque os grupos:", opcoes, [selGrupo.value]);
+            if (!grupos || !grupos.length) return;
+            const rotulo = grupos.length === opcoes.length ? 'todos os grupos' : grupos.join(', ');
+
+            // 2) confirmar usuário
+            const info = await customPrompt(`Ação Crítica de Limpeza (${rotulo}).\n\nPor favor, digite seu Usuário/Crachá para confirmar:`, false);
             const crachaDigitado = info ? info.trim() : ""; const nomeUsuario = usuariosAutorizados[crachaDigitado];
             if (!nomeUsuario) { await customAlert("Acesso negado. Usuário/Crachá inválido ou não cadastrado."); return; }
 
-            document.getElementById('status-update').innerText = "Limpando PRs Manuais Globais...";
+            document.getElementById('status-update').innerText = `Limpando PRs Manuais (${rotulo})...`;
             try {
-                // Pega tudo do firebase, zera e atualiza
-                const resp = await fetch(`${FIREBASE_URL}/alocacao.json${AUTH}`);
-                const todasAlocacoes = await resp.json() || {};
-                for (let g in todasAlocacoes) {
-                    for (let e in todasAlocacoes[g]) {
-                        if (todasAlocacoes[g][e]) {
-                            todasAlocacoes[g][e].prManual = 0; todasAlocacoes[g][e].prTime = "";
+                await Promise.all(grupos.map(async (grupo) => {
+                    const urlGrupo = `${FIREBASE_URL}/alocacao/${encodeURIComponent(grupo)}.json${AUTH}`;
+                    const resp = await fetch(urlGrupo);
+                    const alocGrupo = await resp.json() || {};
+                    // PATCH multi-path: zera só prManual/prTime das estações deste grupo
+                    const updates = {};
+                    for (let e in alocGrupo) {
+                        if (alocGrupo[e]) {
+                            updates[`${e}/prManual`] = 0;
+                            updates[`${e}/prTime`] = "";
                         }
                     }
-                }
-                await fetch(`${FIREBASE_URL}/alocacao.json${AUTH}`, { method: 'PUT', body: JSON.stringify(todasAlocacoes) });
-                await customAlert(`Limpeza concluída por ${nomeUsuario}.\nRegistros manuais foram apagados da base de dados global.`);
+                    if (Object.keys(updates).length) {
+                        await fetch(urlGrupo, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updates) });
+                    }
+                }));
+                await customAlert(`PRs manuais removidos (${rotulo}) por ${nomeUsuario}.`);
                 carregarPainel();
             } catch (e) { await customAlert("Falha na comunicação com o banco."); }
         }
